@@ -145,7 +145,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    cmake --build build-release --target psx-runtime
    ```
 4. ~~KUSEG-Smoke-Test: Boot → Titel → Level, A/B gegen psx-beetle~~ (erledigt). Ergebnis upstream melden (Entwurf liegt bereit, Freigabe durch den Nutzer nötig).
-   - Noch offen: ein Level mit echter Eingabe spielen; Ending-FMV, Memory Card und XA-Musik prüfen.
+   - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt (`analysis/play-native2/`). Noch offen: Ending-FMV, Memory Card, XA-Musik (headless ohne Audiogerät).
 5. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
 6. Ziele nach Lauffähigkeit:
    - Widescreen (GTE-Squash + `[widescreen]`). Kamera und Projektion stehen in rocco `SPEC.md`, Cull-Stellen im Decomp-C.
@@ -173,6 +173,9 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 - `tools/smoke_boot.py --port 4370|4380` liest `gameState`, `isDemoMode`, `levelTimeLeft` usw. (Adressen aus dem Decomp) und speichert Screenshots nach `analysis/smoke/`.
 - Ohne Eingabe startet das Spiel nach 2000 Menü-Frames (40 s) den Demo-Modus. „Demo aktiv und Timer läuft runter“ beweist also BIOS → Titel → Menü → 3D-Level.
 - Tests: `python3 -m unittest discover -s tests`.
+- Debug-Protokoll: eine Anfrage pro TCP-Verbindung. Frame-Nummer: Runtime über `frame`, Beetle im `ping`.
+- **`press`/`set_input` erwarten das Pad-Wort active-low** (`0xFFFF` = nichts gedrückt). Kreuz drücken heißt also `0xFFFF ^ 0x4000`. Bits: `PAD_*` im Decomp `include/common.h`.
+- Spielstart per Eingabe: Kreuz → Untermenü (`curMenu` 3) → Kreuz → 1-Spieler-Arcade (Welt 0, Level 0). Spielerposition `playerCombinedPos` = `0x800A45D0` (8 Byte).
 
 ## Werkzeuge in dieser Umgebung
 - Erste Anlaufstelle für Code-Verständnis ist das dezgeg-Decomp, nicht Ghidra.

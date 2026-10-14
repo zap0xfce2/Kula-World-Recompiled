@@ -55,3 +55,4 @@ Lauf headless unter Xvfb/llvmpipe ohne Eingaben, gemessen mit `tools/smoke_boot.
 - Tempo: Die native Runtime erreicht unter llvmpipe bei 4x interner Auflösung nur ca. 35–44 statt 50 Frames/s. Vermutlich liegt das an der GPU-losen Umgebung, auf echter Hardware noch nicht gemessen.
 - `vsyncCounter` (`0xA2F64`) ist auf beiden Backends dauerhaft 0, also kein Recomp-Fehler.
 - Noch nicht getestet: echtes Spielen mit Eingabe, Ending-FMV (`StrCallback`), Memory Card, XA-Musik.
+- Interaktiv (2026-10-15): Kreuz → Untermenü → Kreuz startet 1-Spieler-Arcade Welt 0 Level 0. `levelTimeLeft` läuft herunter, „hoch“ bewegt die Kugel (`playerCombinedPos` ändert sich), Screenshot zeigt Kugel vor dem EXIT. Eingaben über den Debug-Server sind active-low.

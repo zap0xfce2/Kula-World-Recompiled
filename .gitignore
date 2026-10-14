@@ -13,6 +13,8 @@
 # psxrecomp_cli.py work areas (overlay toolchain download, static overlay
 # shard evidence -- the latter holds bytes read from the disc).
 /.cache/
+# Machine-specific toolchain stamp written by psxrecomp_cli.py
+/toolchain/
 
 # Release packaging
 /release-stage/

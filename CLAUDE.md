@@ -16,12 +16,13 @@ Vorlage für Projektstruktur, Mods und Launcher: [hercules-recompiled](https://g
 keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 `disc/`, `bios/`, `generated/` (bis zur Release-Entscheidung) gehören in `.gitignore`.
 
-## Stand (2026-10-14)
-Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Branch `main`, lokal, kein Remote).
+## Stand (2026-10-15)
+Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (lokal, kein Remote). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
 - Submodule: `psxrecomp` @ `f9c287f5`, `recomp-ui` @ `41c88ff` (Snapshot in `framework_pins.txt`)
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
 - BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
-- Noch nichts generiert/gebaut. `cmake` und `ninja` sind in dieser Umgebung (Alpine) noch nicht installiert.
+- 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Recompiled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D** (X11-Screenshots in `analysis/smoke-native/`). Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
+  - Gemessen (`build-dev`, `tools/smoke_boot.py`): gleiche Demo-Abfolge und gleiche Endwerte wie psx-beetle, 0 Dispatch-Misses. Ergebnis noch nicht upstream gemeldet (Entwurf in `docs/upstream-report-kuseg.md`).
 - **Abweichung von Upstream:** `generated/` ist bewusst gitignored (Upstream committet es), bis die Release-Entscheidung gefallen ist.
 - `disc/kula-quest-jp/` enthält Kula Quest (Japan), nur als Referenz, nicht Teil des Builds.
 
@@ -143,8 +144,9 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release
    cmake --build build-release --target psx-runtime
    ```
-4. KUSEG-Smoke-Test nach `SEGMENT_AWARE_CODE.md` §7: Boot → Titel → Level, A/B gegen psx-beetle. Ergebnis upstream melden.
-5. Seeds und Indirect Targets verfeinern. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
+4. ~~KUSEG-Smoke-Test: Boot → Titel → Level, A/B gegen psx-beetle~~ (erledigt). Ergebnis upstream melden (Entwurf liegt bereit, Freigabe durch den Nutzer nötig).
+   - Noch offen: ein Level mit echter Eingabe spielen; Ending-FMV, Memory Card und XA-Musik prüfen.
+5. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
 6. Ziele nach Lauffähigkeit:
    - Widescreen (GTE-Squash + `[widescreen]`). Kamera und Projektion stehen in rocco `SPEC.md`, Cull-Stellen im Decomp-C.
    - Wobble-Fix
@@ -153,6 +155,24 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - HD-Texturen aus TGI/GGI
    - Muster für Mods und Patches: `hercules-recompiled/port/mods`, `port/patches`
 7. Roadmap: nativer Port über das Decomp (siehe Strategie)
+
+## Build-Gotchas (Alpine/musl)
+- Systempakete: `sudo apk add cmake samurai pkgconf sdl3-dev mesa-dev linux-headers` (samurai liefert `ninja`). Zum Headless-Testen: `xvfb xvfb-run mesa-dri-gallium`.
+- `psxrecomp_cli.py generate` **immer mit `--no-toolchain-download`**. Ohne das Flag passiert Folgendes:
+  - Es lädt die glibc-Toolchain `cmake-clang-v1` nach `~/.local/share/retcomm`, die unter musl nicht läuft.
+  - Es trägt PATH-Hooks in `~/.zshrc` und `~/.profile` ein.
+  - Es schreibt `toolchain/.psxrecomp-bin`.
+  - Das CLI durchsucht `~/.local/share/retcomm` immer. Der Ordner darf also nicht existieren (aktuell umbenannt zu `retcomm.broken-glibc`).
+- Nach `generate --bios` fehlt `psxrecomp/generated/SCPH1001.emitter.sha` (CLI-Lücke), dann meldet CMake „BIOS … STALE“. Abhilfe: `cd psxrecomp && bash tools/regen_bios.sh --config bios/SCPH1001.toml`.
+- musl hat keine `getcontext`/`makecontext`/`swapcontext`, die `psx_fiber.c` braucht. Abhilfe: `sudo apk add libucontext-dev` und bei jedem CMake-Configure `-DCMAKE_C_STANDARD_LIBRARIES=-lucontext -DCMAKE_CXX_STANDARD_LIBRARIES=-lucontext`.
+- Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --bios bios/SCPH1001.BIN --disc disc/SCES01000.CUE --debug-port 4370`.
+- Generate dauert ca. 2 min (569 Shards, 31 Mio. Zeilen C, ~950 MB). Der Runtime-Build dauert auf 8 Kernen ca. 23 min.
+- Oracle: `psxrecomp/beetle-psx` (im Submodule gitignored) auf `5759277b` plus `docs/beetle_*.patch`, siehe `psxrecomp/docs/beetle-linux.md`.
+
+## Smoke-Test
+- `tools/smoke_boot.py --port 4370|4380` liest `gameState`, `isDemoMode`, `levelTimeLeft` usw. (Adressen aus dem Decomp) und speichert Screenshots nach `analysis/smoke/`.
+- Ohne Eingabe startet das Spiel nach 2000 Menü-Frames (40 s) den Demo-Modus. „Demo aktiv und Timer läuft runter“ beweist also BIOS → Titel → Menü → 3D-Level.
+- Tests: `python3 -m unittest discover -s tests`.
 
 ## Werkzeuge in dieser Umgebung
 - Erste Anlaufstelle für Code-Verständnis ist das dezgeg-Decomp, nicht Ghidra.

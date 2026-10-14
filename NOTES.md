@@ -36,3 +36,22 @@ kein MIPS-Code in TGI/GGI/SFX/PAK (auch entpackt). Rein statischer Recomp mögli
    Branch `kula-world-linux-macos` erreicht spielbare 3D-Level
 5. Upstream behält KUSEG inzwischen bei (kein Falten auf KSEG0) – mit Kula **noch nicht getestet**
    (psxrecomp `docs/SEGMENT_AWARE_CODE.md` §7)
+
+## KUSEG-Smoke-Test (2026-10-15)
+Upstream psxrecomp `f9c287f5` (enthält KUSEG-Codegen `d67f0f93`), Retail-BIOS SCPH-1001, unveränderte Seeds (727 JAL-Ziele).
+Generate findet 971 Funktionen → 569 Shards, Dispatch-Tabelle mit 3570 Einträgen.
+Lauf headless unter Xvfb/llvmpipe ohne Eingaben, gemessen mit `tools/smoke_boot.py` (Variablen aus dem dezgeg-Decomp).
+
+| Beobachtung | psx-runtime (recompiliert) | psx-beetle (Oracle) |
+|---|---|---|
+| Boot → Hauptmenü | ja | ja |
+| Demo 1 | Welt 0, Level 4 | Welt 0, Level 4 |
+| Endwert `levelTimeLeft` Demo 1 | 3603 | 3603 |
+| Demo 2 | Welt 1, Level 4 (Punktestand 2770) | Welt 1, Level 4 (Punktestand 2770) |
+| Demo 3 | (nicht beobachtet) | Welt 2, Level 11 |
+| Dispatch-Misses | 0 bei 2.043.749 statischen Treffern | – |
+
+- Bild: Titel, Menü und 3D-Demo inkl. HUD rendern korrekt (`analysis/smoke-dev/`, `analysis/smoke-beetle/`).
+- Tempo: Die native Runtime erreicht unter llvmpipe bei 4x interner Auflösung nur ca. 35–44 statt 50 Frames/s. Vermutlich liegt das an der GPU-losen Umgebung, auf echter Hardware noch nicht gemessen.
+- `vsyncCounter` (`0xA2F64`) ist auf beiden Backends dauerhaft 0, also kein Recomp-Fehler.
+- Noch nicht getestet: echtes Spielen mit Eingabe, Ending-FMV (`StrCallback`), Memory Card, XA-Musik.

@@ -79,6 +79,29 @@ Dort gefixt und laut `docs/ecosystem-watch.md` nach upstream übernommen:
 4. CD-Controller-Version für SCPH-1001 auf `0x94 0x09 0x19 0xC0`
 5. libcd-CD-IRQ wurde nicht bedient. War in der Findings-Doku noch offen, laut späterem Commit gelöst.
 
+**alexbeavs-ps1-ports/kula-world-recomp** (GPL-3.0, Releases bis v0.3.6 vom 2026-09-04, Recherche am 2026-10-14):
+- Gleiche Disc (gleiche MD5) und gleiche KUSEG-`game.toml`. Laut `docs/FEASIBILITY.md` bis Gameplay gekommen (`bootstrap_verified`).
+- Teil eines Portfolios mit 24 Titeln. Inhaltlich nur Scaffold plus Packaging/CI: Seeds nur aus dem Probe, keine Symbole, keine Mods.
+- Pinnt den eigenen Fork `Alexbeav/psxrecomp@08ec704`. Merge-Base mit Upstream ist vom 2026-08-30, also **vor** dem KUSEG-Codegen `d67f0f93` (2026-09-29). Gegenüber Upstream 91 Commits voraus (u. a. PAL-VBlank-Timing, SPU-IRQ, Savestates) und 1482 zurück.
+- Fazit: Bootstrap bringt er nichts mit, was wir übernehmen müssten. Mods und KUSEG auf aktuellem Upstream hat noch niemand gemacht.
+
+**dezgeg/kula-world-decomp** (Matching-Decomp, **keine Lizenz**, seit 2024, 947 Commits, aktiv bis 2026-10-13):
+- Zielt auf genau unsere EXE: `config/eu-SCES_010.00`, SHA256-Check `28c8f46d…` ist identisch mit `disc/SCES_010.00`.
+- 939 benannte Funktionen (`function_addrs.txt`, nur 5 `FUN_`), 937 typisierte Variablen, 347 PsyQ-Lib-Symbole, Strings und Relocs. Format: splat/`name = 0x…; // type:…`.
+- Nur noch 27 Funktionen in ASM, v. a. Render, GTE, Subdivide, Light-Effects, `WaitForVBlank`. Der Rest ist matchendes C (`src/*.c`, u. a. `cheats.c`, `level_update*.c`, `player_movement.c`, `vsync.c`).
+- Portiert gerade nach US/JP (`VER_US`, `VID_NTSC`). `psyz` (PsyQ-Reimplementierung für PC) ist als Submodule eingebunden, wird im Makefile aber noch nicht genutzt.
+- Nutzen für uns: vollständige Funktionsgrenzen für Seeds/Indirect Targets, Symbole für `symbols.toml`, lesbares C als Grundlage für die Mods (Timer, Kamera, Cheats). Ohne Lizenz die Dateien nur lokal als Referenz nutzen und vor dem Committen abgeleiteter Listen beim Maintainer nachfragen.
+
+**Pixelsprout/rocco-engine** (UPL-1.0, Odin/Roc): Klon-Engine mit 3 Leveln und eigenen Assets, Code für uns unbrauchbar.
+Nützlich ist `games/kula/SPEC.md`: Gameplay-Fakten aus dem Decomp (Commit `2ca79ff`) mit Zeilenverweisen.
+Darin stehen Einheiten (512/Block, 4096/Umdrehung), pro Frame laufende Werte (Roll +7/Frame bis 40, Turn 16 Frames, Gravity +6 bis 80, Jump 27 Frames, Idle-Bob hängt an `levelTimeLeft`) und die Kamera (starr, H=160 → 73,7° vFOV bei 4:3).
+Das ist die Checkliste für den 60-FPS-Mod (was an 50 Hz hängt) und die Basis für Widescreen.
+
+**Daten- und Modding-Tools** (Disc-Formate, kein Code):
+- `SaturnKai/Randomizer` (GPL-3.0, C#): mischt Level, Themes, SFX und Modelle auf Dateiebene.
+- `KulaWorkshop/Quilt` (Nachfolger von PakTool) und `LevelEditor`.
+- `RetroAtlas/KulaWorldMap` (GPL-2.0, sehr aktuell): Doku zu Level-Format, TGI, GGI und Bewegungsregeln, inkl. Cheat für beliebige Level (`docs/level-format.md`).
+
 **Offener Punkt für uns:** Upstream faltet KUSEG nicht mehr auf KSEG0, die Code-Identität bleibt `0x0001xxxx`
 (`docs/SEGMENT_AWARE_CODE.md` §3.2, §5.3, §7). Laut Upstream-Doku wurde das **mit Kula World nie getestet**.
 Daher nutzt unsere `game.toml` bewusst die KUSEG-Adressen aus dem Header.
@@ -101,6 +124,14 @@ disc/, bios/               Nutzerdaten, nicht in git
 ```
 Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 
+## Strategie (entschieden 2026-10-14)
+- **Jetzt: Recomp mit psxrecomp.** Das dezgeg-Decomp dient nur als Wissens- und Symbolquelle, es fließt kein Code daraus ein.
+- **Roadmap: nativer Port aus dem dezgeg-Decomp über psyz.** Voraussetzungen:
+  - dezgeg vergibt eine Lizenz oder stimmt zu
+  - die 27 ASM-Funktionen liegen als C vor
+  - psyz ist angebunden
+  - vorher bei dezgeg nachfragen, ob ein eigener PC-Port geplant ist (Zusammenarbeit statt Doppelarbeit)
+
 ## Nächste Schritte
 1. ~~Repo nach New Project Layout aufsetzen~~ (erledigt)
 2. ~~`bios/SCPH1001.BIN` einbinden~~ (erledigt)
@@ -113,18 +144,20 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    cmake --build build-release --target psx-runtime
    ```
 4. KUSEG-Smoke-Test nach `SEGMENT_AWARE_CODE.md` §7: Boot → Titel → Level, A/B gegen psx-beetle. Ergebnis upstream melden.
-5. Indirect Targets aus `jalr`/`jr` sammeln (Hercules: `decomp/config/indirect_targets.json`) und die Seeds verfeinern.
+5. Seeds und Indirect Targets verfeinern. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
 6. Ziele nach Lauffähigkeit:
-   - Widescreen (GTE-Squash + `[widescreen]`)
+   - Widescreen (GTE-Squash + `[widescreen]`). Kamera und Projektion stehen in rocco `SPEC.md`, Cull-Stellen im Decomp-C.
    - Wobble-Fix
-   - 60 FPS: Timer läuft framebasiert mit 50 Hz, die Logik muss entkoppelt werden
-   - Levelauswahl-Mod
+   - 60 FPS: Timer läuft framebasiert mit 50 Hz, die Logik muss entkoppelt werden. Checkliste der Werte pro Frame: rocco `SPEC.md`.
+   - Levelauswahl-Mod (Cheat aus KulaWorldMap `docs/level-format.md`, `cheats.c` im Decomp)
    - HD-Texturen aus TGI/GGI
    - Muster für Mods und Patches: `hercules-recompiled/port/mods`, `port/patches`
+7. Roadmap: nativer Port über das Decomp (siehe Strategie)
 
 ## Werkzeuge in dieser Umgebung
-- Ghidra mit `ghidra_psx_ldr` und optional REA oder GhidrAssistMCP als MCP.
-  Die EXE im KUSEG-Segment laden (Basis `0x00011000`).
+- Erste Anlaufstelle für Code-Verständnis ist das dezgeg-Decomp, nicht Ghidra.
+- Ghidra ist optional (noch nicht installiert, kein JDK), nur für die 27 ASM-Funktionen oder zum Gegenprüfen.
+  Dann mit `ghidra_psx_ldr` die EXE im KUSEG-Segment laden (Basis `0x00011000`) und Funktionsgrenzen per `psxrecomp-analyze --emit-ghidra` importieren.
 - Oracle: psx-beetle aus psxrecomp (`docs/beetle-linux.md`), gleiches TCP-Debug-Protokoll wie die Runtime.
 - psxrecomp-Regeln aus dessen `CLAUDE.md` beachten:
   - Kein HLE, keine Stubs

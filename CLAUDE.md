@@ -172,6 +172,13 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Verworfen: Glas-Ziffern (`DrawTextFancyFont`) plus Menü-Kugel, Schriftmix gefiel nicht. Ein Glas-Alphabet gibt es nicht, Menüwörter sind fertige Bilder, und das Glas-`+` ist in PAL ein anderes Zeichen.
    - Widescreen (GTE-Squash + `[widescreen]`). Kamera und Projektion stehen in rocco `SPEC.md`, Cull-Stellen im Decomp-C.
    - 60 FPS: Timer läuft framebasiert mit 50 Hz, die Logik muss entkoppelt werden. Checkliste der Werte pro Frame: rocco `SPEC.md`.
+     - Ein reiner NTSC-Patch reicht nicht: Die US-Fassung passt rund 130 Stellen an 60 Hz an (`VID_NTSC ? a : b` im Decomp, z. B. Roll-Beschleunigung 7→6, Drehung 14→16 Frames, Effekt-Timer, 240-Zeilen-Layout). Nur umgeschaltet liefe PAL 20 % zu schnell.
+     - Framework-„Smooth motion“ (`[video] frame_generation`, `psxrecomp/docs/FRAME_GENERATION.md`) auf dem Mac getestet (2026-10-15, `PSX_RENDER_THREAD=1 PSX_FRAME_GEN=1`): **erzeugt bei Kula keine Zwischenbilder.**
+       - `frame_gen` zählt kaum Flips (`noplan_why` „older list invalid“), obwohl Kula doppelt puffert (`display_x` 0/320 im Wechsel) und 50 Swaps/s laufen. Über 55 s kamen nur ca. 7 Aufrufe pro Sekunde im Flip-Pfad an (`gpu_gl_renderer.c` um Zeile 13110).
+       - Nur beim Springen kommen Flips an, die alle verworfen werden („few inliers“).
+       - Smoke und Levelauswahl laufen mit eingeschalteter Generierung sauber.
+       - Im Launcher fehlen die Zeilen Render-Thread/Smooth motion, obwohl `renderer = "opengl"` (`launcher_model.c:1947`, Ursache offen).
+       - Kandidat für ein Upstream-Issue (Flip-Erkennung). Kein Default.
    - Wobble-Fix
    - HD-Texturen aus TGI/GGI
    - Eigener Ladebildschirm statt Piraterie-Hinweis (`HIRO\WARNING.TIM`, Idee 2026-10-15):

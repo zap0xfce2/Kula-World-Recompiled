@@ -144,7 +144,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt (`analysis/play-native2/`).
 5. Offene Punkte aus dem Smoke-Test:
    - ~~Ergebnis upstream melden~~ (erledigt 2026-10-15): RetroPortingToolKit/psxrecomp#671 (KUSEG) und #672 (6 Portabilitäts-Befunde). Quelle: `docs/upstream-report-kuseg.md`.
-   - Auf dem Mac verifiziert: XA-Musik und SFX, Memory Card (`saves/card1.mcd`), LLE-Boot. Offen: Controller (kein Gamepad zur Hand) und Ending-FMV (kommt mit dem Levelauswahl-Mod).
+   - Auf dem Mac verifiziert: XA-Musik und SFX, Memory Card (`saves/card1.mcd`), LLE-Boot. Offen: Controller (kein Gamepad zur Hand) und Ending-FMV (per Levelauswahl Welt 10 erreichbar, noch nicht gezielt geprüft).
    - ~~Performance auf echter GPU messen~~ (erledigt): Der Mac schafft 49,5 fps. Die 35 bis 44 fps unter Xvfb/llvmpipe kommen von der Umgebung.
    - OpenBIOS (MIT, vom Framework mitgeliefert und mitgelinkt) funktioniert, getestet am 2026-10-15:
      - Start: `--bios build-dev/bios/openbios.bin`
@@ -158,9 +158,11 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - `vsyncCounter` (`0x800A2F64`) ist auf beiden Backends immer 0. Klären, ob die Adresse aus dem Decomp für PAL stimmt.
 6. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
 7. Mods (vor jedem Mod Brainstorming mit dem Nutzer, Vorschlag: mit der Levelauswahl anfangen):
-   - Levelauswahl-Mod `kula.level-select` (Branch `feat/level-select-mod`, Spec und Plan unter `docs/superpowers/`):
+   - Levelauswahl-Mod `kula.level-select` (in `main` seit 2026-10-15, Spec und Plan unter `docs/superpowers/`):
      - „Arcade“ öffnet START / WORLD 1–10 / LEVEL 1–15. Standardmäßig an.
      - Ein Start ≠ 1/1 setzt `cheated = 1` und macht aus der Highscore-Eingabe die reine Tabelle.
+     - Linux und Mac (M1 Pro, OpenBIOS) verifiziert: Starts 1/1, 3/5, 7/3, 10/3, 10/12; Optik; Kreis/Dreieck zurück; Highscore-Sperre und Gegenprobe 1/1; Launcher an/aus; keine Artefakte in anderen Texten.
+     - Offen: Speicherpunkte nach Start ≠ 1/1 im Spiel bestätigen (laut Decomp unterdrückt `cheated` sie), Ending-FMV über Welt 10.
      - Plugin `mods/src/kula_level_select.c` + reine Logik `mods/src/level_select_logic.c` (C-Test in `task test`).
      - Hooks über `game.toml [recompiler] mod_function_entry_funcs`, danach `task generate`.
      - Prüfen: `tools/check_level_select.py --world W --level L` gegen eine frisch gestartete Dev-Runtime.
@@ -183,12 +185,11 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
          - Offen: Ursache (CD-Timing in der Runtime?) nicht gefunden. 2x ist ein Workaround, kein Beweis. Kandidat für ein Upstream-Issue mit Repro über `tools/check_level_select.py`.
          - Per Override in `mods/preloaded/packages/psx.enhancement.cd-speed/1.0.0/manifest.toml` standardmäßig an (`default_enabled = true`, Multiplikator 2), im Launcher abschaltbar.
          - Linux: Menü bei Frame 512 statt 713, Demo identisch (Timer-Endwert 3603).
-         - Mac (2026-10-15): Launcher zeigt den Mod ohne Zutun an, die Wahl bleibt gespeichert. Warnscreen ca. 5 s.
+         - Mac (2026-10-15): Launcher zeigt den Mod ohne Zutun an, die Wahl bleibt gespeichert. Warnscreen ca. 5 s bei 4x, ca. 6 s bei 2x (ohne Mod ca. 7 s).
            10 min Spiel mit Weltwechsel, Memory Card und Smoke sauber, 0 FATAL.
          - Das Override ist eine Kopie des Framework-Manifests. Bei Framework-Updates abgleichen.
        - `psx.enhancement.fast-loading` (laut Manifest deprecated): spart nur Wall-Clock, keine Guest-Frames. Zusammen mit CD Speed skippt die XA-Musik.
        - CD Speed Instant: Start 8x langsamer, danach `DISPATCH FATAL: misaligned target 0x00810081`. Upstream führt divisor 4x/instant als „proven unsafe“ (`ENHANCEMENTS.md`, MMX6), deshalb nie verwenden.
-       - Offen vor einem Default: Ladezeiten bei Levelwechseln und ein längerer Spieltest mit 4x.
    - Muster für Mods und Patches: `hercules-recompiled/port/mods`, `port/patches`
 8. Repo-Pflege (Entscheidung des Nutzers):
    - ~~Branch `test/kuseg-boot-smoke` nach `main` mergen~~ (erledigt)
@@ -213,7 +214,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. A
   - ccache ist auf dem Mac aktiv, Folgebuilds dauern Sekunden.
   - Mods ohne Launcher reproduzierbar schalten: `<build>/mods/state.toml` (`[[package]] id`, `[[feature]] package_id/id/enabled`, Optionen unter `[feature.values]`). `--no-launcher` übernimmt die Datei.
   - Der Mac hat kein Sony-BIOS mehr und läuft nur mit OpenBIOS.
-- 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Memory Card unter Retail und OpenBIOS ok. Offen: Controller, Ending-FMV.
+- 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Memory Card unter Retail und OpenBIOS ok. Levelauswahl-Mod ok. Offen: Controller, Ending-FMV.
 - Gotchas:
   - Ein verwaister `CommandLineTools/usr/include/c++/v1` überdeckt die SDK-Header (`'string' file not found`).
   - `runtime.cmake` sucht `python` vor `python3`, deshalb `-DPSX_PYTHON=$(command -v python3.12)`.

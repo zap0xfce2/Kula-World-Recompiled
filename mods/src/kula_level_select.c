@@ -24,6 +24,7 @@ enum {
     VAR_LOAD_NEW_WORLD = 0x800a2eacu,
     VAR_SKIP_NEXT_LOAD = 0x800a2eb0u,
     VAR_GAME_MODE = 0x800a2e48u,
+    VAR_GAME_STATE = 0x800a2ec0u,
     VAR_FINAL_UNLOCKED = 0x800a2ed8u,
     VAR_CHEATED = 0x800a4e0cu,
     VAR_SINGLE_PLAYER_CURSOR = 0x800a4f20u + 3u * 4u,
@@ -141,6 +142,7 @@ static int on_highscore_ui(struct CPUState* cpu, uint32_t address) {
 }
 
 static void on_vblank(void) {
+    g_strict_armed = ls_keep_strict(g_strict_armed, (int)psx_mod_read_word(VAR_GAME_STATE));
     const int was_open = g_state.open;
     ls_on_vblank(&g_state);
     if (was_open && !g_state.open) psx_mod_counter_add("kula.level-select.closed_unseen", 1);

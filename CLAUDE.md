@@ -176,7 +176,8 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Kürzer wird der Screen nur durch schnelleres Laden. Mac-Messung der eingebauten Mods (OpenBIOS, Zeit bis Menü / Warnscreen):
        - Baseline: 12,1 s / ca. 7 s, Frame 775
        - `psx.enhancement.cd-speed` 4x: 8,2 s / ca. 5 s, Frame 576, Musik und Memcard sauber.
-         - **4x hängt aber einen Weltwechsel, der nicht bei Level 1 startet** (Levelauswahl, Load Game an Speicherpunkten): Der Level wird nie initialisiert, Bild schwarz, Timer steht. 1x und 2x laden korrekt (W3/L3, W3/L5, W9/L12). Default deshalb **2x**.
+         - **4x hängt aber einen Weltwechsel, der nicht bei Level 1 startet** (gemessen mit der Levelauswahl): Der Level wird nie initialisiert, Bild schwarz, Timer steht. Load Game an Speicherpunkten ist vermutlich auch betroffen, aber nicht geprüft. 1x und 2x laden korrekt (W3/L3, W3/L5, W9/L12). Default deshalb **2x**.
+         - Offen: Ursache (CD-Timing in der Runtime?) nicht gefunden. 2x ist ein Workaround, kein Beweis. Kandidat für ein Upstream-Issue mit Repro über `tools/check_level_select.py`.
          - Per Override in `mods/preloaded/packages/psx.enhancement.cd-speed/1.0.0/manifest.toml` standardmäßig an (`default_enabled = true`, Multiplikator 2), im Launcher abschaltbar.
          - Linux: Menü bei Frame 512 statt 713, Demo identisch (Timer-Endwert 3603).
          - Mac (2026-10-15): Launcher zeigt den Mod ohne Zutun an, die Wahl bleibt gespeichert. Warnscreen ca. 5 s.

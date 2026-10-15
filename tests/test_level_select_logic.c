@@ -110,6 +110,10 @@ static void test_vblank_keeps_submenu_over_short_gap(void) {
     assert(s.open);
 }
 
+/* A cheated game quit without game over must not taint a later Load Game. */
+static void test_strict_cleared_in_main_menu(void) { assert(!ls_keep_strict(1, 0)); }
+static void test_strict_kept_during_play(void) { assert(ls_keep_strict(1, 1)); }
+
 int main(void) {
     test_reset_starts_at_world1_level1();
     test_down_wraps_after_level();
@@ -131,6 +135,8 @@ int main(void) {
     test_strict_ignores_score_table_view();
     test_vblank_closes_abandoned_submenu();
     test_vblank_keeps_submenu_over_short_gap();
+    test_strict_cleared_in_main_menu();
+    test_strict_kept_during_play();
     puts("level_select_logic: all tests passed");
     return 0;
 }

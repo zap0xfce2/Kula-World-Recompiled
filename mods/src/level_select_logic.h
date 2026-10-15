@@ -29,3 +29,4 @@ int ls_is_cheated_start(const LsState* s);
 int ls_skip_reload(const LsState* s, int loaded_world);
 int ls_strict_applies(int strict_armed, int game_mode, int highscore_arg);
 void ls_on_vblank(LsState* s);
+int ls_keep_strict(int strict_armed, int game_state);

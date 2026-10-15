@@ -50,3 +50,7 @@ int ls_strict_applies(int strict_armed, int game_mode, int highscore_arg) {
 void ls_on_vblank(LsState* s) {
     if (++s->missed_vblanks >= LS_MAX_MISSED_VBLANKS) s->open = 0;
 }
+
+/* gameState 0 is the main menu: any game after it is a new one (Load Game,
+ * Final, arcade), so a cheated start must not carry over. */
+int ls_keep_strict(int strict_armed, int game_state) { return strict_armed && game_state != 0; }

@@ -98,3 +98,21 @@ starvation_dump.jsonl
 
 # Local AI assistant state (Serena), not project content
 /.serena/
+
+# Extracted disc assets (Kula World formats, XA/MDEC) outside /analysis/
+*.PAK
+*.pak
+*.TGI
+*.GGI
+*.SFX
+*.TIM
+*.XA
+*.STR
+*.EXE
+*.exe
+
+# Secrets
+.env
+.env.*
+*.pem
+*.key

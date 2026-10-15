@@ -64,7 +64,8 @@ gte_game_mode = true
 
 [widescreen.cull]
 # Screen-X reject branches (beq after the compare against screenOffsetX),
-# found by tools/find_ws_cull_sites.py. Not taken while widened.
+# found by tools/find_ws_cull_sites.py. Not taken while widened. The loads of
+# screenOffsetX return 320 + margin, so the keep chains accept the right band.
 branch_keep_sites = [
     # DrawLensFlares
     "0x00015DDC", "0x0001614C",
@@ -82,4 +83,24 @@ branch_keep_sites = [
     "0x00057220", "0x00057260", "0x00057298",
     # RenderLevelGeometryQuads
     "0x00057688",
+]
+clip_edge_x_load_sites = [
+    # ProcessAndRenderParticles
+    "0x000133E4",
+    # DrawLensFlares
+    "0x00015DCC", "0x0001613C",
+    # SubdivideLevelGeometryPolys
+    "0x000506A4",
+    # DrawLasers
+    "0x0005265C",
+    # RenderDispList
+    "0x00053E60",
+    # RenderBonusBackgroundPart1
+    "0x00055B64",
+    # RenderNonSpecialBackground
+    "0x0005651C",
+    # RenderStarfield
+    "0x00057090",
+    # RenderLevelGeometryQuads
+    "0x000574CC",
 ]

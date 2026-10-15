@@ -30,7 +30,8 @@ NO_SEED: frozenset[int] = frozenset()
 CULL_FUNCTIONS: tuple[tuple[str, int, int, frozenset[int]], ...] = (
     ("ProcessAndRenderParticles", 0x00012918, 0x000139C8, NO_SEED),
     ("DrawLensFlares", 0x00015B54, 0x000164DC, NO_SEED),
-    # SubdivideLevelGeometryPolys loads the bound into a3 and branches here.
+    # Loads the bound into a3 and branches to DoSubdivide, which compares against it.
+    ("SubdivideLevelGeometryPolys", 0x0005054C, 0x00050790, NO_SEED),
     ("DoSubdivide", 0x00050790, 0x00051964, frozenset({REG_A3})),
     ("DrawLasers", 0x00052504, 0x00052AB8, NO_SEED),
     ("RenderDispList", 0x00053DF8, 0x00055A0C, NO_SEED),
@@ -49,10 +50,12 @@ OPS_WRITING_RT = frozenset(range(0x08, 0x10)) | frozenset(range(0x20, 0x27))
 
 @dataclass(frozen=True)
 class SiteScan:
-    reject: list[int] = field(default_factory=list)  # beq at,zero after an x compare
-    keep: list[int] = field(
-        default_factory=list
-    )  # bne at,zero: cannot be kept by address
+    # beq at,zero after an x compare
+    reject: list[int] = field(default_factory=list)
+    # bne at,zero: cannot be kept by address
+    keep: list[int] = field(default_factory=list)
+    # lw of screenOffsetX: widening the loaded bound covers the keep chains too
+    loads: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -85,7 +88,9 @@ def _destination(op: int, rt: int, rd: int, fn: int) -> int | None:
     return rt if op in OPS_WRITING_RT else None
 
 
-def _track_bound(regs: _Regs, op: int, rs: int, rt: int, imm: int) -> bool:
+def _track_bound(
+    regs: _Regs, op: int, rs: int, rt: int, imm: int, pc: int, loads: list[int]
+) -> bool:
     """Follow lui/addiu/lw towards screenOffsetX; True when the word was consumed."""
     if op == OP_LUI and imm == SCREEN_OFFSET_X_HI:
         regs.forget(rt)
@@ -101,6 +106,7 @@ def _track_bound(regs: _Regs, op: int, rs: int, rt: int, imm: int) -> bool:
     if op == OP_LW and loads_bound:
         regs.forget(rt)
         regs.bound.add(rt)
+        loads.append(pc)
         return True
     return False
 
@@ -124,7 +130,7 @@ def find_reject_branches(
     for index, word in enumerate(words):
         pc = base + index * 4
         op, rs, rt, rd, imm, fn = _fields(word)
-        if _track_bound(regs, op, rs, rt, imm) or _branch_after_compare(
+        if _track_bound(regs, op, rs, rt, imm, pc, scan.loads) or _branch_after_compare(
             regs, op, rs, rt, pc, scan
         ):
             continue
@@ -149,19 +155,25 @@ def scan_exe(exe: bytes) -> dict[str, SiteScan]:
     return result
 
 
+def _print_site_list(key: str, sites_by_function: dict[str, list[int]]) -> None:
+    print(f"{key} = [")
+    for name, sites in sites_by_function.items():
+        if sites:
+            print(
+                f"    # {name}\n    " + ", ".join(f'"0x{pc:08X}"' for pc in sites) + ","
+            )
+    print("]")
+
+
 def main() -> int:
     if len(sys.argv) != 2:
         print(__doc__, file=sys.stderr)
         return 2
     scans = scan_exe(Path(sys.argv[1]).read_bytes())
-    print("branch_keep_sites = [")
+    _print_site_list("branch_keep_sites", {n: s.reject for n, s in scans.items()})
+    _print_site_list("clip_edge_x_load_sites", {n: s.loads for n, s in scans.items()})
     for name, scan in scans.items():
-        if scan.reject:
-            sites = ", ".join(f'"0x{pc:08X}"' for pc in scan.reject)
-            print(f"    # {name}\n    {sites},")
-    print("]")
-    for name, scan in scans.items():
-        if not scan.reject:
+        if not scan.reject and not scan.loads:
             note = (
                 f"only keep-branches ({len(scan.keep)})"
                 if scan.keep

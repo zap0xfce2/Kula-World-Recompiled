@@ -61,7 +61,7 @@ class FindRejectBranchesTest(unittest.TestCase):
             sltu(AT, V0, V1),
             beq(AT, ZERO, 8),
         ]
-        self.assertEqual(find_reject_branches(words, BASE), SiteScan([], []))
+        self.assertEqual(find_reject_branches(words, BASE), SiteScan([], [], []))
 
     def test_overwritten_bound_is_forgotten(self) -> None:
         words = BOUND_DIRECT + [addiu(A0, ZERO, 5), sltu(AT, V0, A0), beq(AT, ZERO, 8)]
@@ -70,6 +70,10 @@ class FindRejectBranchesTest(unittest.TestCase):
     def test_branch_far_from_compare_is_ignored(self) -> None:
         words = BOUND_DIRECT + [sltu(AT, V0, A0), NOP, NOP, NOP, beq(AT, ZERO, 8)]
         self.assertEqual(find_reject_branches(words, BASE).reject, [])
+
+    def test_bound_load_is_recorded_as_load_site(self) -> None:
+        words = BOUND_VIA_POINTER + [sltu(AT, V0, A0), beq(AT, ZERO, 8)]
+        self.assertEqual(find_reject_branches(words, BASE).loads, [BASE + 8])
 
     def test_seeded_bound_register_is_recognised(self) -> None:
         words = [sltu(AT, V0, A0), beq(AT, ZERO, 8), NOP]

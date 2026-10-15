@@ -28,7 +28,7 @@ No ready-made Kula widescreen patch exists (DuckStation database, cheat lists an
   - **Foreign-coloured sky shards** (desert orange inside a blue sky) appear at the edge. Cause unknown, probably the same culling.
   - **HUD** stays in the 4:3 centre and looks lost at wide aspects.
 - `gpu_state.ws.configured/active` read 0 in every scene, while `game_mode` is 1 and `present_native_43` is 0. To be clarified before the real mod (possibly fields of the older projection path).
-- Open: launcher toggle, 4:3 screens (warning screen, memory card, FMV), fps.
+- 2D screens (warning screen, memory card) show 4:3 with side bars: ok. Open: FMV, launcher toggle, fps.
 
 Consequences for the design:
 - The culling fix must cover all users listed below, not only the sky.

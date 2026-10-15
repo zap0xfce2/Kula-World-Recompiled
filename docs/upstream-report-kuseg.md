@@ -13,9 +13,11 @@ Closes the "KUSEG titles" item in `docs/SEGMENT_AWARE_CODE.md` §7 for Kula Worl
 - `dispatch_stats`: 2,043,749 static hits, 0 misses, 0 segment misses.
 - Not covered yet: interactive play, ending FMV, memory card, XA.
 
-## 2. Portability findings on Alpine/musl (x86_64)
+## 2. Portability findings (Alpine/musl x86_64, macOS arm64)
 
 1. `runtime/src/psx_fiber.c`: musl has no `getcontext`/`makecontext`/`swapcontext`. Linking `libucontext` works; CMake could detect musl and link it.
 2. `runtime/src/beetle_debug_server.c:1761`: `u_short` is undeclared on musl (`netinet/in.h` does not pull `sys/types.h`). `uint16_t` would be portable.
 3. `psxrecomp_cli.py generate` downloads the glibc `cmake-clang-v1` pack on musl, which cannot run there, writes PATH hooks into `~/.zshrc` and `~/.profile`, and keeps probing `~/.local/share/retcomm` even with `--no-toolchain-download`. A libc check before the download would avoid it.
 4. `generate --bios` writes `generated/SCPH1001_*.c` but no `SCPH1001.emitter.sha`, so the next configure reports the BIOS as STALE. Running `tools/regen_bios.sh --config bios/SCPH1001.toml` writes the stamp.
+5. `runtime/runtime.cmake:2443`: `find_program(PSX_PYTHON NAMES python python3)` picks a Python 2 `python` first (seen on macOS with a python.org 2.7 in `PATH`); `embed_spirv.py` then fails with `SyntaxError: Non-ASCII character`. Ordering `python3 python` fixes it.
+6. `tools/regen_bios.sh` only probes `recompiler/{build-t2,build,cmake-build*}`, but `tools/ci/build_emitters.sh` writes to `../build-recompiler` in a game repo, so a fresh checkout needs `PSXRECOMP_BIOS_BUILD=../build-recompiler`.

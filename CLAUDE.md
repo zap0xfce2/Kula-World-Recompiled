@@ -140,7 +140,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 4. ~~KUSEG-Smoke-Test: Boot → Titel → Level, A/B gegen psx-beetle~~ (erledigt)
    - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt (`analysis/play-native2/`).
 5. Offene Punkte aus dem Smoke-Test:
-   - Ergebnis upstream melden: Entwurf in `docs/upstream-report-kuseg.md` (KUSEG + 4 musl/CLI-Befunde), Posten braucht Freigabe des Nutzers.
+   - Ergebnis upstream melden: Entwurf in `docs/upstream-report-kuseg.md` (KUSEG + 6 Portabilitäts-Befunde für musl und macOS), Posten braucht Freigabe des Nutzers.
    - Ending-FMV (`XA/FINAL.STR`), Memory Card und XA-Musik testen. Headless gibt es kein Audiogerät, also mit echtem Display/Audio oder per Debug-Server-State prüfen.
    - Performance auf echter GPU messen. Unter Xvfb/llvmpipe läuft das Spiel nur mit ca. 35 bis 44 statt 50 fps.
    - `vsyncCounter` (`0x800A2F64`) ist auf beiden Backends immer 0. Klären, ob die Adresse aus dem Decomp für PAL stimmt.
@@ -159,7 +159,13 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 9. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher bei dezgeg Lizenz und PC-Port-Pläne erfragen.
 
 ## macOS
-Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Noch nicht auf echter Hardware verifiziert. Das Repo kommt als `git bundle` auf den Mac, weil es noch kein Remote gibt.
+Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Das Repo kommt als `git bundle` auf den Mac, weil es noch kein Remote gibt.
+- 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Offen: Controller, Memory Card, Ending-FMV.
+- Gotchas:
+  - Ein verwaister `CommandLineTools/usr/include/c++/v1` überdeckt die SDK-Header (`'string' file not found`).
+  - `runtime.cmake` sucht `python` vor `python3`, deshalb `-DPSX_PYTHON=$(command -v python3.12)`.
+  - Das Default-`python3` ist 3.9, also überall `python3.12`.
+- Der Launcher schaltet BIOS-Call-HLE ein (`bios_backend=HLE`). Mit `--no-launcher` gilt der Default LLE. Für A/B gegen Beetle `PSX_BIOS_HLE=0` setzen.
 
 ## Build-Gotchas (Alpine/musl)
 Kompletter Ablauf (Begründung der Flags unten):
@@ -167,7 +173,7 @@ Kompletter Ablauf (Begründung der Flags unten):
 ./psxrecomp/tools/ci/build_emitters.sh
 python3 psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root . \
     --disc disc/SCES01000.CUE --bios bios/SCPH1001.BIN --no-toolchain-download
-(cd psxrecomp && bash tools/regen_bios.sh --config bios/SCPH1001.toml)
+(cd psxrecomp && PSXRECOMP_BIOS_BUILD=../build-recompiler bash tools/regen_bios.sh --config bios/SCPH1001.toml)
 cmake -S . -B build-dev -G Ninja -DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON \
     -DCMAKE_C_STANDARD_LIBRARIES=-lucontext -DCMAKE_CXX_STANDARD_LIBRARIES=-lucontext
 cmake --build build-dev
@@ -178,7 +184,7 @@ cmake --build build-dev
   - Es trägt PATH-Hooks in `~/.zshrc` und `~/.profile` ein.
   - Es schreibt `toolchain/.psxrecomp-bin`.
   - Das CLI durchsucht `~/.local/share/retcomm` immer. Der Ordner darf also nicht existieren (glibc-Reste wurden am 2026-10-15 gelöscht).
-- Nach `generate --bios` fehlt `psxrecomp/generated/SCPH1001.emitter.sha` (CLI-Lücke), dann meldet CMake „BIOS … STALE“. Abhilfe: `cd psxrecomp && bash tools/regen_bios.sh --config bios/SCPH1001.toml`.
+- Nach `generate --bios` fehlt `psxrecomp/generated/SCPH1001.emitter.sha` (CLI-Lücke), dann meldet CMake „BIOS … STALE“. Abhilfe: `regen_bios.sh` wie oben. Das Skript sucht nur `psxrecomp/recompiler/build*`. Die Ausgabe von `build_emitters.sh` liegt aber in `build-recompiler/`, deshalb `PSXRECOMP_BIOS_BUILD=../build-recompiler` setzen (relativ zu `psxrecomp/`). Hier lief es bisher nur wegen eines alten `recompiler/build`.
 - musl hat keine `getcontext`/`makecontext`/`swapcontext`, die `psx_fiber.c` braucht. Abhilfe: `sudo apk add libucontext-dev` und bei jedem CMake-Configure `-DCMAKE_C_STANDARD_LIBRARIES=-lucontext -DCMAKE_CXX_STANDARD_LIBRARIES=-lucontext`.
 - Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --bios bios/SCPH1001.BIN --disc disc/SCES01000.CUE --debug-port 4370`.
 - Generate dauert ca. 2 min (569 Shards, 31 Mio. Zeilen C, ~950 MB). Der Runtime-Build dauert auf 8 Kernen ca. 23 min.

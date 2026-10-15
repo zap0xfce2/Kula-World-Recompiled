@@ -81,9 +81,12 @@ tasks:
       - '{{.PYTHON}} tools/smoke_boot.py --port {{.PORT | default .DEBUG_PORT}} {{.CLI_ARGS}}'
 
   test:
-    desc: Unit tests
+    desc: Unit tests (Python and C)
     cmds:
       - '{{.PYTHON}} -m unittest discover -s tests'
+      - mkdir -p build-tests
+      - cc -std=c99 -Wall -Wextra -Werror -Imods/src -o build-tests/test_level_select_logic tests/test_level_select_logic.c mods/src/level_select_logic.c
+      - ./build-tests/test_level_select_logic
 
   lint:
     desc: ruff and black on project Python

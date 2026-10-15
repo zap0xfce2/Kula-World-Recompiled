@@ -116,3 +116,6 @@ starvation_dump.jsonl
 .env.*
 *.pem
 *.key
+
+# Plan execution scratch (superpowers ledger)
+/.superpowers/

@@ -179,6 +179,10 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Smoke und Levelauswahl laufen mit eingeschalteter Generierung sauber.
        - Im Launcher fehlen die Zeilen Render-Thread/Smooth motion, obwohl `renderer = "opengl"` (`launcher_model.c:1947`, Ursache offen).
        - Kandidat für ein Upstream-Issue (Flip-Erkennung). Kein Default.
+     - **Entscheidung (2026-10-15): ruht, bis sich upstream bei der Frame-Generierung etwas tut.** Untersucht und verworfen bzw. zurückgestellt:
+       - Upstream-Issue zur Flip-Erkennung: erst Ursache eingrenzen, braucht Freigabe des Nutzers.
+       - NTSC-Weg mit den rund 130 angepassten Werten: großer Aufwand, eigenes Brainstorming.
+       - Vor einem neuen Anlauf `frame_gen` auf aktuellem Framework erneut auf dem Mac messen (Demo, Rollen, Springen, Kanten-Kippen).
    - Wobble-Fix
    - HD-Texturen aus TGI/GGI
    - Eigener Ladebildschirm statt Piraterie-Hinweis (`HIRO\WARNING.TIM`, Idee 2026-10-15):

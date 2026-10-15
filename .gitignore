@@ -45,7 +45,6 @@ SCPH*.BIN
 *.CUE
 SCES_*
 probe.json
-/kula-recomp-starter.tar.gz
 
 # Local path/config stubs
 bios.cfg

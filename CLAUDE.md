@@ -136,33 +136,45 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 ## Nächste Schritte
 1. ~~Repo nach New Project Layout aufsetzen~~ (erledigt)
 2. ~~`bios/SCPH1001.BIN` einbinden~~ (erledigt)
-3. `cmake`/`ninja` installieren (`apk add`), Recompiler bauen, BIOS und Spiel generieren, Runtime bauen:
-   ```sh
-   ./psxrecomp/tools/ci/build_emitters.sh
-   python3 psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root . \
-       --disc disc/SCES01000.CUE
-   cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release
-   cmake --build build-release --target psx-runtime
-   ```
-4. ~~KUSEG-Smoke-Test: Boot → Titel → Level, A/B gegen psx-beetle~~ (erledigt). Ergebnis upstream melden (Entwurf liegt bereit, Freigabe durch den Nutzer nötig).
-   - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt (`analysis/play-native2/`). Noch offen: Ending-FMV, Memory Card, XA-Musik (headless ohne Audiogerät).
-5. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
-6. Ziele nach Lauffähigkeit:
-   - Widescreen (GTE-Squash + `[widescreen]`). Kamera und Projektion stehen in rocco `SPEC.md`, Cull-Stellen im Decomp-C.
-   - Wobble-Fix
-   - 60 FPS: Timer läuft framebasiert mit 50 Hz, die Logik muss entkoppelt werden. Checkliste der Werte pro Frame: rocco `SPEC.md`.
+3. ~~Recompiler bauen, BIOS und Spiel generieren, Runtime bauen~~ (erledigt, Befehle und Fallstricke unter Build-Gotchas)
+4. ~~KUSEG-Smoke-Test: Boot → Titel → Level, A/B gegen psx-beetle~~ (erledigt)
+   - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt (`analysis/play-native2/`).
+5. Offene Punkte aus dem Smoke-Test:
+   - Ergebnis upstream melden: Entwurf in `docs/upstream-report-kuseg.md` (KUSEG + 4 musl/CLI-Befunde), Posten braucht Freigabe des Nutzers.
+   - Ending-FMV (`XA/FINAL.STR`), Memory Card und XA-Musik testen. Headless gibt es kein Audiogerät, also mit echtem Display/Audio oder per Debug-Server-State prüfen.
+   - Performance auf echter GPU messen. Unter Xvfb/llvmpipe läuft das Spiel nur mit ca. 35 bis 44 statt 50 fps.
+   - `vsyncCounter` (`0x800A2F64`) ist auf beiden Backends immer 0. Klären, ob die Adresse aus dem Decomp für PAL stimmt.
+6. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
+7. Mods (vor jedem Mod Brainstorming mit dem Nutzer, Vorschlag: mit der Levelauswahl anfangen):
    - Levelauswahl-Mod (Cheat aus KulaWorldMap `docs/level-format.md`, `cheats.c` im Decomp)
+   - Widescreen (GTE-Squash + `[widescreen]`). Kamera und Projektion stehen in rocco `SPEC.md`, Cull-Stellen im Decomp-C.
+   - 60 FPS: Timer läuft framebasiert mit 50 Hz, die Logik muss entkoppelt werden. Checkliste der Werte pro Frame: rocco `SPEC.md`.
+   - Wobble-Fix
    - HD-Texturen aus TGI/GGI
    - Muster für Mods und Patches: `hercules-recompiled/port/mods`, `port/patches`
-7. Roadmap: nativer Port über das Decomp (siehe Strategie)
+8. Repo-Pflege (Entscheidung des Nutzers):
+   - Branch `test/kuseg-boot-smoke` nach `main` mergen
+   - `.serena/` committen oder ignorieren
+   - `Taskfile.yaml` (go-task, `silent: true`) für Generate, Build, Smoke und A/B anlegen
+9. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher bei dezgeg Lizenz und PC-Port-Pläne erfragen.
 
 ## Build-Gotchas (Alpine/musl)
+Kompletter Ablauf (Begründung der Flags unten):
+```sh
+./psxrecomp/tools/ci/build_emitters.sh
+python3 psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root . \
+    --disc disc/SCES01000.CUE --bios bios/SCPH1001.BIN --no-toolchain-download
+(cd psxrecomp && bash tools/regen_bios.sh --config bios/SCPH1001.toml)
+cmake -S . -B build-dev -G Ninja -DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON \
+    -DCMAKE_C_STANDARD_LIBRARIES=-lucontext -DCMAKE_CXX_STANDARD_LIBRARIES=-lucontext
+cmake --build build-dev
+```
 - Systempakete: `sudo apk add cmake samurai pkgconf sdl3-dev mesa-dev linux-headers` (samurai liefert `ninja`). Zum Headless-Testen: `xvfb xvfb-run mesa-dri-gallium`.
 - `psxrecomp_cli.py generate` **immer mit `--no-toolchain-download`**. Ohne das Flag passiert Folgendes:
   - Es lädt die glibc-Toolchain `cmake-clang-v1` nach `~/.local/share/retcomm`, die unter musl nicht läuft.
   - Es trägt PATH-Hooks in `~/.zshrc` und `~/.profile` ein.
   - Es schreibt `toolchain/.psxrecomp-bin`.
-  - Das CLI durchsucht `~/.local/share/retcomm` immer. Der Ordner darf also nicht existieren (aktuell umbenannt zu `retcomm.broken-glibc`).
+  - Das CLI durchsucht `~/.local/share/retcomm` immer. Der Ordner darf also nicht existieren (glibc-Reste wurden am 2026-10-15 gelöscht).
 - Nach `generate --bios` fehlt `psxrecomp/generated/SCPH1001.emitter.sha` (CLI-Lücke), dann meldet CMake „BIOS … STALE“. Abhilfe: `cd psxrecomp && bash tools/regen_bios.sh --config bios/SCPH1001.toml`.
 - musl hat keine `getcontext`/`makecontext`/`swapcontext`, die `psx_fiber.c` braucht. Abhilfe: `sudo apk add libucontext-dev` und bei jedem CMake-Configure `-DCMAKE_C_STANDARD_LIBRARIES=-lucontext -DCMAKE_CXX_STANDARD_LIBRARIES=-lucontext`.
 - Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --bios bios/SCPH1001.BIN --disc disc/SCES01000.CUE --debug-port 4370`.

@@ -49,7 +49,8 @@ enum { LS_PAD_U = 0x0010, LS_PAD_R = 0x0020, LS_PAD_D = 0x0040, LS_PAD_L = 0x008
        LS_PAD_TRIANGLE = 0x1000, LS_PAD_CROSS = 0x4000 };
 typedef enum { LS_ITEM_START, LS_ITEM_WORLD, LS_ITEM_LEVEL, LS_ITEM_COUNT } LsItem;
 typedef enum { LS_ACT_NONE, LS_ACT_MOVE, LS_ACT_BACK, LS_ACT_CONFIRM } LsAction;
-typedef struct { int open; int cursor; int world; int level; int seen_this_frame; } LsState;
+enum { LS_MAX_MISSED_VBLANKS = 8 };
+typedef struct { int open; int cursor; int world; int level; int missed_vblanks; } LsState;
 void ls_reset(LsState* s);
 int ls_arcade_index(int final_unlocked);
 LsAction ls_menu_input(LsState* s, uint32_t pressed);
@@ -161,15 +162,15 @@ static void test_strict_applies_only_in_arcade(void) { assert(!ls_strict_applies
 static void test_strict_applies_to_gameover_entry(void) { assert(ls_strict_applies(1, 0, 1)); }
 static void test_strict_ignores_score_table_view(void) { assert(!ls_strict_applies(1, 0, 0)); }
 
-static void test_vblank_closes_unseen_submenu(void) {
+static void test_vblank_closes_abandoned_submenu(void) {
     LsState s = opened();
-    ls_on_vblank(&s); /* frame where the menu filter did not run */
+    for (int i = 0; i < LS_MAX_MISSED_VBLANKS; ++i) ls_on_vblank(&s);
     assert(!s.open);
 }
 
-static void test_vblank_keeps_seen_submenu(void) {
+/* The game may run its menu at half the VBlank rate; one gap is normal. */
+static void test_vblank_keeps_submenu_over_short_gap(void) {
     LsState s = opened();
-    s.seen_this_frame = 1;
     ls_on_vblank(&s);
     assert(s.open);
 }
@@ -193,8 +194,8 @@ int main(void) {
     test_strict_applies_only_in_arcade();
     test_strict_applies_to_gameover_entry();
     test_strict_ignores_score_table_view();
-    test_vblank_closes_unseen_submenu();
-    test_vblank_keeps_seen_submenu();
+    test_vblank_closes_abandoned_submenu();
+    test_vblank_keeps_submenu_over_short_gap();
     puts("level_select_logic: all tests passed");
     return 0;
 }
@@ -231,12 +232,15 @@ enum { LS_PAD_U = 0x0010, LS_PAD_R = 0x0020, LS_PAD_D = 0x0040, LS_PAD_L = 0x008
 typedef enum { LS_ITEM_START, LS_ITEM_WORLD, LS_ITEM_LEVEL, LS_ITEM_COUNT } LsItem;
 typedef enum { LS_ACT_NONE, LS_ACT_MOVE, LS_ACT_BACK, LS_ACT_CONFIRM } LsAction;
 
+/* VBlanks without a menu-filter call after which the submenu counts as left. */
+enum { LS_MAX_MISSED_VBLANKS = 8 };
+
 typedef struct {
-    int open;            /* submenu replaces the one-player menu */
-    int cursor;          /* LsItem */
-    int world;           /* 0-based */
-    int level;           /* 0-based */
-    int seen_this_frame; /* menu filter ran since the last VBlank */
+    int open;           /* submenu replaces the one-player menu */
+    int cursor;         /* LsItem */
+    int world;          /* 0-based */
+    int level;          /* 0-based */
+    int missed_vblanks; /* VBlanks since the menu filter last ran */
 } LsState;
 
 void ls_reset(LsState* s);
@@ -265,7 +269,7 @@ void ls_reset(LsState* s) {
     s->cursor = LS_ITEM_START;
     s->world = 0;
     s->level = 0;
-    s->seen_this_frame = 0;
+    s->missed_vblanks = 0;
 }
 
 /* With the Final world unlocked the menu gains "Final" as entry 0. */
@@ -298,11 +302,10 @@ int ls_strict_applies(int strict_armed, int game_mode, int highscore_arg) {
     return strict_armed && game_mode == GAME_MODE_ARCADE && highscore_arg == HIGHSCORE_ENTRY;
 }
 
-/* The menu filter runs every menu frame; a frame without it means the menu
- * was left (attract demo, quit), so the submenu must not reappear later. */
+/* The menu filter runs every menu frame; a longer gap means the menu was left
+ * (attract demo, quit), so the submenu must not reappear later. */
 void ls_on_vblank(LsState* s) {
-    if (!s->seen_this_frame) s->open = 0;
-    s->seen_this_frame = 0;
+    if (++s->missed_vblanks >= LS_MAX_MISSED_VBLANKS) s->open = 0;
 }
 ```
 
@@ -422,7 +425,6 @@ enum {
     VAR_CUR_WORLD2 = 0x800a2ea8u,
     VAR_LOAD_NEW_WORLD = 0x800a2eacu,
     VAR_SKIP_NEXT_LOAD = 0x800a2eb0u,
-    VAR_GAME_STATE = 0x800a2ec0u,
     VAR_GAME_MODE = 0x800a2e48u,
     VAR_FINAL_UNLOCKED = 0x800a2ed8u,
     VAR_CHEATED = 0x800a4e0cu,
@@ -507,7 +509,6 @@ static int open_submenu_if_arcade_chosen(struct CPUState* cpu, uint32_t pressed)
     if (!(pressed & LS_PAD_CROSS) || (int)psx_mod_read_word(VAR_SINGLE_PLAYER_CURSOR) != arcade) return 0;
     ls_reset(&g_state);
     g_state.open = 1;
-    g_state.seen_this_frame = 1;
     play_menu_sfx(cpu);
     psx_mod_counter_add("kula.level-select.opened", 1);
     return 1;
@@ -516,8 +517,8 @@ static int open_submenu_if_arcade_chosen(struct CPUState* cpu, uint32_t pressed)
 static int on_single_player_menu(struct CPUState* cpu, uint32_t address) {
     if (g_calling_original) return 0;
     const uint32_t pressed = newly_pressed();
+    g_state.missed_vblanks = 0;
     if (!g_state.open) return open_submenu_if_arcade_chosen(cpu, pressed);
-    g_state.seen_this_frame = 1;
     const LsAction action = ls_menu_input(&g_state, pressed);
     if (action == LS_ACT_CONFIRM) {
         start_arcade(cpu, address);
@@ -539,10 +540,7 @@ static int on_highscore_ui(struct CPUState* cpu, uint32_t address) {
     return 0;
 }
 
-static void on_vblank(void) {
-    if (psx_mod_read_word(VAR_GAME_STATE) != 0) g_state.seen_this_frame = 0;
-    ls_on_vblank(&g_state);
-}
+static void on_vblank(void) { ls_on_vblank(&g_state); }
 
 static void on_activate(void) {
     ls_reset(&g_state);

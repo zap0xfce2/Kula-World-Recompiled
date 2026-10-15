@@ -195,6 +195,12 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - ~~Branch `test/kuseg-boot-smoke` nach `main` mergen~~ (erledigt)
    - ~~`.serena/` committen oder ignorieren~~ (erledigt, gitignored)
    - ~~`Taskfile.yaml` anlegen~~ (erledigt, siehe Build-Gotchas)
+   - Offen: `task generate` scheitert ohne `bios/SCPH1001.BIN` (Mac hat nur OpenBIOS). Das Sony-BIOS nur nutzen, wenn die Datei existiert, sonst nur OpenBIOS generieren. Branch-Vorschlag `fix/taskfile-openbios-generate`.
+   - Offen, Kleinkram aus dem Review des Levelauswahl-Mods:
+     - `g_calling_original` bleibt nach einem Watchdog-longjmp auf 1.
+     - `tools/check_level_select.py`: doppelte Reads in den Fehlermeldungen, Docstrings fehlen.
+     - C-Tests: zwei prüfen kombinierte Bedingungen, ein Test für `LS_ACT_MOVE` fehlt.
+     - Kommentar zur Annahme hinter `LS_MAX_MISSED_VBLANKS` fehlt.
 9. Veröffentlichung (Repo auf public stellen). Vorher:
    - mit dezgeg klären, ob Symbolnamen und Variablenadressen aus dem Decomp (z. B. in `tools/smoke_boot.py`) öffentlich stehen dürfen
    - Entscheidung zu `generated/` (aktuell gitignored)

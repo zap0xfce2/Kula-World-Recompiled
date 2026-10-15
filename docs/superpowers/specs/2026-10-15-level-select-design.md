@@ -1,13 +1,13 @@
 # Level select mod – design
 
-Status: approved in brainstorming on 2026-10-15, spec awaiting review.
+Status: approved by the user on 2026-10-15.
 
 ## Goal
 Let a single player start the arcade game at any world and level. The original always starts arcade at world 1, level 1. Its only selector is in two-player mode, which picks a world, not a level, and only up to `highestLevelReached`.
 Side benefit: late levels and the ending FMV become testable.
 
 ## User-facing behaviour
-- New launcher mod "Level Select" (`kula.level-select`), group "Quality of Life", off by default. While off, the game is unchanged.
+- New launcher mod "Level Select" (`kula.level-select`), group "Quality of Life", on by default (needed for our own late-level and FMV tests). While off, the game is unchanged.
 - While on, choosing "Arcade" in the one-player menu opens a submenu instead of starting right away. It works the same way as the time-trial difficulty menu:
   ```
   ARCADE

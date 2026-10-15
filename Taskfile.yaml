@@ -1,0 +1,92 @@
+version: "3"
+
+silent: true
+
+vars:
+  PYTHON: '{{.PYTHON | default "python3"}}'
+  DISC: disc/SCES01000.CUE
+  BIOS: bios/SCPH1001.BIN
+  DEBUG_PORT: 4370
+  BEETLE_PORT: 4380
+  # Prefix for headless runs, e.g. RUNNER="xvfb-run -a"
+  RUNNER: '{{.RUNNER | default ""}}'
+  # musl lacks getcontext/makecontext/swapcontext (psx_fiber.c), see CLAUDE.md
+  LIBC_FLAGS:
+    sh: |
+      if ldd --version 2>&1 | grep -qi musl; then
+        echo "-DCMAKE_C_STANDARD_LIBRARIES=-lucontext -DCMAKE_CXX_STANDARD_LIBRARIES=-lucontext"
+      fi
+  CMAKE_FLAGS: >-
+    -G Ninja -DCMAKE_BUILD_TYPE=Release {{.LIBC_FLAGS}}
+    -DPSX_PYTHON="$(command -v {{.PYTHON}})"
+
+tasks:
+  emitters:
+    desc: Build the recompiler emitters into build-recompiler/
+    cmds:
+      - ./psxrecomp/tools/ci/build_emitters.sh
+
+  generate:
+    desc: Recompile BIOS and game into generated/ and write the BIOS stamp
+    cmds:
+      # Without --no-toolchain-download the CLI fetches a glibc toolchain and edits shell rc files
+      - >-
+        {{.PYTHON}} psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root .
+        --disc {{.DISC}} --bios {{.BIOS}} --no-toolchain-download
+      # generate --bios leaves out the emitter stamp, CMake would report the BIOS as STALE
+      - cd psxrecomp && PSXRECOMP_BIOS_BUILD=../build-recompiler bash tools/regen_bios.sh --config bios/SCPH1001.toml
+
+  build:
+    desc: Release build without debug server (build-release/)
+    cmds:
+      - cmake -S . -B build-release {{.CMAKE_FLAGS}}
+      - cmake --build build-release
+
+  build:dev:
+    desc: Release build with debug server for tests (build-dev/)
+    cmds:
+      - cmake -S . -B build-dev {{.CMAKE_FLAGS}} -DPSX_DEBUG_TOOLS=ON
+      - cmake --build build-dev
+
+  all:
+    desc: Emitters, generate and dev build from a fresh checkout
+    cmds:
+      - task: emitters
+      - task: generate
+      - task: build:dev
+
+  run:
+    desc: Start the release build with launcher
+    cmds:
+      - '{{.RUNNER}} ./build-release/Kula_World_Recompiled'
+
+  run:dev:
+    desc: Start the dev build without launcher, debug server on DEBUG_PORT
+    cmds:
+      - >-
+        {{.RUNNER}} ./build-dev/Kula_World_Recompiled --no-launcher
+        --bios {{.BIOS}} --disc {{.DISC}} --debug-port {{.DEBUG_PORT}}
+
+  beetle:
+    desc: Start the psx-beetle oracle, debug server on BEETLE_PORT
+    cmds:
+      - >-
+        SDL_RENDER_DRIVER=software {{.RUNNER}}
+        ./psxrecomp/runtime/build-beetle/psx-beetle bios/beetle/SCPH1001.BIN
+        --disc {{.DISC}} --port {{.BEETLE_PORT}}
+
+  smoke:
+    desc: Boot smoke test against a running backend (PORT=4370 runtime, 4380 beetle)
+    cmds:
+      - '{{.PYTHON}} tools/smoke_boot.py --port {{.PORT | default .DEBUG_PORT}} {{.CLI_ARGS}}'
+
+  test:
+    desc: Unit tests
+    cmds:
+      - '{{.PYTHON}} -m unittest discover -s tests'
+
+  lint:
+    desc: ruff and black on project Python
+    cmds:
+      - ruff check tools/smoke_boot.py tests
+      - black --check tools/smoke_boot.py tests

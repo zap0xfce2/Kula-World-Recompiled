@@ -154,8 +154,8 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - Muster für Mods und Patches: `hercules-recompiled/port/mods`, `port/patches`
 8. Repo-Pflege (Entscheidung des Nutzers):
    - ~~Branch `test/kuseg-boot-smoke` nach `main` mergen~~ (erledigt)
-   - `.serena/` committen oder ignorieren
-   - `Taskfile.yaml` (go-task, `silent: true`) für Generate, Build, Smoke und A/B anlegen
+   - ~~`.serena/` committen oder ignorieren~~ (erledigt, gitignored)
+   - ~~`Taskfile.yaml` anlegen~~ (erledigt, siehe Build-Gotchas)
 9. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher bei dezgeg Lizenz und PC-Port-Pläne erfragen.
 
 ## macOS
@@ -168,7 +168,12 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. D
 - Der Launcher schaltet BIOS-Call-HLE ein (`bios_backend=HLE`). Mit `--no-launcher` gilt der Default LLE. Für A/B gegen Beetle `PSX_BIOS_HLE=0` setzen.
 
 ## Build-Gotchas (Alpine/musl)
-Kompletter Ablauf (Begründung der Flags unten):
+Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task all` erledigt Emitter, Generate und Dev-Build. Die musl-Flags setzt sie automatisch. Weitere Tasks:
+- `run`, `run:dev`, `beetle`: Starten, headless mit `RUNNER="xvfb-run -a"`.
+- `smoke PORT=4380`, `test`, `lint`.
+- Auf dem Mac `PYTHON=python3.12`.
+
+Der Ablauf als rohe Befehle (Begründung der Flags unten):
 ```sh
 ./psxrecomp/tools/ci/build_emitters.sh
 python3 psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root . \

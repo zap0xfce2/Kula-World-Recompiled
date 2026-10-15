@@ -17,6 +17,7 @@ No ready-made Kula widescreen patch exists (DuckStation database, cheat lists an
 - World, ball, title, menu text and HUD keep correct proportions. The menu runs over a 3D level, so it goes wide too, and that looks right.
 - **Sky gaps:** sky tiles are missing at the new left and right edges (jagged borders).
 - **HUD:** it stays at its 4:3 position.
+- **`nw_hud_corners = true` breaks the sky:** it also shifts sky pieces drawn as 2D sprites, which leaves dark jagged bands in the middle of the picture. HUD corners therefore need a narrower selection (e.g. the HUD packet range via `nw_left_hud_packet_lo/hi`, or a HUD-only hook). That is a separate task; until then the HUD stays at its 4:3 position.
 - `auto_screen_x` finds no site. Its pattern is `sltiu …,0x140` with an NTSC height of `0xE0`. Kula is PAL and compares registers instead.
 
 ## Why the edges are culled

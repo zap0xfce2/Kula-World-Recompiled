@@ -153,10 +153,13 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - HD-Texturen aus TGI/GGI
    - Muster für Mods und Patches: `hercules-recompiled/port/mods`, `port/patches`
 8. Repo-Pflege (Entscheidung des Nutzers):
-   - Branch `test/kuseg-boot-smoke` nach `main` mergen
+   - ~~Branch `test/kuseg-boot-smoke` nach `main` mergen~~ (erledigt)
    - `.serena/` committen oder ignorieren
    - `Taskfile.yaml` (go-task, `silent: true`) für Generate, Build, Smoke und A/B anlegen
 9. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher bei dezgeg Lizenz und PC-Port-Pläne erfragen.
+
+## macOS
+Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Noch nicht auf echter Hardware verifiziert. Das Repo kommt als `git bundle` auf den Mac, weil es noch kein Remote gibt.
 
 ## Build-Gotchas (Alpine/musl)
 Kompletter Ablauf (Begründung der Flags unten):

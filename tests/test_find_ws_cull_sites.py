@@ -36,6 +36,10 @@ def bne(rs: int, rt: int, off: int) -> int:
     return (0x05 << 26) | (rs << 21) | (rt << 16) | (off & 0xFFFF)
 
 
+def add(rd: int, rs: int, rt: int) -> int:
+    return (rs << 21) | (rt << 16) | (rd << 11) | 0x20
+
+
 NOP = 0
 BOUND_VIA_POINTER = [lui(A0, 0x000A), addiu(A0, A0, 0x2E80), lw(A0, A0, 0)]
 BOUND_DIRECT = [lui(A0, 0x000A), lw(A0, A0, 0x2E80)]
@@ -74,6 +78,11 @@ class FindRejectBranchesTest(unittest.TestCase):
     def test_bound_load_is_recorded_as_load_site(self) -> None:
         words = BOUND_VIA_POINTER + [sltu(AT, V0, A0), beq(AT, ZERO, 8)]
         self.assertEqual(find_reject_branches(words, BASE).loads, [BASE + 8])
+
+    def test_compare_against_derived_bound_is_reject_site(self) -> None:
+        # Bounding-sphere test: x + r < W + 2r, with the bound derived by add.
+        words = BOUND_DIRECT + [add(V1, A0, 5), sltu(AT, V0, V1), beq(AT, ZERO, 8)]
+        self.assertEqual(find_reject_branches(words, BASE).reject, [BASE + 16])
 
     def test_seeded_bound_register_is_recognised(self) -> None:
         words = [sltu(AT, V0, A0), beq(AT, ZERO, 8), NOP]

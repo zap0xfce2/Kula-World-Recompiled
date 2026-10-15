@@ -42,7 +42,7 @@ CULL_FUNCTIONS: tuple[tuple[str, int, int, frozenset[int]], ...] = (
 )
 
 OP_SPECIAL, OP_BEQ, OP_BNE, OP_ADDIU, OP_LUI, OP_LW = 0x00, 0x04, 0x05, 0x09, 0x0F, 0x23
-FN_SLT, FN_SLTU = 0x2A, 0x2B
+FN_ADD, FN_ADDU, FN_SLT, FN_SLTU = 0x20, 0x21, 0x2A, 0x2B
 # SPECIAL functions without a destination register (jr, jalr link aside, syscall, mult/div).
 FN_NO_DEST = frozenset({0x08, 0x0C, 0x0D, 0x18, 0x19, 0x1A, 0x1B})
 OPS_WRITING_RT = frozenset(range(0x08, 0x10)) | frozenset(range(0x20, 0x27))
@@ -134,9 +134,15 @@ def find_reject_branches(
             regs, op, rs, rt, pc, scan
         ):
             continue
+        derives_bound = (
+            op == OP_SPECIAL and fn in (FN_ADD, FN_ADDU) and rs in regs.bound
+        )
         dest = _destination(op, rt, rd, fn)
         if dest:
             regs.forget(dest)
+        # bound + radius: bounding-sphere tests compare against a derived bound
+        if derives_bound and rd:
+            regs.bound.add(rd)
         if op == OP_SPECIAL and fn in (FN_SLT, FN_SLTU) and rt in regs.bound and rd:
             regs.compare_pc[rd] = pc
     return scan

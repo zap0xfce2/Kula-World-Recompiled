@@ -12,6 +12,8 @@ Vorlage für Projektstruktur, Mods und Launcher: [hercules-recompiled](https://g
 - Git-Freigabe (2026-10-15): Solange das Repo privat ist, darf ohne Rückfrage auf `origin` committet und gepusht werden.
   - Weiterhin nur mit Freigabe: Force-Push, Historie umschreiben, Sichtbarkeit ändern, Issues/PRs in fremden Repos.
   - Vor jedem Commit `git status` prüfen und sicherstellen, dass keine Spieldaten und keine Secrets dabei sind.
+- Tests laufen standardmäßig unter Linux (Xvfb + Debug-Server). Der Mac macht nur die Endabnahme und was unter Linux nicht geht (echte GPU-fps, Ton, Launcher, Fenster per Maus). Freigabe vom 2026-10-15.
+- Ghidra und PSX-Plugins dürfen installiert und genutzt werden, wenn es hilft (Freigabe vom 2026-10-15).
 - Spekuliere nicht über Hardware-Verhalten. Verifiziere gegen den Oracle-Emulator (Beetle) oder sag "unbekannt".
 
 ## Rechtliches – harte Regel
@@ -178,9 +180,9 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Danach `task generate`.
      - `DoSubdivide` bekommt die Grenze im Register `a3` vom Aufrufer, deshalb startet das Skript dort mit vorbelegtem Register.
      - Partikel (`ProcessAndRenderParticles`) haben nur „behalten“-Sprünge und bleiben unverändert. Rechts greift für sie die Ladestelle, links können sie verschwinden. Links (negative X) erfassen die Ladestellen nichts. Dort ist nur die letzte Ecke verbreitert, deshalb sind kleine Popper in den Ecken unten/oben links möglich.
-     - **Offen, linker Rand (Entscheidung des Nutzers: später):** Items und Plattformen verschwinden links am alten 4:3-Rand, sobald alle Ecken bei x < 0 liegen. Repro: W1/L1, rechts antippen, zwei Felder vor, der Schlüssel verschwindet bei 2:1 bei x ≈ −12.
-       - Ursache: Die Prüfung ist vorzeichenlos, und eine linke Grenze, die man wie rechts über eine Ladestelle anheben könnte, gibt es nicht. Teils sammelt das Spiel die Ergebnisse in einer Bitmaske (wie `DoSubdivide`).
-       - Wege: per Debug-Server die verwerfende Stelle des Schlüssels finden, oder die Gast-Koordinaten im Breitbild um den Rand nach rechts verschieben (Framework-Thema, ggf. upstream).
+     - Linker Rand (Branch `fix/widescreen-left-edge`): Objekte (Items, Schlüssel) sowie Himmel- und Bonus-Hintergrundkacheln haben vor den Polygon-Ketten einen Kugeltest `x + r < Breite + 2r` (vorzeichenlos) gegen eine aus der Breite abgeleitete Grenze (`add t8, t1, r`).
+       - Rechts reicht die Ladestelle, links verwarf der Test alles bei x < −r. Repro: W1/L1, rechts antippen, zwei Felder vor, der Schlüssel verschwand bei x ≈ −12.
+       - Das Suchskript erfasst abgeleitete Grenzen (`add rd, bound, x`) und findet so 3 weitere Sites: 0x540B4 Items, 0x55C30 Bonus-Hintergrund, 0x565E8 Himmel.
      - Offen: HUD in die Ecken. `nw_hud_corners` verschiebt auch Himmels-Sprites und erzeugt dunkle Streifen.
      - `gpu_state.ws.configured/active = 0` ist bei native-wide normal (Felder des Squash-Pfads). Aussagekräftig sind `mode 2`, `x_margin` (16:9: 53, 2:1: 80), `game_mode`, `present_native_43`.
      - Das Suchskript braucht Python 3.10+ (`int | None`), auf dem Mac also `PYTHON=python3.12`.

@@ -22,17 +22,22 @@ MAX_BRANCH_DISTANCE = (
     12  # bytes between the compare and its branch (delay-slot scheduling)
 )
 
-# Renderers that cull against screenOffsetX (EU addresses, dezgeg/kula-world-decomp).
-CULL_FUNCTIONS: tuple[tuple[str, int, int], ...] = (
-    ("ProcessAndRenderParticles", 0x00012918, 0x000139C8),
-    ("DrawLensFlares", 0x00015B54, 0x000164DC),
-    ("SubdivideLevelGeometryPolys", 0x0005054C, 0x00050790),
-    ("DrawLasers", 0x00052504, 0x00052AB8),
-    ("RenderDispList", 0x00053DF8, 0x00055A0C),
-    ("RenderBonusBackgroundPart1", 0x00055A0C, 0x000563C4),
-    ("RenderNonSpecialBackground", 0x000563C4, 0x00056D7C),
-    ("RenderStarfield", 0x00056F48, 0x00057374),
-    ("RenderLevelGeometryQuads", 0x00057374, 0x00057834),
+REG_A3 = 7
+NO_SEED: frozenset[int] = frozenset()
+
+# Renderers that cull against screenOffsetX (EU addresses, dezgeg/kula-world-decomp),
+# with the registers that already hold the bound on entry.
+CULL_FUNCTIONS: tuple[tuple[str, int, int, frozenset[int]], ...] = (
+    ("ProcessAndRenderParticles", 0x00012918, 0x000139C8, NO_SEED),
+    ("DrawLensFlares", 0x00015B54, 0x000164DC, NO_SEED),
+    # SubdivideLevelGeometryPolys loads the bound into a3 and branches here.
+    ("DoSubdivide", 0x00050790, 0x00051964, frozenset({REG_A3})),
+    ("DrawLasers", 0x00052504, 0x00052AB8, NO_SEED),
+    ("RenderDispList", 0x00053DF8, 0x00055A0C, NO_SEED),
+    ("RenderBonusBackgroundPart1", 0x00055A0C, 0x000563C4, NO_SEED),
+    ("RenderNonSpecialBackground", 0x000563C4, 0x00056D7C, NO_SEED),
+    ("RenderStarfield", 0x00056F48, 0x00057374, NO_SEED),
+    ("RenderLevelGeometryQuads", 0x00057374, 0x00057834, NO_SEED),
 )
 
 OP_SPECIAL, OP_BEQ, OP_BNE, OP_ADDIU, OP_LUI, OP_LW = 0x00, 0x04, 0x05, 0x09, 0x0F, 0x23
@@ -111,9 +116,11 @@ def _branch_after_compare(
     return True
 
 
-def find_reject_branches(words: Sequence[int], base: int) -> SiteScan:
+def find_reject_branches(
+    words: Sequence[int], base: int, seed_bound: frozenset[int] = NO_SEED
+) -> SiteScan:
     """Linear scan of one function; renderers keep the bound in a register across loops."""
-    regs, scan = _Regs(), SiteScan()
+    regs, scan = _Regs(bound=set(seed_bound)), SiteScan()
     for index, word in enumerate(words):
         pc = base + index * 4
         op, rs, rt, rd, imm, fn = _fields(word)
@@ -135,10 +142,10 @@ def scan_exe(exe: bytes) -> dict[str, SiteScan]:
             f"unexpected EXE size {len(exe):#x}, expected {EXE_SIZE:#x} (EU SCES_010.00)"
         )
     result: dict[str, SiteScan] = {}
-    for name, start, end in CULL_FUNCTIONS:
+    for name, start, end, seed in CULL_FUNCTIONS:
         offset = EXE_HEADER + start - LOAD_ADDRESS
         words = struct.unpack_from(f"<{(end - start) // 4}I", exe, offset)
-        result[name] = find_reject_branches(words, start)
+        result[name] = find_reject_branches(words, start, seed)
     return result
 
 
@@ -154,11 +161,13 @@ def main() -> int:
             print(f"    # {name}\n    {sites},")
     print("]")
     for name, scan in scans.items():
-        if scan.keep and not scan.reject:
-            print(
-                f"# {name}: only keep-branches ({len(scan.keep)}), left vanilla",
-                file=sys.stderr,
+        if not scan.reject:
+            note = (
+                f"only keep-branches ({len(scan.keep)})"
+                if scan.keep
+                else "no sites found"
             )
+            print(f"# {name}: {note}, left vanilla", file=sys.stderr)
     return 0
 
 

@@ -173,10 +173,11 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - Widescreen-Mod `kula.widescreen` (Branch `feat/widescreen-mod`, Spec und Plan unter `docs/superpowers/`):
      - Standardmäßig an. Startfenster 16:9, danach folgt die Ansicht dem Fenster von 4:3 bis maximal 2:1 (darüber Balken). Der Himmel ist nur für ca. 1,7x 4:3-Breite generiert.
      - Plugin `mods/src/kula_widescreen.c` (`psx_mod_set_fixed_display_aspect` + `..._adaptive_...(2, 1)`), dazu `game.toml [widescreen] gte_game_mode = true` (ohne das bleibt die Ausgabe 4:3). `[video] aspect_ratio` allein wirkt nicht mehr.
-     - Rand-Culling: Das Spiel verwirft alles außerhalb 0…320 gegen `screenOffsetX` (0x800A2E80, `sltu` + `beq`). Die 47 `beq` stehen als `[widescreen.cull] branch_keep_sites` in der `game.toml` und springen bei Breitbild nicht.
+     - Rand-Culling: Das Spiel verwirft alles außerhalb 0…320 gegen `screenOffsetX` (0x800A2E80, `sltu` + `beq`). Die 54 `beq` stehen als `[widescreen.cull] branch_keep_sites` in der `game.toml` und springen bei Breitbild nicht.
        - Liste nur über `python3 -I tools/find_ws_cull_sites.py disc/SCES_010.00` erzeugen. Es landen nur Adressen im Repo, keine Bytes.
        - Danach `task generate`.
-     - Partikel (`ProcessAndRenderParticles`) haben nur „behalten“-Sprünge und bleiben unverändert. Sie können am breiten Rand verschwinden.
+     - `DoSubdivide` bekommt die Grenze im Register `a3` vom Aufrufer, deshalb startet das Skript dort mit vorbelegtem Register.
+     - Partikel (`ProcessAndRenderParticles`) haben nur „behalten“-Sprünge und bleiben unverändert. Sie können am breiten Rand verschwinden. In `RenderDispList`/`DrawLasers` ist nur die letzte Ecke verbreitert, kleine Popper in den Ecken oben/unten sind möglich.
      - Offen: HUD in die Ecken. `nw_hud_corners` verschiebt auch Himmels-Sprites und erzeugt dunkle Streifen.
      - `gpu_state.ws.configured/active = 0` ist bei native-wide normal (Felder des Squash-Pfads). Aussagekräftig sind `mode 2`, `x_margin` (16:9: 53, 2:1: 80), `game_mode`, `present_native_43`.
      - Prüfen: Debug-Kommando `window_size` (`w`, `h`) ändert das Fenster wie ein Spieler, auch unter Xvfb.

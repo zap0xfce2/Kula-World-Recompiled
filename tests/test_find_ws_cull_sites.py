@@ -71,6 +71,11 @@ class FindRejectBranchesTest(unittest.TestCase):
         words = BOUND_DIRECT + [sltu(AT, V0, A0), NOP, NOP, NOP, beq(AT, ZERO, 8)]
         self.assertEqual(find_reject_branches(words, BASE).reject, [])
 
+    def test_seeded_bound_register_is_recognised(self) -> None:
+        words = [sltu(AT, V0, A0), beq(AT, ZERO, 8), NOP]
+        scan = find_reject_branches(words, BASE, seed_bound=frozenset({A0}))
+        self.assertEqual(scan.reject, [BASE + 4])
+
 
 class ScanExeTest(unittest.TestCase):
     def test_rejects_wrong_exe_size(self) -> None:

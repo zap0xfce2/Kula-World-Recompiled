@@ -163,6 +163,11 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - 60 FPS: Timer läuft framebasiert mit 50 Hz, die Logik muss entkoppelt werden. Checkliste der Werte pro Frame: rocco `SPEC.md`.
    - Wobble-Fix
    - HD-Texturen aus TGI/GGI
+   - Eigener Ladebildschirm statt Piraterie-Hinweis (`HIRO\WARNING.TIM`, Idee 2026-10-15):
+     - Der Hinweis ist der Ladebildschirm des Erststarts (`LoadWarningTim` → `LoadImage` 640x256), ohne feste Wartezeit.
+     - Über HD-Texture-Packs geht es nicht, weil `vram-write-` nicht unterstützt wird. Machbar per Mod-Plugin oder Patch (`docs/MOD_PACKAGES.md`).
+     - Die Grafik muss selbst erstellt sein.
+     - Kürzer wird der Screen nur durch schnelleres Laden (eingebaute Mods Fast Loading/CD Speed, Mac-Messung läuft).
    - Muster für Mods und Patches: `hercules-recompiled/port/mods`, `port/patches`
 8. Repo-Pflege (Entscheidung des Nutzers):
    - ~~Branch `test/kuseg-boot-smoke` nach `main` mergen~~ (erledigt)

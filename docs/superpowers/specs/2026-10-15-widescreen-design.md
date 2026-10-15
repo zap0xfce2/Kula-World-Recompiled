@@ -20,6 +20,20 @@ No ready-made Kula widescreen patch exists (DuckStation database, cheat lists an
 - **`nw_hud_corners = true` breaks the sky:** it also shifts sky pieces drawn as 2D sprites, which leaves dark jagged bands in the middle of the picture. HUD corners therefore need a narrower selection (e.g. the HUD packet range via `nw_left_hud_packet_lo/hi`, or a HUD-only hook). That is a separate task; until then the HUD stays at its 4:3 position.
 - `auto_screen_x` finds no site. Its pattern is `sltiu …,0x140` with an NTSC height of `0xE0`. Kula is PAL and compares registers instead.
 
+## Mac findings on the spike (2026-10-15, `7425c75`)
+- **Stable:** smoke and level select pass, 0 FATAL. Fit to window works: the guest width follows the window (428 px at 16:9, 758 px at about 3:1).
+- **The user's verdict: "not there yet, real artefacts".**
+  - **Sky gaps** are worse than seen on Linux. At about 3:1 everything beyond roughly 1.7x the 4:3 width is black. The sky tiles the game generates cover only about 1.7x of 320 px.
+  - **World geometry** ends hard at a fixed screen X, or sky shards are drawn over it (platforms, walls). This is the same `screenOffsetX` culling, and it hits the level as well, not only the sky.
+  - **Foreign-coloured sky shards** (desert orange inside a blue sky) appear at the edge. Cause unknown, probably the same culling.
+  - **HUD** stays in the 4:3 centre and looks lost at wide aspects.
+- `gpu_state.ws.configured/active` read 0 in every scene, while `game_mode` is 1 and `present_native_43` is 0. To be clarified before the real mod (possibly fields of the older projection path).
+- Open: launcher toggle, 4:3 screens (warning screen, memory card, FMV), fps.
+
+Consequences for the design:
+- The culling fix must cover all users listed below, not only the sky.
+- The sky is authored for about 1.7x the 4:3 width (`RecalcSkyboxes01/2` generate the tiles). Beyond that only black is left, unless the generation is widened. **Cap the aspect until that is solved.** About 2:1 is safe (1.7 × 4/3 ≈ 2.27:1), so 16:9 and 2:1 are fine and 21:9 (2.33:1) already sits at the limit. This changes the user's "no upper limit" decision and needs the user's confirmation.
+
 ## Why the edges are culled
 - The game rejects screen points against the RAM variables `screenOffsetX` (0x800A2E80, 320) and `screenOffsetY` (0x800A2E84, 256), with an unsigned test: `andi x, sxy, 0xffff; sltu at, x, a1; beq at, zero, outside`. That rejects both x < 0 and x >= 320.
 - Users of the bound (EU addresses):

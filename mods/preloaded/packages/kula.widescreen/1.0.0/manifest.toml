@@ -1,0 +1,22 @@
+format_version = 7
+id = "kula.widescreen"
+version = "1.0.0"
+name = "Widescreen"
+author = "Kula World Recompiled"
+description = "Shows the world wider than 4:3, following the window up to 2:1."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "SCES-01000"
+
+[[feature]]
+id = "widescreen"
+name = "Widescreen"
+description = "Wider view of the world, following the window up to 2:1. Menus and the warning screen stay 4:3."
+group = "Graphics"
+default_enabled = true
+
+[[plugin]]
+feature = "widescreen"
+id = "kula.widescreen"

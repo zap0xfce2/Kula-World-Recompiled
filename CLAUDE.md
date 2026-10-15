@@ -287,6 +287,8 @@ cmake --build build-dev
 - `tools/smoke_boot.py --port 4370|4380` liest `gameState`, `isDemoMode`, `levelTimeLeft` usw. (Adressen aus dem Decomp) und speichert Screenshots nach `analysis/smoke/`.
 - Ohne Eingabe startet das Spiel nach 2000 Menü-Frames (40 s) den Demo-Modus. „Demo aktiv und Timer läuft runter“ beweist also BIOS → Titel → Menü → 3D-Level.
 - Tests: `python3 -m unittest discover -s tests`.
+- Lange Testsitzungen: `task freeze-timer` (`tools/freeze_timer.py`) hält den Level-Timer per `write_ram` voll (nur Dev-Build). `SDL_AUDIO_DRIVER=dummy` schaltet den Ton ab, das Spiel läuft normal weiter.
+- `write_ram` schreibt ein Byte pro Anfrage.
 - Debug-Protokoll: eine Anfrage pro TCP-Verbindung. Frame-Nummer: Runtime über `frame`, Beetle im `ping`.
 - **`press`/`set_input` erwarten das Pad-Wort active-low** (`0xFFFF` = nichts gedrückt). Kreuz drücken heißt also `0xFFFF ^ 0x4000`. Bits: `PAD_*` im Decomp `include/common.h`.
 - Spielstart per Eingabe: Kreuz → Untermenü (`curMenu` 3) → Kreuz → 1-Spieler-Arcade (Welt 0, Level 0). Spielerposition `playerCombinedPos` = `0x800A45D0` (8 Byte).

@@ -83,6 +83,11 @@ tasks:
     cmds:
       - '{{.PYTHON}} tools/smoke_boot.py --port {{.PORT | default .DEBUG_PORT}} {{.CLI_ARGS}}'
 
+  freeze-timer:
+    desc: Keep the level timer full on a running dev build (PORT=4370)
+    cmds:
+      - '{{.PYTHON}} tools/freeze_timer.py --port {{.PORT | default .DEBUG_PORT}}'
+
   test:
     desc: Unit tests (Python and C)
     cmds:
@@ -94,5 +99,5 @@ tasks:
   lint:
     desc: ruff and black on project Python
     cmds:
-      - ruff check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tests
-      - black --check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tests
+      - ruff check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tools/freeze_timer.py tests
+      - black --check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tools/freeze_timer.py tests

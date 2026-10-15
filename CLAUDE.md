@@ -150,7 +150,11 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Start: `--bios build-dev/bios/openbios.bin`
      - `smoke_boot.py`: `demo_gameplay_reached`, gleiche Demo (Welt 0, Level 4) und gleicher Timer-Endwert 3603 wie mit SCPH1001
      - Log: `bios_backend=LLE`, `bios_boot=HLE (shell skipped)`, `image=OPENBIOS`. Call-HLE ist auf OpenBIOS nicht verfügbar.
-     - Offen: Memory Card, interaktives Spielen und A/B gegen Beetle mit OpenBIOS. Danach könnte ein Release ohne Sony-BIOS auskommen, die Disc braucht es weiterhin.
+     - Mac: Ohne gespeicherte BIOS-Wahl nimmt der Launcher OpenBIOS. Demo wie unter Linux, 50,0 fps, XA und SFX ok.
+     - Memory Card ok: Ein unter Retail angelegter Spielstand lässt sich unter OpenBIOS laden und neu speichern.
+     - Ein Build nur mit OpenBIOS geht: `-DPSXRECOMP_BIOS_STEMS=OpenBIOS`, ohne SCPH1001-Quellen, Smoke ohne `--bios` ok (Mac).
+     - Die Demo startet mit Retail-HLE und OpenBIOS bei gleichem Frame (~3100–3200). Mit Retail-LLE (echtes Intro) kommt sie ca. 10 s später. Linux erreicht den Frame wegen llvmpipe in Sekunden später.
+     - Offen: interaktives Spielen und A/B gegen Beetle mit OpenBIOS. Damit kann ein Release ohne Sony-BIOS auskommen, die Disc braucht es weiterhin.
    - `vsyncCounter` (`0x800A2F64`) ist auf beiden Backends immer 0. Klären, ob die Adresse aus dem Decomp für PAL stimmt.
 6. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
 7. Mods (vor jedem Mod Brainstorming mit dem Nutzer, Vorschlag: mit der Levelauswahl anfangen):
@@ -177,6 +181,9 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. A
   - Linux pusht einen Branch und schickt per `SendMessage` den Branch-Namen plus Testauftrag.
   - Der Mac holt den Branch (`git fetch && git checkout <branch>`), baut und testet. Er pusht nicht und committet nicht.
   - Das Ergebnis kommt als Cross-Session-Nachricht zurück, die Doku pflegt nur Linux.
+  - Mac-Repo: `origin` per SSH, `.claude/settings.local.json` erlaubt lesende Git-Befehle plus fetch/checkout/switch/submodule update.
+  - ccache ist auf dem Mac aktiv, Folgebuilds dauern Sekunden.
+  - Der Mac hat kein Sony-BIOS mehr und läuft nur mit OpenBIOS.
 - 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Offen: Controller, Memory Card, Ending-FMV.
 - Gotchas:
   - Ein verwaister `CommandLineTools/usr/include/c++/v1` überdeckt die SDK-Header (`'string' file not found`).

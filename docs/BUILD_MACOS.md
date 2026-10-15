@@ -17,9 +17,10 @@ git clone https://github.com/zap0xfce2/kula-world-recompiled.git
 cd kula-world-recompiled
 git submodule update --init --recursive
 ```
-Copy your own game data next to it (never committed):
-- `disc/SCES01000.BIN` + `disc/SCES01000.CUE`
-- `bios/SCPH1001.BIN` (MD5 `924e392ed05558ffdb115408c263dccf`)
+Copy your own disc next to it (never committed): `disc/SCES01000.BIN` + `disc/SCES01000.CUE`.
+A retail BIOS is optional; without one the bundled OpenBIOS (MIT) is used. Without a dump, run `generate` without `--bios`,
+regenerate only `bios/OpenBIOS.toml` and configure with `-DPSXRECOMP_BIOS_STEMS=OpenBIOS`.
+A retail dump goes to `bios/SCPH1001.BIN` (MD5 `924e392ed05558ffdb115408c263dccf`).
 
 ## Build
 ```sh
@@ -69,6 +70,8 @@ macOS 27.0.1 (26A434), Apple M1 Pro (10 cores), cmake 4.4.4, Apple clang 21.0.0,
 | Controller | not tested (no gamepad at hand) |
 | Memory card | ok, save/quit/load; cards in `saves/card1.mcd`, `card2.mcd` (gitignored) |
 | Boot with LLE BIOS (`PSX_BIOS_HLE=0`) | ok, real BIOS intro, demo about 10 s later than with HLE |
+| OpenBIOS (no retail dump) | ok: launcher picks it when no BIOS is chosen; demo, 50.0 fps, XA/SFX, memory card (retail save loads and re-saves) |
+| OpenBIOS-only build (`-DPSXRECOMP_BIOS_STEMS=OpenBIOS`) | ok, no SCPH1001 sources linked |
 | Ending FMV | not tested, needs the level select mod |
 
 The launcher run used the BIOS call-HLE tier (`bios_backend=HLE (LLE fallback)`). The Linux runs used `--no-launcher` and therefore LLE (default `bios_hle = false`). For A/B against Beetle, force LLE with `PSX_BIOS_HLE=0`; the demo runs identically under both.

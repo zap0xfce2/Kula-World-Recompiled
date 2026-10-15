@@ -31,16 +31,24 @@ enum {
     VAR_CONTROLLER_BUTTONS = 0x800a5530u,
     VAR_PREV_CONTROLLER_BUTTONS = 0x800a50bcu,
     VAR_SCORE_TEXT = 0x800a4ab0u,
+    VAR_FONT_SPRITES = 0x800aa47cu,
 };
 enum { SFX_MENU_SELECTION_2 = 109, SFX_VOLUME = 8000 };
 enum { SCORE_TEXT_SIZE = 128, MIPS_REG_A0 = 4, MIPS_REG_SP = 29, MIPS_REG_RA = 31 };
 /* Layout in the 320x256 PAL menu space: START centred, labels right-aligned
- * to a shared edge and values centred in a fixed column, so - n + line up. */
+ * to a shared edge; -, number and + each centred in their own fixed column,
+ * so one- and two-digit values line up. */
 enum { TEXT_CENTER_X = 160, TEXT_TOP_Y = 162, TEXT_LINE_STEP = 20 };
-enum { LABEL_RIGHT_X = 158, VALUE_CENTER_X = 194 };
+enum { LABEL_RIGHT_X = 158, MINUS_X = 174, NUMBER_X = 194, PLUS_X = 214 };
 enum { TEXT_ALIGN_CENTER = 1, TEXT_ALIGN_RIGHT = 2 };
 /* Pale blue tint instead of plain white; unselected rows at half brightness. */
 enum { TINT_R = 96, TINT_G = 116, TINT_B = 128, TINT_DIM_SHIFT = 1 };
+/* Light drop shadow one pixel down-right. The font blends additively, so a dark
+ * copy would be invisible; the shadow pass switches the glyph templates
+ * (fontSprites, 28-byte TSprite with DR_TPAGE first) to subtractive blending. */
+enum { SHADOW_OFFSET = 1, SHADOW_SHADE = 40 };
+enum { FONT_FIRST_CHAR = 0x20, TSPRITE_SIZE = 28, TSPRITE_TPAGE_CODE = 4 };
+enum { TPAGE_ABR_MASK = 0x60u, TPAGE_ABR_SUBTRACT = 0x40u };
 
 static LsState g_state;
 static int g_strict_armed;
@@ -69,10 +77,8 @@ static void set_text_params(struct CPUState* cpu, int x, int y, int align, int r
     cpu->gpr[MIPS_REG_SP] = sp;
 }
 
-static void draw_text(struct CPUState* cpu, int x, int line, int align, int selected, const char* text) {
-    const int dim = selected ? 0 : TINT_DIM_SHIFT;
-    set_text_params(cpu, x, TEXT_TOP_Y + line * TEXT_LINE_STEP, align, TINT_R >> dim, TINT_G >> dim,
-                    TINT_B >> dim);
+static void draw_glyphs(struct CPUState* cpu, int x, int y, int align, int r, int g, int b, const char* text) {
+    set_text_params(cpu, x, y, align, r, g, b);
     for (uint32_t i = 0; i < SCORE_TEXT_SIZE; ++i) {
         psx_mod_write_byte(VAR_SCORE_TEXT + i, (uint8_t)text[i]);
         if (!text[i]) break;
@@ -80,12 +86,47 @@ static void draw_text(struct CPUState* cpu, int x, int line, int align, int sele
     psx_mod_call_guest(cpu, FN_DRAW_TEXT_CRAPPY, cpu->gpr[MIPS_REG_RA], VAR_SCORE_TEXT, 0, 0, 0);
 }
 
+static uint32_t glyph_tpage_address(char c) {
+    return VAR_FONT_SPRITES + (uint32_t)(c - FONT_FIRST_CHAR) * TSPRITE_SIZE + TSPRITE_TPAGE_CODE;
+}
+
+/* Switch the blend mode of the glyph templates used by text (up to the newline);
+ * returns how many words were saved. */
+static int set_glyph_blend(const char* text, uint32_t abr, uint32_t* saved) {
+    int count = 0;
+    for (; text[count] >= FONT_FIRST_CHAR; ++count) {
+        const uint32_t addr = glyph_tpage_address(text[count]);
+        saved[count] = psx_mod_read_word(addr);
+        psx_mod_write_word(addr, (saved[count] & ~TPAGE_ABR_MASK) | abr);
+    }
+    return count;
+}
+
+/* Reverse order, so a repeated glyph ends with its first, unpatched value. */
+static void restore_glyph_blend(const char* text, const uint32_t* saved, int count) {
+    while (count-- > 0) psx_mod_write_word(glyph_tpage_address(text[count]), saved[count]);
+}
+
+/* Primitives are prepended to the ordering table, so the shadow added after the
+ * text is drawn underneath it. */
+static void draw_text(struct CPUState* cpu, int x, int line, int align, int selected, const char* text) {
+    uint32_t saved[SCORE_TEXT_SIZE];
+    const int dim = selected ? 0 : TINT_DIM_SHIFT;
+    const int y = TEXT_TOP_Y + line * TEXT_LINE_STEP;
+    draw_glyphs(cpu, x, y, align, TINT_R >> dim, TINT_G >> dim, TINT_B >> dim, text);
+    const int patched = set_glyph_blend(text, TPAGE_ABR_SUBTRACT, saved);
+    draw_glyphs(cpu, x + SHADOW_OFFSET, y + SHADOW_OFFSET, align, SHADOW_SHADE, SHADOW_SHADE, SHADOW_SHADE, text);
+    restore_glyph_blend(text, saved, patched);
+}
+
 static void draw_setting(struct CPUState* cpu, int item, const char* label, int value) {
-    char text[16];
+    char number[8];
     const int selected = g_state.cursor == item;
-    snprintf(text, sizeof text, "- %d +\n", value);
+    snprintf(number, sizeof number, "%d\n", value);
     draw_text(cpu, LABEL_RIGHT_X, item, TEXT_ALIGN_RIGHT, selected, label);
-    draw_text(cpu, VALUE_CENTER_X, item, TEXT_ALIGN_CENTER, selected, text);
+    draw_text(cpu, MINUS_X, item, TEXT_ALIGN_CENTER, selected, "-\n");
+    draw_text(cpu, NUMBER_X, item, TEXT_ALIGN_CENTER, selected, number);
+    draw_text(cpu, PLUS_X, item, TEXT_ALIGN_CENTER, selected, "+\n");
 }
 
 static void draw_submenu(struct CPUState* cpu) {

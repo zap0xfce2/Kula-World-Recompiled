@@ -9,6 +9,9 @@ Vorlage für Projektstruktur, Mods und Launcher: [hercules-recompiled](https://g
 - Der Nutzer ist Softwareentwickler, IT-Experte und DevOps Engineer. Erkläre keine Grundlagen.
 - Code nicht ausführlich erklären, sondern nach Clean-Code-Prinzip kommentieren.
 - Default-Plattform ist Linux. Editor-Anweisungen immer mit `vi`, nie `nano`.
+- Git-Freigabe (2026-10-15): Solange das Repo privat ist, darf ohne Rückfrage auf `origin` committet und gepusht werden.
+  - Weiterhin nur mit Freigabe: Force-Push, Historie umschreiben, Sichtbarkeit ändern, Issues/PRs in fremden Repos.
+  - Vor jedem Commit `git status` prüfen und sicherstellen, dass keine Spieldaten und keine Secrets dabei sind.
 - Spekuliere nicht über Hardware-Verhalten. Verifiziere gegen den Oracle-Emulator (Beetle) oder sag "unbekannt".
 
 ## Rechtliches – harte Regel

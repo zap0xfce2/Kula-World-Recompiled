@@ -12,10 +12,6 @@
 enum {
     FN_SET_TEXT_PARAMS = 0x00014c10u,
     FN_DRAW_TEXT_CRAPPY = 0x00014c90u,
-    FN_SET_BIG_GUI_SPRITE_VISIBLE = 0x00016da0u,
-    FN_DRAW_MENU_CURSOR = 0x00018088u,
-    FN_SET_FANCY_TEXT_COLOR = 0x0001a614u,
-    FN_DRAW_TEXT_FANCY = 0x0001b690u,
     FN_SINGLE_PLAYER_MENU = 0x000491a8u,
     FN_HIGHSCORE_UI = 0x0004c09cu,
     FN_SND_PLAY_SFX = 0x0004eb6cu,
@@ -38,11 +34,10 @@ enum {
 };
 enum { SFX_MENU_SELECTION_2 = 109, SFX_VOLUME = 8000 };
 enum { SCORE_TEXT_SIZE = 128, MIPS_REG_A0 = 4, MIPS_REG_SP = 29, MIPS_REG_RA = 31 };
-/* Layout in the 320x256 PAL menu space: labels left, values right-aligned. */
-enum { TEXT_TOP_Y = 162, TEXT_LINE_STEP = 20, TEXT_ALIGN_LEFT = 0 };
-enum { LABEL_X = 112, VALUE_RIGHT_X = 228, CURSOR_X = 80 };
-/* Pale blue tint for the small font, so labels match the glass digits. */
-enum { GLASS_R = 96, GLASS_G = 116, GLASS_B = 128, GLASS_DIM_SHIFT = 1 };
+/* Layout in the 320x256 PAL menu space, centred like the game's menus. */
+enum { TEXT_CENTER_X = 160, TEXT_TOP_Y = 162, TEXT_LINE_STEP = 20, TEXT_ALIGN_CENTER = 1 };
+/* Pale blue tint instead of plain white; unselected rows at half brightness. */
+enum { TINT_R = 96, TINT_G = 116, TINT_B = 128, TINT_DIM_SHIFT = 1 };
 
 static LsState g_state;
 static int g_strict_armed;
@@ -67,47 +62,30 @@ static void set_text_params(struct CPUState* cpu, int x, int y, int r, int g, in
     psx_mod_write_word(sp - frame + 16, (uint32_t)g);
     psx_mod_write_word(sp - frame + 20, (uint32_t)b);
     psx_mod_call_guest(cpu, FN_SET_TEXT_PARAMS, cpu->gpr[MIPS_REG_RA], (uint32_t)x, (uint32_t)y,
-                       TEXT_ALIGN_LEFT, (uint32_t)r);
+                       TEXT_ALIGN_CENTER, (uint32_t)r);
     cpu->gpr[MIPS_REG_SP] = sp;
 }
 
-static void write_score_text(const char* text) {
+static void draw_line(struct CPUState* cpu, int line, int selected, const char* text) {
+    const int dim = selected ? 0 : TINT_DIM_SHIFT;
+    set_text_params(cpu, TEXT_CENTER_X, TEXT_TOP_Y + line * TEXT_LINE_STEP, TINT_R >> dim,
+                    TINT_G >> dim, TINT_B >> dim);
     for (uint32_t i = 0; i < SCORE_TEXT_SIZE; ++i) {
         psx_mod_write_byte(VAR_SCORE_TEXT + i, (uint8_t)text[i]);
         if (!text[i]) break;
     }
-}
-
-static int line_y(int line) { return TEXT_TOP_Y + line * TEXT_LINE_STEP; }
-
-static void draw_label(struct CPUState* cpu, int line, int selected, const char* text) {
-    const int dim = selected ? 0 : GLASS_DIM_SHIFT;
-    set_text_params(cpu, LABEL_X, line_y(line), GLASS_R >> dim, GLASS_G >> dim, GLASS_B >> dim);
-    write_score_text(text);
     psx_mod_call_guest(cpu, FN_DRAW_TEXT_CRAPPY, cpu->gpr[MIPS_REG_RA], VAR_SCORE_TEXT, 0, 0, 0);
 }
 
-/* The game's glass font is digits only ('+' renders as a different glyph on PAL); x is the right edge. */
-static void draw_value(struct CPUState* cpu, int line, int value) {
-    char text[16];
-    snprintf(text, sizeof text, "%d", value);
-    write_score_text(text);
-    psx_mod_call_guest(cpu, FN_DRAW_TEXT_FANCY, cpu->gpr[MIPS_REG_RA], VAR_SCORE_TEXT,
-                       VALUE_RIGHT_X, (uint32_t)line_y(line), 0);
-}
-
 static void draw_submenu(struct CPUState* cpu) {
-    const uint32_t ra = cpu->gpr[MIPS_REG_RA];
-    /* Digit and cursor brightness fade with bigGuiSpriteFade; other menus may leave a tint. */
-    psx_mod_call_guest(cpu, FN_SET_BIG_GUI_SPRITE_VISIBLE, ra, 0, 0, 0, 0);
-    psx_mod_call_guest(cpu, FN_SET_FANCY_TEXT_COLOR, ra, 0, 0, 0, 0);
-    psx_mod_call_guest(cpu, FN_DRAW_MENU_CURSOR, ra, CURSOR_X, (uint32_t)line_y(g_state.cursor), 0, 0);
-    /* DrawTextCrappyFont only emits a line when it reaches a newline. */
-    draw_label(cpu, LS_ITEM_START, g_state.cursor == LS_ITEM_START, "START\n");
-    draw_label(cpu, LS_ITEM_WORLD, g_state.cursor == LS_ITEM_WORLD, "WORLD\n");
-    draw_label(cpu, LS_ITEM_LEVEL, g_state.cursor == LS_ITEM_LEVEL, "LEVEL\n");
-    draw_value(cpu, LS_ITEM_WORLD, g_state.world + 1);
-    draw_value(cpu, LS_ITEM_LEVEL, g_state.level + 1);
+    char line[32];
+    /* DrawTextCrappyFont only emits a line when it reaches a newline;
+     * '<' and '>' are pad-button glyphs in this font, hence - and +. */
+    draw_line(cpu, LS_ITEM_START, g_state.cursor == LS_ITEM_START, "START\n");
+    snprintf(line, sizeof line, "WORLD  - %d +\n", g_state.world + 1);
+    draw_line(cpu, LS_ITEM_WORLD, g_state.cursor == LS_ITEM_WORLD, line);
+    snprintf(line, sizeof line, "LEVEL  - %d +\n", g_state.level + 1);
+    draw_line(cpu, LS_ITEM_LEVEL, g_state.cursor == LS_ITEM_LEVEL, line);
 }
 
 /* Run the original menu body with Cross still pressed on Arcade, so the game's

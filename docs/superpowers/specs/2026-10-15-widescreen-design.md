@@ -1,0 +1,61 @@
+# Widescreen mod – design
+
+Status: draft, waiting for the user's review.
+
+## Goal
+Play Kula World in widescreen: the world is shown wider, not stretched, and the window can have any aspect from 4:3 up (16:9, 21:9, ...).
+No ready-made Kula widescreen patch exists (DuckStation database, cheat lists and forums checked on 2026-10-15). psxrecomp's own widescreen support does most of the work.
+
+## User decisions (2026-10-15)
+- New launcher mod "Widescreen" (`kula.widescreen`), group "Graphics", **on by default**, can be switched off.
+- **Fit to window**: the view follows the window's aspect, never narrower than 4:3, with no upper limit.
+- **HUD in the wide corners**: the key on the left and the fruits on the right move to the outer edges.
+
+## What the spike showed (local branch `spike/widescreen`, Linux, 16:9)
+- A trusted plugin that calls `psx_mod_set_fixed_display_aspect(16, 9)` plus `[widescreen] gte_game_mode = true` engages native-wide.
+  - Without `gte_game_mode` the runtime keeps presenting 4:3: Kula has no sprite-tag helper.
+- World, ball, title, menu text and HUD keep correct proportions. The menu runs over a 3D level, so it goes wide too, and that looks right.
+- **Sky gaps:** sky tiles are missing at the new left and right edges (jagged borders).
+- **HUD:** it stays at its 4:3 position.
+- `auto_screen_x` finds no site. Its pattern is `sltiu …,0x140` with an NTSC height of `0xE0`. Kula is PAL and compares registers instead.
+
+## Why the edges are culled
+- The game rejects screen points against the RAM variables `screenOffsetX` (0x800A2E80, 320) and `screenOffsetY` (0x800A2E84, 256), with an unsigned test: `andi x, sxy, 0xffff; sltu at, x, a1; beq at, zero, outside`. That rejects both x < 0 and x >= 320.
+- Users of the bound (EU addresses):
+  - **Culling:** `ProcessAndRenderParticles`, `DrawLensFlares`, `SubdivideLevelGeometryPolys`, `DrawLasers`, `RenderDispList`, `RenderBonusBackgroundPart1`, `RenderNonSpecialBackground` (sky), `RenderStarfield`, `RenderLevelGeometryQuads`.
+  - **Setup only:** `SetupDisplay`, `InitScreenFadePolys`.
+
+## Architecture
+- **Plugin** `mods/src/kula_widescreen.c`, activation callback:
+  - `psx_mod_set_fixed_display_aspect(16, 9)`, which shapes the first window.
+  - `psx_mod_set_adaptive_display_aspect(0, 0)`, which makes the view follow the window from 4:3 with no cap.
+- **Manifest** `mods/preloaded/packages/kula.widescreen/1.0.0/manifest.toml`: feature `widescreen`, group "Graphics", `default_enabled = true`.
+- **`game.toml`** `[widescreen]` (all of it is inert while the mod is off, i.e. at 4:3):
+  - `gte_game_mode = true` (runtime only)
+  - `nw_hud_corners = true` (runtime only)
+  - `[widescreen.cull] branch_keep_sites`: the x-reject branches (`beq at, zero, …` right after the `sltu` against the x bound) in the culling functions above. While widened, they are not taken, so geometry in the revealed bands is drawn and the GPU clips at the wide surface. The y tests stay untouched.
+  - This needs `task generate`. A listed address that does not hold the expected instruction is a hard build error, which guards against wrong sites.
+- **CMake:** add the plugin to `target_sources`, like the level select mod.
+
+Site discovery is a small script (`tools/find_ws_cull_sites.py`). It scans the EXE for the `andi …,0xffff` / `sltu at, x, <reg loaded from screenOffsetX>` / `beq at, zero` shape and prints the branch addresses. Its output is checked by hand against each function before it goes into `game.toml`. The script reads the user's own EXE, so no game bytes are committed, only addresses.
+
+## Out of scope
+- 60 fps (parked), HD textures.
+- Changing the game's own 4:3 2D screens: the warning screen, FMV and memory card screens keep the framework's 4:3 pillarbox.
+
+## Risks
+- **Unclear branch targets:** a kept branch may lead into a clip/subdivide path instead of a plain reject. If so, an object in the band can look wrong instead of missing. Check each function with screenshots in the band.
+- **Cost:** more primitives at wide aspects (sky tiles, particles). Measure fps on the Mac.
+- **Very wide windows** (21:9 and up): the sky or level may simply end, because the game never authored coverage there. In that case cap the aspect in the plugin (fallback `psx_mod_set_adaptive_display_aspect(21, 9)`).
+- **Licence:** only addresses and names are facts from the decomp. The release checklist covers asking dezgeg.
+
+## Testing
+- **Linux (Xvfb), `build-dev`, OpenBIOS:**
+  - Screenshots at 16:9 and 21:9 of the menu, the demo and several worlds (sky and edge bands while turning).
+  - A/B against the spike state, to confirm the gaps are gone.
+  - `gpu_state.ws` shows `game_mode = 1`, `present_native_43 = 0`.
+- **Regression:**
+  - mod off → 4:3, `smoke_boot.py` reaches `demo_gameplay_reached`
+  - `check_level_select.py` → `level_select_ok`
+  - `task test`
+- **Mac:** launcher toggle, window resizing (fit to window), fps at 16:9 and 21:9, HUD corners, warning screen and FMV in 4:3, a longer play test.

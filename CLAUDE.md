@@ -169,7 +169,10 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Die Grafik muss selbst erstellt sein.
      - Kürzer wird der Screen nur durch schnelleres Laden. Mac-Messung der eingebauten Mods (OpenBIOS, Zeit bis Menü / Warnscreen):
        - Baseline: 12,1 s / ca. 7 s, Frame 775
-       - `psx.enhancement.cd-speed` 4x: 8,2 s / ca. 5 s, Frame 576, Musik und Memcard sauber. **Kandidat für den Projekt-Default.**
+       - `psx.enhancement.cd-speed` 4x: 8,2 s / ca. 5 s, Frame 576, Musik und Memcard sauber.
+         - Ab Branch `feat/fast-boot` per Override in `mods/preloaded/packages/psx.enhancement.cd-speed/1.0.0/manifest.toml` standardmäßig an (`default_enabled = true`), im Launcher abschaltbar.
+         - Linux: Menü bei Frame 512 statt 713, Demo identisch (Timer-Endwert 3603).
+         - Das Override ist eine Kopie des Framework-Manifests. Bei Framework-Updates abgleichen.
        - `psx.enhancement.fast-loading` (laut Manifest deprecated): spart nur Wall-Clock, keine Guest-Frames. Zusammen mit CD Speed skippt die XA-Musik.
        - CD Speed Instant: Start 8x langsamer, danach `DISPATCH FATAL: misaligned target 0x00810081`. Upstream führt divisor 4x/instant als „proven unsafe“ (`ENHANCEMENTS.md`, MMX6), deshalb nie verwenden.
        - Offen vor einem Default: Ladezeiten bei Levelwechseln und ein längerer Spieltest mit 4x.
@@ -187,6 +190,8 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 
 ## macOS
 Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Auf dem Mac wird das private Remote geklont.
+- Rolle des Macs: reine Teststation für alles, was unter Linux ohne Display/GPU nicht geht (echte fps, Audio, Launcher-UI, Sichtprüfungen).
+  - Der Nutzer sitzt nur für Beobachtungen am Mac (Stoppuhr, Gehör, Eingaben). Alles Messbare automatisiert die Mac-Session über den Debug-Server.
 - Testablauf mit der Mac-Session (Claude Code über Remote Control, Name per `ListAgents`):
   - Linux pusht einen Branch und schickt per `SendMessage` den Branch-Namen plus Testauftrag.
   - Der Mac holt den Branch (`git fetch && git checkout <branch>`), baut und testet. Er pusht nicht und committet nicht.

@@ -1,6 +1,6 @@
 # Widescreen mod – design
 
-Status: draft, waiting for the user's review.
+Status: approved 2026-10-15 (cap 2:1), implemented on `feat/widescreen-mod`; Linux verified, Mac pending.
 
 ## Goal
 Play Kula World in widescreen: the world is shown wider, not stretched, and the window can have any aspect from 4:3 up (16:9, 21:9, ...).

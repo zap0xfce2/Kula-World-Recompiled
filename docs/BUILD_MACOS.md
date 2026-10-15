@@ -72,6 +72,7 @@ macOS 27.0.1 (26A434), Apple M1 Pro (10 cores), cmake 4.4.4, Apple clang 21.0.0,
 | Boot with LLE BIOS (`PSX_BIOS_HLE=0`) | ok, real BIOS intro, demo about 10 s later than with HLE |
 | OpenBIOS (no retail dump) | ok: launcher picks it when no BIOS is chosen; demo, 50.0 fps, XA/SFX, memory card (retail save loads and re-saves) |
 | OpenBIOS-only build (`-DPSXRECOMP_BIOS_STEMS=OpenBIOS`) | ok, no SCPH1001 sources linked |
+| CD Speed 4x as project default (override in `mods/preloaded`) | on out of the box, toggle persists; warning screen ~5 s; 10 min play incl. world change and memory card clean |
 | Load mods (OpenBIOS, time to menu) | baseline 12.1 s; `cd-speed` 4x 8.2 s, clean; `fast-loading` + `cd-speed` makes XA skip; `cd-speed` instant crashes (dispatch fatal) |
 | Ending FMV | not tested, needs the level select mod |
 

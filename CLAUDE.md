@@ -170,8 +170,10 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Kürzer wird der Screen nur durch schnelleres Laden. Mac-Messung der eingebauten Mods (OpenBIOS, Zeit bis Menü / Warnscreen):
        - Baseline: 12,1 s / ca. 7 s, Frame 775
        - `psx.enhancement.cd-speed` 4x: 8,2 s / ca. 5 s, Frame 576, Musik und Memcard sauber.
-         - Ab Branch `feat/fast-boot` per Override in `mods/preloaded/packages/psx.enhancement.cd-speed/1.0.0/manifest.toml` standardmäßig an (`default_enabled = true`), im Launcher abschaltbar.
+         - Per Override in `mods/preloaded/packages/psx.enhancement.cd-speed/1.0.0/manifest.toml` standardmäßig an (`default_enabled = true`), im Launcher abschaltbar.
          - Linux: Menü bei Frame 512 statt 713, Demo identisch (Timer-Endwert 3603).
+         - Mac (2026-10-15): Launcher zeigt den Mod ohne Zutun an, die Wahl bleibt gespeichert. Warnscreen ca. 5 s.
+           10 min Spiel mit Weltwechsel, Memory Card und Smoke sauber, 0 FATAL.
          - Das Override ist eine Kopie des Framework-Manifests. Bei Framework-Updates abgleichen.
        - `psx.enhancement.fast-loading` (laut Manifest deprecated): spart nur Wall-Clock, keine Guest-Frames. Zusammen mit CD Speed skippt die XA-Musik.
        - CD Speed Instant: Start 8x langsamer, danach `DISPATCH FATAL: misaligned target 0x00810081`. Upstream führt divisor 4x/instant als „proven unsafe“ (`ENHANCEMENTS.md`, MMX6), deshalb nie verwenden.

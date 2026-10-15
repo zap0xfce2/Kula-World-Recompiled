@@ -18,7 +18,9 @@ MENU_TIMER = 4950
 CHEATED_ADDR = 0x800A4E0C
 PRESS_FRAMES = 4
 SETTLE_S = 0.6
-LOAD_WAIT_S = 20.0
+LOAD_WAIT_S = 120.0  # a world change loads slowly under llvmpipe
+LOAD_NEW_WORLD_ADDR = 0x800A2EAC
+TICK_WAIT_S = 15.0
 MENU_WAIT_S = 120.0
 
 
@@ -58,8 +60,28 @@ def select_and_start(
     press(conn, PAD_CROSS)
 
 
+def wait_for_load(conn: DebugConnection) -> None:
+    """The mod only requests the load; it is done once the game clears the flag."""
+    deadline = time.monotonic() + LOAD_WAIT_S
+    while conn.read_s32(LOAD_NEW_WORLD_ADDR) != 0:
+        if time.monotonic() > deadline:
+            raise TimeoutError("world load did not finish")
+        time.sleep(1.0)
+
+
+def timer_runs(conn: DebugConnection) -> bool:
+    """The timer holds during the level intro, so allow it a while to start."""
+    before = conn.read_s32(WATCHED_S32["levelTimeLeft"])
+    deadline = time.monotonic() + TICK_WAIT_S
+    while time.monotonic() < deadline:
+        time.sleep(1.0)
+        if conn.read_s32(WATCHED_S32["levelTimeLeft"]) < before:
+            return True
+    return False
+
+
 def check_started(conn: DebugConnection, world: int, level: int) -> list[str]:
-    time.sleep(LOAD_WAIT_S)
+    wait_for_load(conn)
     expected = {
         "curWorld": world - 1,
         "curLevel": level - 1,
@@ -71,6 +93,8 @@ def check_started(conn: DebugConnection, world: int, level: int) -> list[str]:
         for name, want in expected.items()
         if conn.read_s32(WATCHED_S32[name]) != want
     ]
+    if not timer_runs(conn):
+        failures.append("levelTimeLeft does not count down")
     want_cheated = 0 if (world, level) == (1, 1) else 1
     if conn.read_s32(CHEATED_ADDR) != want_cheated:
         failures.append(f"cheated: expected {want_cheated}")

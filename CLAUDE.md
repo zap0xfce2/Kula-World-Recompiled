@@ -158,7 +158,13 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - `vsyncCounter` (`0x800A2F64`) ist auf beiden Backends immer 0. Klären, ob die Adresse aus dem Decomp für PAL stimmt.
 6. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
 7. Mods (vor jedem Mod Brainstorming mit dem Nutzer, Vorschlag: mit der Levelauswahl anfangen):
-   - Levelauswahl-Mod (Cheat aus KulaWorldMap `docs/level-format.md`, `cheats.c` im Decomp)
+   - Levelauswahl-Mod `kula.level-select` (Branch `feat/level-select-mod`, Spec und Plan unter `docs/superpowers/`):
+     - „Arcade“ öffnet START / WORLD 1–10 / LEVEL 1–15. Standardmäßig an.
+     - Ein Start ≠ 1/1 setzt `cheated = 1` und macht aus der Highscore-Eingabe die reine Tabelle.
+     - Plugin `mods/src/kula_level_select.c` + reine Logik `mods/src/level_select_logic.c` (C-Test in `task test`).
+     - Hooks über `game.toml [recompiler] mod_function_entry_funcs`, danach `task generate`.
+     - Prüfen: `tools/check_level_select.py --world W --level L` gegen eine frisch gestartete Dev-Runtime.
+     - Gotcha: `DrawTextCrappyFont` zeichnet eine Zeile nur bei `\n`. `<`/`>` sind in dieser Schrift Tasten-Symbole.
    - Widescreen (GTE-Squash + `[widescreen]`). Kamera und Projektion stehen in rocco `SPEC.md`, Cull-Stellen im Decomp-C.
    - 60 FPS: Timer läuft framebasiert mit 50 Hz, die Logik muss entkoppelt werden. Checkliste der Werte pro Frame: rocco `SPEC.md`.
    - Wobble-Fix
@@ -170,7 +176,8 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Kürzer wird der Screen nur durch schnelleres Laden. Mac-Messung der eingebauten Mods (OpenBIOS, Zeit bis Menü / Warnscreen):
        - Baseline: 12,1 s / ca. 7 s, Frame 775
        - `psx.enhancement.cd-speed` 4x: 8,2 s / ca. 5 s, Frame 576, Musik und Memcard sauber.
-         - Per Override in `mods/preloaded/packages/psx.enhancement.cd-speed/1.0.0/manifest.toml` standardmäßig an (`default_enabled = true`), im Launcher abschaltbar.
+         - **4x hängt aber einen Weltwechsel, der nicht bei Level 1 startet** (Levelauswahl, Load Game an Speicherpunkten): Der Level wird nie initialisiert, Bild schwarz, Timer steht. 1x und 2x laden korrekt (W3/L3, W3/L5, W9/L12). Default deshalb **2x**.
+         - Per Override in `mods/preloaded/packages/psx.enhancement.cd-speed/1.0.0/manifest.toml` standardmäßig an (`default_enabled = true`, Multiplikator 2), im Launcher abschaltbar.
          - Linux: Menü bei Frame 512 statt 713, Demo identisch (Timer-Endwert 3603).
          - Mac (2026-10-15): Launcher zeigt den Mod ohne Zutun an, die Wahl bleibt gespeichert. Warnscreen ca. 5 s.
            10 min Spiel mit Weltwechsel, Memory Card und Smoke sauber, 0 FATAL.

@@ -140,7 +140,11 @@ static int on_highscore_ui(struct CPUState* cpu, uint32_t address) {
     return 0;
 }
 
-static void on_vblank(void) { ls_on_vblank(&g_state); }
+static void on_vblank(void) {
+    const int was_open = g_state.open;
+    ls_on_vblank(&g_state);
+    if (was_open && !g_state.open) psx_mod_counter_add("kula.level-select.closed_unseen", 1);
+}
 
 static void on_activate(void) {
     ls_reset(&g_state);

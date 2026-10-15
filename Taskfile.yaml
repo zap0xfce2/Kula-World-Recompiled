@@ -94,5 +94,5 @@ tasks:
   lint:
     desc: ruff and black on project Python
     cmds:
-      - ruff check tools/smoke_boot.py tests
-      - black --check tools/smoke_boot.py tests
+      - ruff check tools/smoke_boot.py tools/check_level_select.py tests
+      - black --check tools/smoke_boot.py tools/check_level_select.py tests

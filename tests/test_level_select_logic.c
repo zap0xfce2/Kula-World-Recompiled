@@ -67,6 +67,22 @@ static void test_triangle_closes(void) {
     assert(!s.open);
 }
 
+static void test_triangle_returns_back(void) {
+    LsState s = opened();
+    assert(ls_menu_input(&s, LS_PAD_TRIANGLE) == LS_ACT_BACK);
+}
+
+static void test_circle_closes(void) {
+    LsState s = opened();
+    ls_menu_input(&s, LS_PAD_CIRCLE);
+    assert(!s.open);
+}
+
+static void test_circle_returns_back(void) {
+    LsState s = opened();
+    assert(ls_menu_input(&s, LS_PAD_CIRCLE) == LS_ACT_BACK);
+}
+
 static void test_default_start_not_cheated(void) {
     LsState s = opened();
     assert(!ls_is_cheated_start(&s));
@@ -124,6 +140,9 @@ int main(void) {
     test_cross_on_start_confirms();
     test_cross_on_world_does_not_confirm();
     test_triangle_closes();
+    test_triangle_returns_back();
+    test_circle_closes();
+    test_circle_returns_back();
     test_default_start_not_cheated();
     test_level_change_is_cheated();
     test_skip_reload_when_same_world();

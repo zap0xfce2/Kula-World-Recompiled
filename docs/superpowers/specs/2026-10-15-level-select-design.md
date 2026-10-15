@@ -16,8 +16,9 @@ Side benefit: late levels and the ending FMV become testable.
       LEVEL   < 1 >    1-15, left/right, wraps
   ```
   - Cross on START starts the arcade game at the chosen world and level.
-  - Triangle goes back to the one-player menu.
+  - Triangle or Circle goes back to the one-player menu (Circle only in this submenu; the original menus keep Triangle).
   - Up and down move the cursor; every move plays the game's menu sound.
+- Look (user request after the first test): the game's animated menu cursor, values in the game's glass digit font, labels in the small font tinted pale blue. The game has no glass alphabet (menu words are pre-rendered images) and its PAL glass `+` is a different glyph, so the values are digits only.
 - All 10 worlds × 15 levels are selectable at once.
 - START with 1/1 behaves exactly like the original arcade start.
 - Any other start counts as cheated:
@@ -55,7 +56,8 @@ How the original behaves:
 
 Text drawing:
 - Letters (A-Z, 0-9): `SetTextParams(x, y, align, r, g, b)` followed by `DrawTextCrappyFont(str)`.
-- Digits only: `DrawTextFancyFont(str, x, y)`.
+- Digits only: `DrawTextFancyFont(str, x, y)`, right-aligned (`x` is the right edge); brightness follows `bigGuiSpriteFade` (`SetBigGuiSpriteVisible`), tint via `SetFancyTextColor`.
+- Menu cursor: `DrawMenuCursorSprite(x, y)`.
 - Menu panels: `DrawWidgets(menuId, cursor)`.
 
 Ordering detail: `HighScoreUi(1)` runs at game over regardless of `cheated` (main.c:838).

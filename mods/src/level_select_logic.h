@@ -6,7 +6,7 @@
 enum { LS_WORLD_COUNT = 10, LS_LEVEL_COUNT = 15 };
 /* Pad bits as the game stores them in controllerButtons (active-high). */
 enum { LS_PAD_U = 0x0010, LS_PAD_R = 0x0020, LS_PAD_D = 0x0040, LS_PAD_L = 0x0080,
-       LS_PAD_TRIANGLE = 0x1000, LS_PAD_CROSS = 0x4000 };
+       LS_PAD_TRIANGLE = 0x1000, LS_PAD_CIRCLE = 0x2000, LS_PAD_CROSS = 0x4000 };
 
 typedef enum { LS_ITEM_START, LS_ITEM_WORLD, LS_ITEM_LEVEL, LS_ITEM_COUNT } LsItem;
 typedef enum { LS_ACT_NONE, LS_ACT_MOVE, LS_ACT_BACK, LS_ACT_CONFIRM } LsAction;

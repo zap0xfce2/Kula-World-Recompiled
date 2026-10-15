@@ -24,7 +24,7 @@ static void step_value(LsState* s, int delta) {
 }
 
 LsAction ls_menu_input(LsState* s, uint32_t pressed) {
-    if (pressed & LS_PAD_TRIANGLE) {
+    if (pressed & (LS_PAD_TRIANGLE | LS_PAD_CIRCLE)) {
         s->open = 0;
         return LS_ACT_BACK;
     }

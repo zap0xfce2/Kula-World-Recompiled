@@ -165,6 +165,8 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Hooks über `game.toml [recompiler] mod_function_entry_funcs`, danach `task generate`.
      - Prüfen: `tools/check_level_select.py --world W --level L` gegen eine frisch gestartete Dev-Runtime.
      - Gotcha: `DrawTextCrappyFont` zeichnet eine Zeile nur bei `\n`. `<`/`>` sind in dieser Schrift Tasten-Symbole.
+     - Optik: Original-Menü-Cursor (`DrawMenuCursorSprite`), Werte in der Glas-Ziffernschrift (`DrawTextFancyFont`, rechtsbündig), Wörter in der kleinen Schrift hellblau getönt. Kreis und Dreieck gehen zurück (Kreis nur im Untermenü).
+     - Gotcha: Ein Glas-Alphabet gibt es nicht, Menüwörter sind fertige Bilder (`DrawWidgets`). Das Glas-`+` erscheint in PAL als anderes Zeichen, deshalb nur Ziffern.
    - Widescreen (GTE-Squash + `[widescreen]`). Kamera und Projektion stehen in rocco `SPEC.md`, Cull-Stellen im Decomp-C.
    - 60 FPS: Timer läuft framebasiert mit 50 Hz, die Logik muss entkoppelt werden. Checkliste der Werte pro Frame: rocco `SPEC.md`.
    - Wobble-Fix

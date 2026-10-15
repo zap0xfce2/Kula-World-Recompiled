@@ -180,7 +180,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Danach `task generate`.
      - `DoSubdivide` bekommt die Grenze im Register `a3` vom Aufrufer, deshalb startet das Skript dort mit vorbelegtem Register.
      - Partikel (`ProcessAndRenderParticles`) haben nur „behalten“-Sprünge und bleiben unverändert. Rechts greift für sie die Ladestelle, links können sie verschwinden. Links (negative X) erfassen die Ladestellen nichts. Dort ist nur die letzte Ecke verbreitert, deshalb sind kleine Popper in den Ecken unten/oben links möglich.
-     - Linker Rand (Branch `fix/widescreen-left-edge`): Objekte (Items, Schlüssel) sowie Himmel- und Bonus-Hintergrundkacheln haben vor den Polygon-Ketten einen Kugeltest `x + r < Breite + 2r` (vorzeichenlos) gegen eine aus der Breite abgeleitete Grenze (`add t8, t1, r`).
+     - Linker Rand (in `main` seit 2026-10-15): Objekte (Items, Schlüssel) sowie Himmel- und Bonus-Hintergrundkacheln haben vor den Polygon-Ketten einen Kugeltest `x + r < Breite + 2r` (vorzeichenlos) gegen eine aus der Breite abgeleitete Grenze (`add t8, t1, r`).
        - Rechts reicht die Ladestelle, links verwarf der Test alles bei x < −r. Repro: W1/L1, rechts antippen, zwei Felder vor, der Schlüssel verschwand bei x ≈ −12.
        - Das Suchskript erfasst abgeleitete Grenzen (`add rd, bound, x`) und findet so 3 weitere Sites: 0x540B4 Items, 0x55C30 Bonus-Hintergrund, 0x565E8 Himmel.
      - Offen, Himmelskeil nach Fenster-Aufziehen im Level: Lädt man bei 16:9 und zieht dann auf 2:1, bleibt oben rechts ein schwarzer Keil, bis sich die Kamera dreht.

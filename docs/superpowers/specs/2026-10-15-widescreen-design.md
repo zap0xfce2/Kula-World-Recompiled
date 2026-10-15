@@ -74,3 +74,9 @@ Site discovery is a small script (`tools/find_ws_cull_sites.py`). It scans the E
   - `check_level_select.py` → `level_select_ok`
   - `task test`
 - **Mac:** launcher toggle, window resizing (fit to window), fps at 16:9 and 21:9, HUD corners, warning screen and FMV in 4:3, a longer play test.
+
+## Mac verification (2026-10-15, `f94720b`)
+- 2:1 in worlds 1-10 (level 1, turning series): no gaps or shards at the edges, lasers reach the edge, items are drawn in the band, the front edge reaches the right edge, 50 fps, 0 FATAL.
+- Above 2:1 (8:3): sky gaps in worlds 2, 3, 6 and 7. **The 2:1 cap stays.** Going wider needs the skybox generation widened.
+- Open: the user saw platforms and items disappear at the corners (no repro yet; the left-band keep chains are the prime suspect).
+

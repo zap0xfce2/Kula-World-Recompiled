@@ -34,7 +34,10 @@ tasks:
         {{.PYTHON}} psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root .
         --disc {{.DISC}} --bios {{.BIOS}} --no-toolchain-download
       # generate --bios leaves out the emitter stamp, CMake would report the BIOS as STALE
-      - cd psxrecomp && PSXRECOMP_BIOS_BUILD=../build-recompiler bash tools/regen_bios.sh --config bios/SCPH1001.toml
+      # Point it at task emitters' tree when that exists, else let it probe psxrecomp/recompiler/build*
+      - >-
+        cd psxrecomp && if [ -f ../build-recompiler/CMakeCache.txt ]; then export PSXRECOMP_BIOS_BUILD=../build-recompiler; fi;
+        bash tools/regen_bios.sh --config bios/SCPH1001.toml
 
   build:
     desc: Release build without debug server (build-release/)

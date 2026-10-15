@@ -1,0 +1,22 @@
+format_version = 7
+id = "kula.level-select"
+version = "1.0.0"
+name = "Level Select"
+author = "Kula World Recompiled"
+description = "Arcade opens a submenu to start at any world and level."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "SCES-01000"
+
+[[feature]]
+id = "level-select"
+name = "Level Select"
+description = "Choosing Arcade opens START / WORLD / LEVEL. Starting anywhere but world 1, level 1 counts as cheated: no save points and no high-score entry."
+group = "Quality of Life"
+default_enabled = true
+
+[[plugin]]
+feature = "level-select"
+id = "kula.level-select"

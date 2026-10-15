@@ -140,9 +140,9 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 4. ~~KUSEG-Smoke-Test: Boot → Titel → Level, A/B gegen psx-beetle~~ (erledigt)
    - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt (`analysis/play-native2/`).
 5. Offene Punkte aus dem Smoke-Test:
-   - Ergebnis upstream melden: Entwurf in `docs/upstream-report-kuseg.md` (KUSEG + 6 Portabilitäts-Befunde für musl und macOS), Posten braucht Freigabe des Nutzers.
-   - Ending-FMV (`XA/FINAL.STR`), Memory Card und XA-Musik testen. Headless gibt es kein Audiogerät, also mit echtem Display/Audio oder per Debug-Server-State prüfen.
-   - Performance auf echter GPU messen. Unter Xvfb/llvmpipe läuft das Spiel nur mit ca. 35 bis 44 statt 50 fps.
+   - ~~Ergebnis upstream melden~~ (erledigt 2026-10-15): RetroPortingToolKit/psxrecomp#671 (KUSEG) und #672 (6 Portabilitäts-Befunde). Quelle: `docs/upstream-report-kuseg.md`.
+   - Auf dem Mac verifiziert: XA-Musik und SFX, Memory Card (`saves/card1.mcd`), LLE-Boot. Offen: Controller (kein Gamepad zur Hand) und Ending-FMV (kommt mit dem Levelauswahl-Mod).
+   - ~~Performance auf echter GPU messen~~ (erledigt): Der Mac schafft 49,5 fps. Die 35 bis 44 fps unter Xvfb/llvmpipe kommen von der Umgebung.
    - `vsyncCounter` (`0x800A2F64`) ist auf beiden Backends immer 0. Klären, ob die Adresse aus dem Decomp für PAL stimmt.
 6. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
 7. Mods (vor jedem Mod Brainstorming mit dem Nutzer, Vorschlag: mit der Levelauswahl anfangen):
@@ -165,6 +165,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. D
   - Ein verwaister `CommandLineTools/usr/include/c++/v1` überdeckt die SDK-Header (`'string' file not found`).
   - `runtime.cmake` sucht `python` vor `python3`, deshalb `-DPSX_PYTHON=$(command -v python3.12)`.
   - Das Default-`python3` ist 3.9, also überall `python3.12`.
+- Der Launcher schreibt bei jedem Start `[controller] multitap_analog` in `game.toml`. Der Wert ist deshalb fest eingetragen, damit kein Diff entsteht.
 - Der Launcher schaltet BIOS-Call-HLE ein (`bios_backend=HLE`). Mit `--no-launcher` gilt der Default LLE. Für A/B gegen Beetle `PSX_BIOS_HLE=0` setzen.
 
 ## Build-Gotchas (Alpine/musl)

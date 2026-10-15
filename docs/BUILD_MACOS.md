@@ -66,8 +66,9 @@ macOS 27.0.1 (26A434), Apple M1 Pro (10 cores), cmake 4.4.4, Apple clang 21.0.0,
 | Frame rate | 49.5 fps over 60 s (50 Hz pacer; 120 Hz and 57 Hz panels), OpenGL 4.1 on Metal |
 | XA music and SFX | ok |
 | Keyboard input | ok |
-| Controller | not tested |
-| Memory card | not tested |
-| Ending FMV | not tested |
+| Controller | not tested (no gamepad at hand) |
+| Memory card | ok, save/quit/load; cards in `saves/card1.mcd`, `card2.mcd` (gitignored) |
+| Boot with LLE BIOS (`PSX_BIOS_HLE=0`) | ok, real BIOS intro, demo about 10 s later than with HLE |
+| Ending FMV | not tested, needs the level select mod |
 
-The launcher run used the BIOS call-HLE tier (`bios_backend=HLE (LLE fallback)`). The Linux runs used `--no-launcher` and therefore LLE (default `bios_hle = false`). For A/B against Beetle, force LLE with `PSX_BIOS_HLE=0`.
+The launcher run used the BIOS call-HLE tier (`bios_backend=HLE (LLE fallback)`). The Linux runs used `--no-launcher` and therefore LLE (default `bios_hle = false`). For A/B against Beetle, force LLE with `PSX_BIOS_HLE=0`; the demo runs identically under both.

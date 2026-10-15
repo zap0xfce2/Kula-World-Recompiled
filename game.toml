@@ -45,6 +45,8 @@ aspect_ratio = "4:3"
 
 [controller]
 default_mode = "digital"
+# Persisted by the recomp-ui launcher on every start; kept here so launches leave no diff
+multitap_analog = true
 
 # Online mount gate: digests + track count + optional TOC fingerprint
 # (see docs/NETPLAY.md).

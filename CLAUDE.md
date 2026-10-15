@@ -170,7 +170,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Optik: alles in der kleinen Schrift, hellblau getönt. START zentriert, WORLD/LEVEL rechtsbündig an gemeinsamer Kante, `-`, Zahl und `+` je in fester Spalte, die gewählte Zeile hell, leichter Schatten. Kreis und Dreieck gehen zurück (Kreis nur im Untermenü).
      - Gotcha Schatten: Die kleine Schrift blendet additiv (`fontSprites` 0x800AA47C, abr 1), eine dunkle Kopie bleibt unsichtbar. Der Mod schaltet für den Schatten-Durchgang die Glyph-Vorlagen kurz auf subtraktiv (abr 2) und stellt sie danach wieder her.
      - Verworfen: Glas-Ziffern (`DrawTextFancyFont`) plus Menü-Kugel, Schriftmix gefiel nicht. Ein Glas-Alphabet gibt es nicht, Menüwörter sind fertige Bilder, und das Glas-`+` ist in PAL ein anderes Zeichen.
-   - Widescreen-Mod `kula.widescreen` (Branch `feat/widescreen-mod`, Spec und Plan unter `docs/superpowers/`):
+   - Widescreen-Mod `kula.widescreen` (in `main` seit 2026-10-15, Spec und Plan unter `docs/superpowers/`):
      - Standardmäßig an. Startfenster 16:9, danach folgt die Ansicht dem Fenster von 4:3 bis maximal 2:1 (darüber Balken). Der Himmel ist nur für ca. 1,7x 4:3-Breite generiert.
      - Plugin `mods/src/kula_widescreen.c` (`psx_mod_set_fixed_display_aspect` + `..._adaptive_...(2, 1)`), dazu `game.toml [widescreen] gte_game_mode = true` (ohne das bleibt die Ausgabe 4:3). `[video] aspect_ratio` allein wirkt nicht mehr.
      - Rand-Culling: Das Spiel verwirft alles außerhalb 0…320 gegen `screenOffsetX` (0x800A2E80, `sltu` + `beq`). Die 54 `beq` stehen als `[widescreen.cull] branch_keep_sites` in der `game.toml` und springen bei Breitbild nicht. Dazu kommen 10 Ladestellen von `screenOffsetX` als `clip_edge_x_load_sites`, die bei Breitbild 320 + Rand liefern. Damit nehmen auch die „behalten“-Ketten (Ecken 1–3) das rechte Band an. Ohne sie fehlte nahe Geometrie unten rechts (Vorderkante, Mac-Befund).
@@ -178,6 +178,9 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Danach `task generate`.
      - `DoSubdivide` bekommt die Grenze im Register `a3` vom Aufrufer, deshalb startet das Skript dort mit vorbelegtem Register.
      - Partikel (`ProcessAndRenderParticles`) haben nur „behalten“-Sprünge und bleiben unverändert. Rechts greift für sie die Ladestelle, links können sie verschwinden. Links (negative X) erfassen die Ladestellen nichts. Dort ist nur die letzte Ecke verbreitert, deshalb sind kleine Popper in den Ecken unten/oben links möglich.
+     - **Offen, linker Rand (Entscheidung des Nutzers: später):** Items und Plattformen verschwinden links am alten 4:3-Rand, sobald alle Ecken bei x < 0 liegen. Repro: W1/L1, rechts antippen, zwei Felder vor, der Schlüssel verschwindet bei 2:1 bei x ≈ −12.
+       - Ursache: Die Prüfung ist vorzeichenlos, und eine linke Grenze, die man wie rechts über eine Ladestelle anheben könnte, gibt es nicht. Teils sammelt das Spiel die Ergebnisse in einer Bitmaske (wie `DoSubdivide`).
+       - Wege: per Debug-Server die verwerfende Stelle des Schlüssels finden, oder die Gast-Koordinaten im Breitbild um den Rand nach rechts verschieben (Framework-Thema, ggf. upstream).
      - Offen: HUD in die Ecken. `nw_hud_corners` verschiebt auch Himmels-Sprites und erzeugt dunkle Streifen.
      - `gpu_state.ws.configured/active = 0` ist bei native-wide normal (Felder des Squash-Pfads). Aussagekräftig sind `mode 2`, `x_margin` (16:9: 53, 2:1: 80), `game_mode`, `present_native_43`.
      - Das Suchskript braucht Python 3.10+ (`int | None`), auf dem Mac also `PYTHON=python3.12`.

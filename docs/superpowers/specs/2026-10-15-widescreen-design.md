@@ -1,6 +1,6 @@
 # Widescreen mod – design
 
-Status: approved 2026-10-15 (cap 2:1), implemented on `feat/widescreen-mod`; Linux verified, Mac pending.
+Status: approved 2026-10-15 (cap 2:1), implemented and merged; Linux and Mac verified. Left edge open (see below).
 
 ## Goal
 Play Kula World in widescreen: the world is shown wider, not stretched, and the window can have any aspect from 4:3 up (16:9, 21:9, ...).
@@ -78,5 +78,5 @@ Site discovery is a small script (`tools/find_ws_cull_sites.py`). It scans the E
 ## Mac verification (2026-10-15, `f94720b`)
 - 2:1 in worlds 1-10 (level 1, turning series): no gaps or shards at the edges, lasers reach the edge, items are drawn in the band, the front edge reaches the right edge, 50 fps, 0 FATAL.
 - Above 2:1 (8:3): sky gaps in worlds 2, 3, 6 and 7. **The 2:1 cap stays.** Going wider needs the skybox generation widened.
-- Open: the user saw platforms and items disappear at the corners (no repro yet; the left-band keep chains are the prime suspect).
+- Open, deferred by the user: items vanish at the old 4:3 edge on the left (repro: W1/L1, tap right, roll two fields; the key disappears at x ≈ -12 at 2:1). The right side is fixed by the load sites. The left has no loaded bound, because the unsigned test rejects negative x.
 

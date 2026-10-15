@@ -11,9 +11,9 @@ brew install cmake ninja pkg-config sdl3 python@3.12
 Python 3.11+ is required. The default `python3` (CLT) is 3.9, so the steps below call `python3.12` explicitly.
 
 ## Get the repo
-There is no remote yet; the repo travels as a git bundle. Submodules come from GitHub.
+The repo is private for now; you need read access. Submodules come from their public GitHub repos.
 ```sh
-git clone kula.bundle kula-world-recompiled
+git clone https://github.com/zap0xfce2/kula-world-recompiled.git
 cd kula-world-recompiled
 git submodule update --init --recursive
 ```

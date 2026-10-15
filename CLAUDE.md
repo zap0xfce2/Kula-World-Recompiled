@@ -17,7 +17,7 @@ keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 `disc/`, `bios/`, `generated/` (bis zur Release-Entscheidung) gehören in `.gitignore`.
 
 ## Stand (2026-10-15)
-Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (lokal, kein Remote). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
+Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, vorerst privat). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
 - Submodule: `psxrecomp` @ `f9c287f5`, `recomp-ui` @ `41c88ff` (Snapshot in `framework_pins.txt`)
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
 - BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
@@ -143,6 +143,11 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - ~~Ergebnis upstream melden~~ (erledigt 2026-10-15): RetroPortingToolKit/psxrecomp#671 (KUSEG) und #672 (6 Portabilitäts-Befunde). Quelle: `docs/upstream-report-kuseg.md`.
    - Auf dem Mac verifiziert: XA-Musik und SFX, Memory Card (`saves/card1.mcd`), LLE-Boot. Offen: Controller (kein Gamepad zur Hand) und Ending-FMV (kommt mit dem Levelauswahl-Mod).
    - ~~Performance auf echter GPU messen~~ (erledigt): Der Mac schafft 49,5 fps. Die 35 bis 44 fps unter Xvfb/llvmpipe kommen von der Umgebung.
+   - OpenBIOS (MIT, vom Framework mitgeliefert und mitgelinkt) funktioniert, getestet am 2026-10-15:
+     - Start: `--bios build-dev/bios/openbios.bin`
+     - `smoke_boot.py`: `demo_gameplay_reached`, gleiche Demo (Welt 0, Level 4) und gleicher Timer-Endwert 3603 wie mit SCPH1001
+     - Log: `bios_backend=LLE`, `bios_boot=HLE (shell skipped)`, `image=OPENBIOS`. Call-HLE ist auf OpenBIOS nicht verfügbar.
+     - Offen: Memory Card, interaktives Spielen und A/B gegen Beetle mit OpenBIOS. Danach könnte ein Release ohne Sony-BIOS auskommen, die Disc braucht es weiterhin.
    - `vsyncCounter` (`0x800A2F64`) ist auf beiden Backends immer 0. Klären, ob die Adresse aus dem Decomp für PAL stimmt.
 6. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
 7. Mods (vor jedem Mod Brainstorming mit dem Nutzer, Vorschlag: mit der Levelauswahl anfangen):
@@ -156,10 +161,19 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - ~~Branch `test/kuseg-boot-smoke` nach `main` mergen~~ (erledigt)
    - ~~`.serena/` committen oder ignorieren~~ (erledigt, gitignored)
    - ~~`Taskfile.yaml` anlegen~~ (erledigt, siehe Build-Gotchas)
-9. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher bei dezgeg Lizenz und PC-Port-Pläne erfragen.
+9. Veröffentlichung (Repo auf public stellen). Vorher:
+   - mit dezgeg klären, ob Symbolnamen und Variablenadressen aus dem Decomp (z. B. in `tools/smoke_boot.py`) öffentlich stehen dürfen
+   - Entscheidung zu `generated/` (aktuell gitignored)
+   - README auf Projektstand bringen
+   - erneuter Check der ganzen Historie auf Spieldaten, Secrets und persönliche Pfade
+10. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher bei dezgeg Lizenz und PC-Port-Pläne erfragen.
 
 ## macOS
-Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Das Repo kommt als `git bundle` auf den Mac, weil es noch kein Remote gibt.
+Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Auf dem Mac wird das private Remote geklont.
+- Testablauf mit der Mac-Session (Claude Code über Remote Control, Name per `ListAgents`):
+  - Linux pusht einen Branch und schickt per `SendMessage` den Branch-Namen plus Testauftrag.
+  - Der Mac holt den Branch (`git fetch && git checkout <branch>`), baut und testet. Er pusht nicht und committet nicht.
+  - Das Ergebnis kommt als Cross-Session-Nachricht zurück, die Doku pflegt nur Linux.
 - 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Offen: Controller, Memory Card, Ending-FMV.
 - Gotchas:
   - Ein verwaister `CommandLineTools/usr/include/c++/v1` überdeckt die SDK-Header (`'string' file not found`).

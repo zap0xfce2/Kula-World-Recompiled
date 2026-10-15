@@ -167,7 +167,12 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Der Hinweis ist der Ladebildschirm des Erststarts (`LoadWarningTim` → `LoadImage` 640x256), ohne feste Wartezeit.
      - Über HD-Texture-Packs geht es nicht, weil `vram-write-` nicht unterstützt wird. Machbar per Mod-Plugin oder Patch (`docs/MOD_PACKAGES.md`).
      - Die Grafik muss selbst erstellt sein.
-     - Kürzer wird der Screen nur durch schnelleres Laden (eingebaute Mods Fast Loading/CD Speed, Mac-Messung läuft).
+     - Kürzer wird der Screen nur durch schnelleres Laden. Mac-Messung der eingebauten Mods (OpenBIOS, Zeit bis Menü / Warnscreen):
+       - Baseline: 12,1 s / ca. 7 s, Frame 775
+       - `psx.enhancement.cd-speed` 4x: 8,2 s / ca. 5 s, Frame 576, Musik und Memcard sauber. **Kandidat für den Projekt-Default.**
+       - `psx.enhancement.fast-loading` (laut Manifest deprecated): spart nur Wall-Clock, keine Guest-Frames. Zusammen mit CD Speed skippt die XA-Musik.
+       - CD Speed Instant: Start 8x langsamer, danach `DISPATCH FATAL: misaligned target 0x00810081`. Upstream führt divisor 4x/instant als „proven unsafe“ (`ENHANCEMENTS.md`, MMX6), deshalb nie verwenden.
+       - Offen vor einem Default: Ladezeiten bei Levelwechseln und ein längerer Spieltest mit 4x.
    - Muster für Mods und Patches: `hercules-recompiled/port/mods`, `port/patches`
 8. Repo-Pflege (Entscheidung des Nutzers):
    - ~~Branch `test/kuseg-boot-smoke` nach `main` mergen~~ (erledigt)
@@ -188,8 +193,9 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. A
   - Das Ergebnis kommt als Cross-Session-Nachricht zurück, die Doku pflegt nur Linux.
   - Mac-Repo: `origin` per SSH, `.claude/settings.local.json` erlaubt lesende Git-Befehle plus fetch/checkout/switch/submodule update.
   - ccache ist auf dem Mac aktiv, Folgebuilds dauern Sekunden.
+  - Mods ohne Launcher reproduzierbar schalten: `<build>/mods/state.toml` (`[[package]] id`, `[[feature]] package_id/id/enabled`, Optionen unter `[feature.values]`). `--no-launcher` übernimmt die Datei.
   - Der Mac hat kein Sony-BIOS mehr und läuft nur mit OpenBIOS.
-- 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Offen: Controller, Memory Card, Ending-FMV.
+- 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Memory Card unter Retail und OpenBIOS ok. Offen: Controller, Ending-FMV.
 - Gotchas:
   - Ein verwaister `CommandLineTools/usr/include/c++/v1` überdeckt die SDK-Header (`'string' file not found`).
   - `runtime.cmake` sucht `python` vor `python3`, deshalb `-DPSX_PYTHON=$(command -v python3.12)`.

@@ -34,8 +34,11 @@ enum {
 };
 enum { SFX_MENU_SELECTION_2 = 109, SFX_VOLUME = 8000 };
 enum { SCORE_TEXT_SIZE = 128, MIPS_REG_A0 = 4, MIPS_REG_SP = 29, MIPS_REG_RA = 31 };
-/* Layout in the 320x256 PAL menu space, centred like the game's menus. */
-enum { TEXT_CENTER_X = 160, TEXT_TOP_Y = 162, TEXT_LINE_STEP = 20, TEXT_ALIGN_CENTER = 1 };
+/* Layout in the 320x256 PAL menu space: START centred, labels right-aligned
+ * to a shared edge and values centred in a fixed column, so - n + line up. */
+enum { TEXT_CENTER_X = 160, TEXT_TOP_Y = 162, TEXT_LINE_STEP = 20 };
+enum { LABEL_RIGHT_X = 158, VALUE_CENTER_X = 194 };
+enum { TEXT_ALIGN_CENTER = 1, TEXT_ALIGN_RIGHT = 2 };
 /* Pale blue tint instead of plain white; unselected rows at half brightness. */
 enum { TINT_R = 96, TINT_G = 116, TINT_B = 128, TINT_DIM_SHIFT = 1 };
 
@@ -55,21 +58,21 @@ static void play_menu_sfx(struct CPUState* cpu) {
 
 /* SetTextParams takes six ints; o32 passes args 5 and 6 at sp+16/sp+20 of the
  * caller, so reserve a fresh frame below the live stack for them. */
-static void set_text_params(struct CPUState* cpu, int x, int y, int r, int g, int b) {
+static void set_text_params(struct CPUState* cpu, int x, int y, int align, int r, int g, int b) {
     const uint32_t frame = 24;
     const uint32_t sp = cpu->gpr[MIPS_REG_SP];
     cpu->gpr[MIPS_REG_SP] = sp - frame;
     psx_mod_write_word(sp - frame + 16, (uint32_t)g);
     psx_mod_write_word(sp - frame + 20, (uint32_t)b);
     psx_mod_call_guest(cpu, FN_SET_TEXT_PARAMS, cpu->gpr[MIPS_REG_RA], (uint32_t)x, (uint32_t)y,
-                       TEXT_ALIGN_CENTER, (uint32_t)r);
+                       (uint32_t)align, (uint32_t)r);
     cpu->gpr[MIPS_REG_SP] = sp;
 }
 
-static void draw_line(struct CPUState* cpu, int line, int selected, const char* text) {
+static void draw_text(struct CPUState* cpu, int x, int line, int align, int selected, const char* text) {
     const int dim = selected ? 0 : TINT_DIM_SHIFT;
-    set_text_params(cpu, TEXT_CENTER_X, TEXT_TOP_Y + line * TEXT_LINE_STEP, TINT_R >> dim,
-                    TINT_G >> dim, TINT_B >> dim);
+    set_text_params(cpu, x, TEXT_TOP_Y + line * TEXT_LINE_STEP, align, TINT_R >> dim, TINT_G >> dim,
+                    TINT_B >> dim);
     for (uint32_t i = 0; i < SCORE_TEXT_SIZE; ++i) {
         psx_mod_write_byte(VAR_SCORE_TEXT + i, (uint8_t)text[i]);
         if (!text[i]) break;
@@ -77,15 +80,21 @@ static void draw_line(struct CPUState* cpu, int line, int selected, const char* 
     psx_mod_call_guest(cpu, FN_DRAW_TEXT_CRAPPY, cpu->gpr[MIPS_REG_RA], VAR_SCORE_TEXT, 0, 0, 0);
 }
 
+static void draw_setting(struct CPUState* cpu, int item, const char* label, int value) {
+    char text[16];
+    const int selected = g_state.cursor == item;
+    snprintf(text, sizeof text, "- %d +\n", value);
+    draw_text(cpu, LABEL_RIGHT_X, item, TEXT_ALIGN_RIGHT, selected, label);
+    draw_text(cpu, VALUE_CENTER_X, item, TEXT_ALIGN_CENTER, selected, text);
+}
+
 static void draw_submenu(struct CPUState* cpu) {
-    char line[32];
     /* DrawTextCrappyFont only emits a line when it reaches a newline;
      * '<' and '>' are pad-button glyphs in this font, hence - and +. */
-    draw_line(cpu, LS_ITEM_START, g_state.cursor == LS_ITEM_START, "START\n");
-    snprintf(line, sizeof line, "WORLD  - %d +\n", g_state.world + 1);
-    draw_line(cpu, LS_ITEM_WORLD, g_state.cursor == LS_ITEM_WORLD, line);
-    snprintf(line, sizeof line, "LEVEL  - %d +\n", g_state.level + 1);
-    draw_line(cpu, LS_ITEM_LEVEL, g_state.cursor == LS_ITEM_LEVEL, line);
+    draw_text(cpu, TEXT_CENTER_X, LS_ITEM_START, TEXT_ALIGN_CENTER, g_state.cursor == LS_ITEM_START,
+              "START\n");
+    draw_setting(cpu, LS_ITEM_WORLD, "WORLD\n", g_state.world + 1);
+    draw_setting(cpu, LS_ITEM_LEVEL, "LEVEL\n", g_state.level + 1);
 }
 
 /* Run the original menu body with Cross still pressed on Arcade, so the game's

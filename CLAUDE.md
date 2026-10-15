@@ -165,7 +165,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Hooks über `game.toml [recompiler] mod_function_entry_funcs`, danach `task generate`.
      - Prüfen: `tools/check_level_select.py --world W --level L` gegen eine frisch gestartete Dev-Runtime.
      - Gotcha: `DrawTextCrappyFont` zeichnet eine Zeile nur bei `\n`. `<`/`>` sind in dieser Schrift Tasten-Symbole.
-     - Optik: alles in der kleinen Schrift, zentriert, hellblau getönt, die gewählte Zeile hell. Kreis und Dreieck gehen zurück (Kreis nur im Untermenü).
+     - Optik: alles in der kleinen Schrift, hellblau getönt. START zentriert, WORLD/LEVEL rechtsbündig an gemeinsamer Kante, `- n +` in fester Spalte untereinander, die gewählte Zeile hell. Kreis und Dreieck gehen zurück (Kreis nur im Untermenü).
      - Verworfen: Glas-Ziffern (`DrawTextFancyFont`) plus Menü-Kugel, Schriftmix gefiel nicht. Ein Glas-Alphabet gibt es nicht, Menüwörter sind fertige Bilder, und das Glas-`+` ist in PAL ein anderes Zeichen.
    - Widescreen (GTE-Squash + `[widescreen]`). Kamera und Projektion stehen in rocco `SPEC.md`, Cull-Stellen im Decomp-C.
    - 60 FPS: Timer läuft framebasiert mit 50 Hz, die Logik muss entkoppelt werden. Checkliste der Werte pro Frame: rocco `SPEC.md`.

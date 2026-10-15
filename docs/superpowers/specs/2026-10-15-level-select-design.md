@@ -18,7 +18,7 @@ Side benefit: late levels and the ending FMV become testable.
   - Cross on START starts the arcade game at the chosen world and level.
   - Triangle or Circle goes back to the one-player menu (Circle only in this submenu; the original menus keep Triangle).
   - Up and down move the cursor; every move plays the game's menu sound.
-- Look: all text in the game's small font, centred, tinted pale blue instead of white; the selected row at full brightness, the others at half. A glass-digit/menu-cursor variant was tried and rejected by the user (mixed fonts).
+- Look: all text in the game's small font, tinted pale blue instead of white; START centred, WORLD/LEVEL right-aligned to a shared edge with `- n +` centred in a fixed column so the values line up; the selected row at full brightness, the others at half. A glass-digit/menu-cursor variant was tried and rejected by the user (mixed fonts).
 - All 10 worlds × 15 levels are selectable at once.
 - START with 1/1 behaves exactly like the original arcade start.
 - Any other start counts as cheated:

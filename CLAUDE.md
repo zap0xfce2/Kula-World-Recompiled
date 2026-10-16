@@ -309,6 +309,8 @@ cmake --build build-dev
   - Screenshot pro Frame per Polling auf `frame` (ca. 50/s).
   - Himmelslücken-Scanner: 60-px-Band am Rand, obere 128 Zeilen, Graustufe < 4 %.
   - Auf dem Mac geht nur der Debug-Server-Screenshot, `screencapture` hat keine Berechtigung. Das Mac-Startfenster ist 853x480 (`x_margin` 54).
+  - Ein Tiling-WM (yabai) hebelt `window_size` aus, `x_margin` bleibt dann bei jeder Fenstergröße gleich. Für Tests yabai ausschalten.
+  - Im Menü (640 px Breite) ist `x_margin` doppelt so groß wie im Level (16:9: 107, 2:1: 160).
 - Lange Testsitzungen: `task freeze-timer` (`tools/freeze_timer.py`) hält den Level-Timer per `write_ram` voll (nur Dev-Build). `SDL_AUDIO_DRIVER=dummy` schaltet den Ton ab, das Spiel läuft normal weiter.
 - `write_ram` schreibt ein Byte pro Anfrage.
 - Debug-Protokoll: eine Anfrage pro TCP-Verbindung. Frame-Nummer: Runtime über `frame`, Beetle im `ping`.

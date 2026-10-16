@@ -246,7 +246,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 9. Veröffentlichung (Repo auf public stellen). Vorher:
    - mit dezgeg klären, ob Symbolnamen und Variablenadressen aus dem Decomp (z. B. in `tools/smoke_boot.py`) öffentlich stehen dürfen
    - Entscheidung zu `generated/` (aktuell gitignored)
-   - README auf Projektstand bringen
+   - ~~README auf Projektstand bringen~~ (erledigt 2026-10-16, mit Screenshots unter `docs/images/`, Roadmap und KI-Hinweis)
    - erneuter Check der ganzen Historie auf Spieldaten, Secrets und persönliche Pfade
 10. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher bei dezgeg Lizenz und PC-Port-Pläne erfragen.
 

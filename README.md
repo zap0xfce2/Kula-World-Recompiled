@@ -1,104 +1,116 @@
 # Kula World Recompiled
 
-<!-- retcomm-readme-metrics -->
-[![GitHub downloads (all assets, all releases)](https://img.shields.io/github/downloads/RetroPortingToolKit/Kula-World-Recompiled/total)](https://github.com/RetroPortingToolKit/Kula-World-Recompiled/releases)
-[![GitHub downloads (latest release)](https://img.shields.io/github/downloads/RetroPortingToolKit/Kula-World-Recompiled/latest/total)](https://github.com/RetroPortingToolKit/Kula-World-Recompiled/releases/latest)
-[![GitHub release](https://img.shields.io/github/v/release/RetroPortingToolKit/Kula-World-Recompiled)](https://github.com/RetroPortingToolKit/Kula-World-Recompiled/releases/latest)
-<!-- /retcomm-readme-metrics -->
+A static recompilation of **Kula World** (PAL, SCES-01000) to native Linux and
+macOS, built on [psxrecomp](https://github.com/RetroPortingToolKit/psxrecomp)
+and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui).
 
-Static recompilation of **Kula World** built on
-[psxrecomp](https://github.com/mstan/psxrecomp) and
-[recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui).
-
-_Add a short pitch in catalog_identity.json / README._
+The game's MIPS code is translated to C ahead of time and compiled into a
+native executable. No emulator core runs the game. Bring your own disc image;
+a retail BIOS is optional because the bundled, MIT-licensed OpenBIOS works.
 
 | | |
 |---|---|
-| Players | 2 |
-| Region | PAL |
-| Publisher | — |
-| Year | — |
+| ![Title screen at 16:9](docs/images/title.png) | ![Level select submenu](docs/images/level-select.png) |
+| ![World 3 in widescreen, HUD in the corners](docs/images/widescreen-world3.png) | ![World 9 in widescreen](docs/images/widescreen-world9.png) |
 
-Scaffolded with the New Project Layout. See
-`psxrecomp/docs/GAME_PROJECT_SETUP.md` for the full flow.
+> [!IMPORTANT]
+> This project was created with significant AI assistance, and that is intentional and transparent.
+>
+> Parts of the codebase were generated with AI, but the application was not shipped as unchecked output. The generated code was reviewed, corrected, and validated by a human developer before being kept in the project.
 
-<!-- retcomm-readme-launcher -->
-## Retro Launcher
+## Status
 
-You can run this title **standalone** (download the release zip, point it at
-your disc, play), or manage installs, updates, and disc/BIOS wiring with
-**[Retro Launcher](https://github.com/RetroPortingToolKit/Retro-Launcher)** —
-the Retro Compilation Manager hub for self-compiling recomps.
+Playable; all ten worlds start and run (checked via Level Select, the ending FMV is not verified yet). The recompiled game reaches the same
+attract demo, with the same timer values, as the psx-beetle reference
+emulator.
 
-[Downloads](https://github.com/RetroPortingToolKit/Retro-Launcher/releases) ·
-[Full README & features](https://github.com/RetroPortingToolKit/Retro-Launcher#readme)
+| Platform | State |
+|---|---|
+| Linux (x86-64, tested on Alpine/musl) | builds and runs; tested headless under Xvfb |
+| macOS (Apple Silicon, M1 Pro) | builds and runs at 50 fps; audio, memory card, launcher, keyboard verified |
+| Windows | not tested |
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/RetroPortingToolKit/Retro-Launcher/main/docs/screenshots/hub-and-game-launcher.png" alt="Retro hub with a background build, next to a title’s recomp-ui launcher" width="720">
-</p>
+## Mods
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/RetroPortingToolKit/Retro-Launcher/main/docs/screenshots/queue-and-background-build.png" alt="Background cmake build with titles queued" width="720">
-</p>
+All mods are switchable in the launcher (recomp-ui).
 
-Retro checks for updates, installs the prebuilt release zips, and automates
-BIOS/ROM/save plumbing so you are not stuck repeating each game’s first run by hand.
-<!-- /retcomm-readme-launcher -->
+| Mod | Default | What it does |
+|---|---|---|
+| Level Select | on | "Arcade" opens START / WORLD / LEVEL. Starting anywhere but world 1, level 1 counts as cheated: no save points, no high-score entry. |
+| Widescreen | on | Shows the world wider than 4:3 and follows the window up to 2:1. The key and fruit HUD move to the wide corners. Menus, the warning screen and memory-card screens stay 4:3. |
+| CD Speed | on, 2x | Shorter loading. 4x is faster but hangs world changes that start past level 1, so the project default is 2x. |
+
+## Requirements
+
+- Your own copy of the game: Kula World PAL, SCES-01000, as `disc/SCES01000.BIN` + `disc/SCES01000.CUE`
+  (single data track, MD5 `0f675dc230354f8c3b835bf34841bd20`).
+- Optional: a SCPH-1001 BIOS dump as `bios/SCPH1001.BIN`. Without it the bundled OpenBIOS is used.
+- [go-task](https://taskfile.dev), CMake, Ninja, a C/C++ compiler, SDL3, Python 3.11+.
+  - Alpine: `apk add cmake samurai pkgconf sdl3-dev mesa-dev linux-headers libucontext-dev`
+  - macOS: see [docs/BUILD_MACOS.md](docs/BUILD_MACOS.md)
+
+## Build
+
+```sh
+git clone --recursive https://github.com/zap0xfce2/kula-world-recompiled.git
+cd kula-world-recompiled
+# put your disc (and optionally the BIOS) in place, then:
+task all        # emitters, generate, dev build with debug server
+task build      # release build
+task run        # start with the launcher
+```
+
+Until [psxrecomp#676](https://github.com/RetroPortingToolKit/psxrecomp/pull/676)
+is merged, the `psxrecomp` submodule points at a fork that carries it.
+
+`task --list` shows everything else (tests, lint, smoke test, the psx-beetle
+oracle, a level-timer freeze for long test sessions). On macOS pass
+`PYTHON=python3.12`. The first generate takes a few minutes; the recompiled C
+in `generated/` is not committed.
+
+## Roadmap
+
+Done:
+- [x] Disc and EXE analysis; the EXE runs from KUSEG, which upstream had never tested
+- [x] Recompilation boots BIOS → title → menu → 3D level, with 0 dispatch misses
+- [x] A/B against psx-beetle: identical attract demo and timer values
+- [x] macOS build verified (50 fps, audio, memory card, launcher)
+- [x] OpenBIOS: plays without a retail BIOS, including memory card saves
+- [x] Level Select mod
+- [x] Widescreen mod up to 2:1, HUD in the corners, edge culling widened on both sides
+- [x] CD Speed default (2x)
+- [x] Upstream reports: KUSEG result and portability findings for musl/macOS
+- [x] Upstream PR: widescreen band form for register compares ([psxrecomp#676](https://github.com/RetroPortingToolKit/psxrecomp/pull/676))
+
+Next:
+- [ ] Widescreen: sky refresh after resizing the window inside a level
+- [ ] Widescreen wider than 2:1 (needs a wider generated sky)
+- [ ] 60 fps (parked: psxrecomp's frame generation does not see Kula's flips yet; an NTSC-style patch would change the gameplay timing)
+- [ ] Own loading screen instead of the piracy warning shown during the first load
+- [ ] HD textures, wobble fix
+- [ ] Controller test on macOS, ending FMV check
+- [ ] Windows build
+- [ ] Release packaging
+
+## Known issues
+
+- Widening the window inside a level leaves a gap in the sky until the camera turns.
+- Particles can disappear early at the left edge of the widescreen band.
+- CD Speed 4x hangs world changes that start past level 1 (cause unknown, 2x is safe).
 
 ## Legal
 
-You must own the original game. Disc images under `disc/` are gitignored and
-must never be committed. Retail BIOS dumps are not redistributed and no C
-derived from one may be committed; releases run on the bundled MIT OpenBIOS.
+You must own the original game. This repository contains no game data: no
+disc image, no BIOS, no extracted assets, no disassembly with original bytes,
+and no recompiled game C. Addresses and symbol names used by the mods are
+facts about the executable.
 
-`generated/` (the recompiled game C) **is committed**: releases ship the
-compiled game, built by CI from that tree. Regenerate and commit it whenever
-seeds or the framework pin change.
+Kula World is © 1998 Sony Computer Entertainment Europe, developed by Game
+Design Sweden AB. This project is not affiliated with or endorsed by Sony.
 
-Default app icon: `assets/psxrecomp.ico` (and `.png` / `.svg`) — Retro-themed controller mark from `psxrecomp/assets/`. Windows builds embed it via `APP_ICON`.
+## Credits
 
-Optional box art under `launcher_assets/img/` may come from
-[libretro-thumbnails](https://github.com/libretro-thumbnails/libretro-thumbnails)
-(`Named_Boxarts`); see `BOXART_SOURCE.txt` when present.
-
-## Quick start (dev)
-
-```bash
-git submodule update --init --recursive
-./psxrecomp/tools/ci/build_emitters.sh
-python3 psxrecomp/psxrecomp_cli.py generate \
-  --config game.toml --project-root . --disc disc/<your>.cue
-git add generated && git commit -m "Regenerate game C"
-cmake -S . -B build-release -G Ninja -DCMAKE_BUILD_TYPE=Release
-cmake --build build-release --target psx-runtime
-```
-
-Releases: tag `vX.Y.Z` (or run the *Release builds* workflow). CI builds the
-committed `generated/` C on Linux, Windows and macOS and attaches
-`kwr-<version>-<platform>.zip`, the compiled game. Locally:
-`scripts/package_release.sh build-release linux-x64`.
-
-## Symbols
-
-Progressive map: `symbols.toml` → `python3 tools/sync_symbols.py` →
-`psx_symbols.h` (`PSX_FN_*`). See `psxrecomp/docs/SYMBOLS.md`.
-
-## Framework pins
-
-Submodule gitlinks (`psxrecomp`, optional `recomp-ui`, nested `recomp-net`)
-are authoritative. `framework_pins.txt` is an optional scaffold snapshot;
-release CI logs SHAs with `record_pins.sh` but builds whatever the gitlinks
-resolve to. Bump submodules deliberately — do not float on `main`/`master`
-in release CI.
-
-<!-- retcomm-readme-raid -->
----
-
-<p align="center">
-  <sub><b>R.A.I.D. — Retro AI Development</b> · a Discord for AI-assisted retro reverse-engineering, decomp &amp; recomp</sub>
-</p>
-
-<p align="center">
-  <a href="https://discord.gg/Ad9BwSzctP"><img src=".github/raid-discord.png" alt="Join the Retro AI Development (R.A.I.D.) Discord" width="200"></a>
-</p>
-<!-- /retcomm-readme-raid -->
+- [psxrecomp](https://github.com/RetroPortingToolKit/psxrecomp) and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui): the recompiler, runtime and launcher
+- [OpenBIOS](https://github.com/grumpycoders/pcsx-redux) (MIT), bundled with psxrecomp
+- [dezgeg/kula-world-decomp](https://github.com/dezgeg/kula-world-decomp): function boundaries, names and addresses used as reference
+- The Kula World community documentation at [wiki.kula.quest](https://wiki.kula.quest/)

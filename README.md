@@ -1,7 +1,6 @@
 # Kula World Recompiled
 
-A static recompilation of **Kula World** (PAL, SCES-01000) to native Linux and
-macOS, built on [psxrecomp](https://github.com/RetroPortingToolKit/psxrecomp)
+A static recompilation of **Kula World** (PAL, SCES-01000) to native Linux, macOS and Windows (comming soon!), built on [psxrecomp](https://github.com/RetroPortingToolKit/psxrecomp)
 and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui).
 
 The game's MIPS code is translated to C ahead of time and compiled into a
@@ -13,6 +12,7 @@ a retail BIOS is optional because the bundled, MIT-licensed OpenBIOS works.
 | ![Title screen at 16:9](docs/images/title.png) | ![Level select submenu](docs/images/level-select.png) |
 | ![World 3 in widescreen, HUD in the corners](docs/images/widescreen-world3.png) | ![World 9 in widescreen](docs/images/widescreen-world9.png) |
 
+## AI-Assisted Development
 > [!IMPORTANT]
 > This project was created with significant AI assistance, and that is intentional and transparent.
 >

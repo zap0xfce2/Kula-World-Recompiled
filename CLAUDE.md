@@ -9,7 +9,7 @@ Vorlage für Projektstruktur, Mods und Launcher: [hercules-recompiled](https://g
 - Der Nutzer ist Softwareentwickler, IT-Experte und DevOps Engineer. Erkläre keine Grundlagen.
 - Code nicht ausführlich erklären, sondern nach Clean-Code-Prinzip kommentieren.
 - Default-Plattform ist Linux. Editor-Anweisungen immer mit `vi`, nie `nano`.
-- Git-Freigabe (2026-10-15): Solange das Repo privat ist, darf ohne Rückfrage auf `origin` committet und gepusht werden.
+- Git: Das Repo ist seit 2026-10-16 öffentlich. Die frühere Freigabe „ohne Rückfrage committen und pushen“ galt nur, solange es privat war; Commits und Pushes jetzt nur nach Rückfrage.
   - Weiterhin nur mit Freigabe: Force-Push, Historie umschreiben, Sichtbarkeit ändern, Issues/PRs in fremden Repos.
   - Vor jedem Commit `git status` prüfen und sicherstellen, dass keine Spieldaten und keine Secrets dabei sind.
 - Tests laufen standardmäßig unter Linux (Xvfb + Debug-Server). Der Mac macht nur die Endabnahme und was unter Linux nicht geht (echte GPU-fps, Ton, Launcher, Fenster per Maus). Freigabe vom 2026-10-15.
@@ -244,7 +244,8 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - C-Tests: zwei prüfen kombinierte Bedingungen, ein Test für `LS_ACT_MOVE` fehlt.
      - Kommentar zur Annahme hinter `LS_MAX_MISSED_VBLANKS` fehlt.
 9. Veröffentlichung (Repo auf public stellen). Vorher:
-   - mit dezgeg klären, ob Symbolnamen und Variablenadressen aus dem Decomp (z. B. in `tools/smoke_boot.py`) öffentlich stehen dürfen
+   - ~~Repo öffentlich schalten~~ (erledigt 2026-10-16, https://github.com/zap0xfce2/Kula-World-Recompiled)
+   - mit dezgeg klären, ob Symbolnamen und Variablenadressen aus dem Decomp öffentlich stehen dürfen und ob ein eigener PC-Port geplant ist: angefragt in dezgeg/kula-world-decomp#1 (2026-10-16), Antwort offen
    - Entscheidung zu `generated/` (aktuell gitignored)
    - ~~README auf Projektstand bringen~~ (erledigt 2026-10-16, mit Screenshots unter `docs/images/`, Roadmap und KI-Hinweis)
    - erneuter Check der ganzen Historie auf Spieldaten, Secrets und persönliche Pfade

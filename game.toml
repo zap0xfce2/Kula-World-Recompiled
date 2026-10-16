@@ -63,26 +63,29 @@ required_disc_fp = "8cc747a424dd4cb8fb0959db3dcb51ea51c1807d5c30cf5199201972ff5a
 gte_game_mode = true
 
 [widescreen.cull]
-# Screen-X reject branches (beq after the compare against screenOffsetX),
-# found by tools/find_ws_cull_sites.py. Not taken while widened. The loads of
-# screenOffsetX return 320 + margin, so the keep chains accept the right band.
+# Screen-X culls against screenOffsetX, found by tools/find_ws_cull_sites.py:
+# unsigned compares become the band -m <= x < W (screen_x_sites, sltu form),
+# signed rejects are not taken (branch_keep_sites), and the loads of
+# screenOffsetX return 320 + margin. All inert at 4:3.
+screen_x_sites = [
+    # DoSubdivide
+    "0x00050A98", "0x00050B84", "0x00050BA0", "0x00050BBC", "0x00050C00", "0x00050C3C", "0x00050D30", "0x00050E6C", "0x00050FB0", "0x00051460",
+    # DrawLasers
+    "0x0005287C", "0x00052890", "0x000528A4", "0x000528B8",
+    # RenderDispList
+    "0x000540B0", "0x0005431C", "0x00054330", "0x00054344", "0x00054418", "0x0005442C", "0x00054440", "0x00054454", "0x000545E8", "0x000545FC", "0x00054610", "0x000546E4", "0x000546F8", "0x0005470C", "0x00054720", "0x00054AA8", "0x00054ABC", "0x00054AD0", "0x00054BD0", "0x00054BE4", "0x00054BF8", "0x00054C0C", "0x00054DF8", "0x00054E0C", "0x00054E20", "0x00054F20", "0x00054F34", "0x00054F48", "0x00054F5C", "0x0005537C", "0x00055390", "0x000553A4", "0x000554A4", "0x000554B8", "0x000554CC", "0x000554E0", "0x000556E8", "0x000556FC", "0x00055710", "0x00055810", "0x00055824", "0x00055838", "0x0005584C",
+    # RenderBonusBackgroundPart1
+    "0x00055C2C", "0x00055E40", "0x00055E54", "0x00055E68", "0x00055EBC", "0x00055ED0", "0x00055F14", "0x00055F60", "0x00056010", "0x00056024", "0x00056038", "0x0005608C", "0x000560A0", "0x000560E4", "0x00056130",
+    # RenderNonSpecialBackground
+    "0x000565E4", "0x000567FC", "0x00056810", "0x00056824", "0x00056878", "0x0005688C", "0x000568D0", "0x0005691C", "0x000569C4", "0x000569D8", "0x000569EC", "0x00056A40", "0x00056A54", "0x00056A98", "0x00056AE4",
+    # RenderStarfield
+    "0x0005721C", "0x0005725C", "0x00057294",
+    # RenderLevelGeometryQuads
+    "0x00057638", "0x0005764C", "0x00057660", "0x00057684",
+]
 branch_keep_sites = [
     # DrawLensFlares
     "0x00015DDC", "0x0001614C",
-    # DoSubdivide
-    "0x00050A9C", "0x00050B88", "0x00050BA4", "0x00050BC0", "0x00050C04", "0x00050FB4", "0x00051464",
-    # DrawLasers
-    "0x000528BC",
-    # RenderDispList
-    "0x000540B4", "0x00054348", "0x00054458", "0x00054614", "0x00054724", "0x00054AD4", "0x00054C10", "0x00054E24", "0x00054F60", "0x000553A8", "0x000554E4", "0x00055714", "0x00055850",
-    # RenderBonusBackgroundPart1
-    "0x00055C30", "0x00055E44", "0x00055E58", "0x00055E6C", "0x00055EC0", "0x00055ED4", "0x00055F18", "0x00055F64", "0x00056014", "0x00056028", "0x0005603C", "0x00056090", "0x000560A4", "0x000560E8", "0x00056134",
-    # RenderNonSpecialBackground
-    "0x000565E8", "0x00056800", "0x00056814", "0x00056828", "0x0005687C", "0x00056890", "0x000568D4", "0x00056920", "0x000569C8", "0x000569DC", "0x000569F0", "0x00056A44", "0x00056A58", "0x00056A9C", "0x00056AE8",
-    # RenderStarfield
-    "0x00057220", "0x00057260", "0x00057298",
-    # RenderLevelGeometryQuads
-    "0x00057688",
 ]
 clip_edge_x_load_sites = [
     # ProcessAndRenderParticles

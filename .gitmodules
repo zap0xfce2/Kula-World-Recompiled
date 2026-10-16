@@ -1,7 +1,7 @@
 [submodule "psxrecomp"]
 	path = psxrecomp
-	url = https://github.com/mstan/psxrecomp.git
-	branch = master
+	url = https://github.com/zap0xfce2/psxrecomp.git
+	branch = kula/ws-screen-x-sltu-band
 [submodule "recomp-ui"]
 	path = recomp-ui
 	url = https://github.com/RetroPortingToolKit/recomp-ui.git

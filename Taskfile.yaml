@@ -28,16 +28,22 @@ tasks:
 
   generate:
     desc: Recompile BIOS and game into generated/ and write the BIOS stamp
+    vars:
+      # Without a retail dump only the bundled OpenBIOS is regenerated
+      BIOS_ARG:
+        sh: '[ -f {{.BIOS}} ] && echo "--bios {{.BIOS}}" || true'
+      BIOS_TOML:
+        sh: '[ -f {{.BIOS}} ] && echo SCPH1001.toml || echo OpenBIOS.toml'
     cmds:
       # Without --no-toolchain-download the CLI fetches a glibc toolchain and edits shell rc files
       - >-
         {{.PYTHON}} psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root .
-        --disc {{.DISC}} --bios {{.BIOS}} --no-toolchain-download
+        --disc {{.DISC}} {{.BIOS_ARG}} --no-toolchain-download
       # generate --bios leaves out the emitter stamp, CMake would report the BIOS as STALE
       # Point it at task emitters' tree when that exists, else let it probe psxrecomp/recompiler/build*
       - >-
         cd psxrecomp && if [ -f ../build-recompiler/CMakeCache.txt ]; then export PSXRECOMP_BIOS_BUILD=../build-recompiler; fi;
-        bash tools/regen_bios.sh --config bios/SCPH1001.toml
+        bash tools/regen_bios.sh --config bios/{{.BIOS_TOML}}
 
   build:
     desc: Release build without debug server (build-release/)

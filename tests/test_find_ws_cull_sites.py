@@ -28,6 +28,10 @@ def sltu(rd: int, rs: int, rt: int) -> int:
     return (rs << 21) | (rt << 16) | (rd << 11) | 0x2B
 
 
+def slt(rd: int, rs: int, rt: int) -> int:
+    return (rs << 21) | (rt << 16) | (rd << 11) | 0x2A
+
+
 def beq(rs: int, rt: int, off: int) -> int:
     return (0x04 << 26) | (rs << 21) | (rt << 16) | (off & 0xFFFF)
 
@@ -46,17 +50,25 @@ BOUND_DIRECT = [lui(A0, 0x000A), lw(A0, A0, 0x2E80)]
 
 
 class FindRejectBranchesTest(unittest.TestCase):
-    def test_beq_after_x_compare_is_reject_site(self) -> None:
+    def test_sltu_compare_is_band_site(self) -> None:
         words = BOUND_VIA_POINTER + [sltu(AT, V0, A0), beq(AT, ZERO, 8), NOP]
-        self.assertEqual(find_reject_branches(words, BASE).reject, [BASE + 16])
+        self.assertEqual(find_reject_branches(words, BASE).band, [BASE + 12])
+
+    def test_branch_after_band_compare_is_not_reject_site(self) -> None:
+        words = BOUND_VIA_POINTER + [sltu(AT, V0, A0), beq(AT, ZERO, 8), NOP]
+        self.assertEqual(find_reject_branches(words, BASE).reject, [])
 
     def test_direct_load_is_recognised(self) -> None:
         words = BOUND_DIRECT + [sltu(AT, V0, A0), beq(AT, ZERO, 8), NOP]
+        self.assertEqual(find_reject_branches(words, BASE).band, [BASE + 8])
+
+    def test_beq_after_signed_compare_is_reject_site(self) -> None:
+        words = BOUND_DIRECT + [slt(AT, V0, A0), beq(AT, ZERO, 8), NOP]
         self.assertEqual(find_reject_branches(words, BASE).reject, [BASE + 12])
 
-    def test_bne_after_x_compare_is_keep_site(self) -> None:
-        words = BOUND_VIA_POINTER + [sltu(AT, V0, A0), bne(AT, ZERO, 8), NOP]
-        self.assertEqual(find_reject_branches(words, BASE).keep, [BASE + 16])
+    def test_bne_after_signed_compare_is_keep_site(self) -> None:
+        words = BOUND_DIRECT + [slt(AT, V0, A0), bne(AT, ZERO, 8), NOP]
+        self.assertEqual(find_reject_branches(words, BASE).keep, [BASE + 12])
 
     def test_compare_against_y_bound_is_ignored(self) -> None:
         words = [
@@ -65,29 +77,29 @@ class FindRejectBranchesTest(unittest.TestCase):
             sltu(AT, V0, V1),
             beq(AT, ZERO, 8),
         ]
-        self.assertEqual(find_reject_branches(words, BASE), SiteScan([], [], []))
+        self.assertEqual(find_reject_branches(words, BASE), SiteScan())
 
     def test_overwritten_bound_is_forgotten(self) -> None:
         words = BOUND_DIRECT + [addiu(A0, ZERO, 5), sltu(AT, V0, A0), beq(AT, ZERO, 8)]
-        self.assertEqual(find_reject_branches(words, BASE).reject, [])
+        self.assertEqual(find_reject_branches(words, BASE).band, [])
 
-    def test_branch_far_from_compare_is_ignored(self) -> None:
-        words = BOUND_DIRECT + [sltu(AT, V0, A0), NOP, NOP, NOP, beq(AT, ZERO, 8)]
+    def test_branch_far_from_signed_compare_is_ignored(self) -> None:
+        words = BOUND_DIRECT + [slt(AT, V0, A0), NOP, NOP, NOP, beq(AT, ZERO, 8)]
         self.assertEqual(find_reject_branches(words, BASE).reject, [])
 
     def test_bound_load_is_recorded_as_load_site(self) -> None:
         words = BOUND_VIA_POINTER + [sltu(AT, V0, A0), beq(AT, ZERO, 8)]
         self.assertEqual(find_reject_branches(words, BASE).loads, [BASE + 8])
 
-    def test_compare_against_derived_bound_is_reject_site(self) -> None:
+    def test_compare_against_derived_bound_is_band_site(self) -> None:
         # Bounding-sphere test: x + r < W + 2r, with the bound derived by add.
         words = BOUND_DIRECT + [add(V1, A0, 5), sltu(AT, V0, V1), beq(AT, ZERO, 8)]
-        self.assertEqual(find_reject_branches(words, BASE).reject, [BASE + 16])
+        self.assertEqual(find_reject_branches(words, BASE).band, [BASE + 12])
 
     def test_seeded_bound_register_is_recognised(self) -> None:
         words = [sltu(AT, V0, A0), beq(AT, ZERO, 8), NOP]
         scan = find_reject_branches(words, BASE, seed_bound=frozenset({A0}))
-        self.assertEqual(scan.reject, [BASE + 4])
+        self.assertEqual(scan.band, [BASE])
 
 
 class ScanExeTest(unittest.TestCase):

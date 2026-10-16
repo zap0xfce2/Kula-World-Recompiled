@@ -23,7 +23,9 @@ keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 
 ## Stand (2026-10-15)
 Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, vorerst privat). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
-- Submodule: `psxrecomp` @ `f9c287f5`, `recomp-ui` @ `41c88ff` (Snapshot in `framework_pins.txt`)
+- Submodule: `psxrecomp` @ `0edce1d3`, `recomp-ui` @ `41c88ff` (Snapshot in `framework_pins.txt`)
+  - `psxrecomp` kommt seit 2026-10-16 aus dem Fork `zap0xfce2/psxrecomp`, Branch `kula/ws-screen-x-sltu-band`: Upstream-Pin `f9c287f5` plus die `sltu`-Bandform für `screen_x_sites`.
+  - Upstream: Issue RetroPortingToolKit/psxrecomp#675, PR #676 (auf aktuellem `master`). Nach dem Merge `.gitmodules` zurück auf Upstream stellen und neu pinnen.
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
 - BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
 - 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Recompiled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D** (X11-Screenshots in `analysis/smoke-native/`). Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
@@ -187,6 +189,13 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Repro: Mac-Skript, W1/L1, 757 dunkle Pixel im Band x 420–479, y 0–127.
        - Ursache: `RenderNonSpecialBackground` erneuert die Himmelskacheln nur bei Kamerabewegung. Die Ladestelle lieferte beim letzten Erneuern 320 + 53, deshalb fehlen die Kacheln zwischen +53 und +80.
        - Lädt man direkt bei 2:1 oder dreht die Kamera einmal, ist der Keil weg. Die Bodenlücke links (Nutzer) hat vermutlich denselben Mechanismus.
+     - Bodenlücke links (Mac-Live-Aufnahme, 2026-10-16, Branch `fix/widescreen-left-floor`): Am Hieroglyphen-Würfel links der Grube fehlt im linken Band die Vorderfläche bis Spiel-x ≈ 50 (bei 2:1). Rechts tritt das nicht auf, Fenstergröße und Ladezeitpunkt spielen keine Rolle.
+       - Ursache: Die „behalten“-Ketten (Ecken 1–3, `sltu x, W` + `bne`) verwerfen negatives X vorzeichenlos. Rechts deckt das die Ladestelle ab, links fehlt eine untere Grenze.
+       - Lösung: Alle `sltu`-X-Vergleiche (94) stehen als `screen_x_sites` in der `game.toml`. Sie brauchen die `sltu`-Bandform aus dem Fork (`psx_ws_cull_sltu_band`): Im Breitbild gilt `-4·Rand ≤ x < W`, bei 4:3 das Original. Es stehen nur Adressen im Repo.
+       - Verworfen: `[[widescreen.cull.keep]] result = 1`, also „immer sichtbar“. Das behob die Lücke, ließ aber in `RenderLevelGeometryQuads` alle Quads außerhalb des Bildes durch, und das W10-Intro stand ca. 5 s (Pufferüberlauf, per Halbierung auf die 3 Level-Quad-Stellen eingegrenzt). Mit nur einem Rand Reichweite blieb die Lücke, weil große nahe Quads keine Ecke im Band haben.
+       - Die vorzeichenbehafteten Vergleiche (Lens-Flares) laufen weiter über `branch_keep_sites`. Partikel (`slt` + `bne`) bleiben links unverändert.
+       - Repro, deterministisch (direkt bei 2:1 laden, T0 = erster Frame mit `levelTimeLeft` < 4950, `press` 4 Frames): R@100, U@150, U@200, U@250, L@310, U@370+55·i (i = 0..7). Blick wie im Nutzerbild bei rel ≈ 400–410, Pfad bei ≈ 600–650.
+       - Breitenvergleiche zeigen den Fehler nicht, weil er bei jeder Breite im negativen X liegt.
      - HUD in den Ecken: Das Plugin verankert pro VBlank die Pakete von `keySprites` (0x800ADBB4, links) und `fruitSprites` (0x800ADD74, rechts) per `psx_mod_anchor_hud_primitive`. `nw_hud_corners` scheidet aus, weil es auch Himmels-Sprites verschiebt.
        - Gotcha: Das API liest den GP0-Farbbefehl an `primitive + 4`. Bei Kulas zusammengeführtem TSprite (DR_TPAGE + SPRT, 28 Byte) ist deshalb TSprite + 8 zu übergeben, also das SPRT-Tag-Wort.
        - Prüfen: `{"cmd":"ws_tag_stats"}`, `hud.hit` muss steigen.
@@ -262,7 +271,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. A
 - Der Launcher schaltet BIOS-Call-HLE ein (`bios_backend=HLE`). Mit `--no-launcher` gilt der Default LLE. Für A/B gegen Beetle `PSX_BIOS_HLE=0` setzen.
 
 ## Build-Gotchas (Alpine/musl)
-Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task all` erledigt Emitter, Generate und Dev-Build. Die musl-Flags setzt sie automatisch. Weitere Tasks:
+Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task generate` läuft auch ohne Sony-BIOS. Dann regeneriert es nur OpenBIOS (Mac). `task all` erledigt Emitter, Generate und Dev-Build. Die musl-Flags setzt sie automatisch. Weitere Tasks:
 - `run`, `run:dev`, `beetle`: Starten, headless mit `RUNNER="xvfb-run -a"`.
 - `smoke PORT=4380`, `test`, `lint`.
 - Auf dem Mac `PYTHON=python3.12`.
@@ -293,6 +302,12 @@ cmake --build build-dev
 - `tools/smoke_boot.py --port 4370|4380` liest `gameState`, `isDemoMode`, `levelTimeLeft` usw. (Adressen aus dem Decomp) und speichert Screenshots nach `analysis/smoke/`.
 - Ohne Eingabe startet das Spiel nach 2000 Menü-Frames (40 s) den Demo-Modus. „Demo aktiv und Timer läuft runter“ beweist also BIOS → Titel → Menü → 3D-Level.
 - Tests: `python3 -m unittest discover -s tests`.
+- Bewährte Methodik für Eingabe-Repros (Mac-Erfahrung):
+  - Eingaben erst ab T0 + ca. 60 Frames, früher ignoriert das Spiel sie.
+  - `press` mit 4 Frames entspricht genau 90° bzw. 1 Feld, 18 Frames drehen zu weit.
+  - Screenshot pro Frame per Polling auf `frame` (ca. 50/s).
+  - Himmelslücken-Scanner: 60-px-Band am Rand, obere 128 Zeilen, Graustufe < 4 %.
+  - Auf dem Mac geht nur der Debug-Server-Screenshot, `screencapture` hat keine Berechtigung. Das Mac-Startfenster ist 853x480 (`x_margin` 54).
 - Lange Testsitzungen: `task freeze-timer` (`tools/freeze_timer.py`) hält den Level-Timer per `write_ram` voll (nur Dev-Build). `SDL_AUDIO_DRIVER=dummy` schaltet den Ton ab, das Spiel läuft normal weiter.
 - `write_ram` schreibt ein Byte pro Anfrage.
 - Debug-Protokoll: eine Anfrage pro TCP-Verbindung. Frame-Nummer: Runtime über `frame`, Beetle im `ping`.

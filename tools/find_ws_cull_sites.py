@@ -5,6 +5,9 @@ The game rejects screen points with `slt/sltu at, x, W` + `beq at, zero, reject`
 where W was loaded from screenOffsetX (0x800A2E80). Only addresses are printed,
 so nothing of the game's code ends up in the repo.
 Usage: python3 -I tools/find_ws_cull_sites.py disc/SCES_010.00
+
+screen_x_sites (unsigned compares, band -m <= x < W) needs the sltu form of
+psxrecomp's screen_x_sites; signed compares fall back to branch_keep_sites.
 """
 
 import struct
@@ -56,6 +59,8 @@ class SiteScan:
     keep: list[int] = field(default_factory=list)
     # lw of screenOffsetX: widening the loaded bound covers the keep chains too
     loads: list[int] = field(default_factory=list)
+    # sltu x compares: screen_x_sites turn them into the band -m <= x < W
+    band: list[int] = field(default_factory=list)
 
 
 @dataclass
@@ -143,8 +148,12 @@ def find_reject_branches(
         # bound + radius: bounding-sphere tests compare against a derived bound
         if derives_bound and rd:
             regs.bound.add(rd)
-        if op == OP_SPECIAL and fn in (FN_SLT, FN_SLTU) and rt in regs.bound and rd:
-            regs.compare_pc[rd] = pc
+        if op == OP_SPECIAL and rt in regs.bound and rd:
+            if fn == FN_SLTU:
+                scan.band.append(pc)
+            elif fn == FN_SLT:
+                # signed compares have no band form; their branches are listed instead
+                regs.compare_pc[rd] = pc
     return scan
 
 
@@ -176,10 +185,11 @@ def main() -> int:
         print(__doc__, file=sys.stderr)
         return 2
     scans = scan_exe(Path(sys.argv[1]).read_bytes())
+    _print_site_list("screen_x_sites", {n: s.band for n, s in scans.items()})
     _print_site_list("branch_keep_sites", {n: s.reject for n, s in scans.items()})
     _print_site_list("clip_edge_x_load_sites", {n: s.loads for n, s in scans.items()})
     for name, scan in scans.items():
-        if not scan.reject and not scan.loads:
+        if not scan.reject and not scan.loads and not scan.band:
             note = (
                 f"only keep-branches ({len(scan.keep)})"
                 if scan.keep

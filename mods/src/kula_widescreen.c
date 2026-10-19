@@ -5,7 +5,7 @@
  * pickup sparkles. Still screens on the
  * PS-button background (loading, high scores, memory card) fill the side bands
  * with more of that background, and the score table's shade and flying cubes
- * reach into them too. */
+ * reach into them too. The pill's motion trail continues into the bands. */
 #include <stdint.h>
 #include "cpu_state.h"
 #include "mod_plugins.h"
@@ -41,6 +41,18 @@ enum {
     PARTICLE_PRIMS_PER_ENV = 2,
 };
 enum { HUD_EDGE_LEFT = -1, HUD_EDGE_RIGHT = 1 };
+/* Pill trail: TSprite lethargyEffectSprite[2][2], drawn while lethargyMode != 0. */
+enum {
+    FN_DRAW_LETHARGY = 0x00020b30u,
+    VAR_LETHARGY_SPRITES = 0x800a3ee4u,
+    VAR_LETHARGY_MODE = 0x800a52b8u,
+    LETHARGY_SPRITES_PER_ENV = 2,
+    /* POLY_FT4 lethargyEffectPoly[2]: the full-screen flash at pickup and the
+     * fade at the end, hard-wired to 0..displayWidth+1. */
+    VAR_LETHARGY_POLY = 0x800a3e94u,
+    POLY_FT4_X0 = 8, POLY_FT4_X1 = 16, POLY_FT4_X2 = 24, POLY_FT4_X3 = 32,
+    LETHARGY_POLY_RIGHT_PAD = 1,
+};
 
 /* DrawPsxButtonBackground runs only on still screens (loading callback, high
  * scores, memory card); RenderBackground only in the main game loop. */
@@ -138,13 +150,47 @@ static void anchor_hud_particles(void) {
     }
 }
 
-/* The packets are rebuilt every frame, so tag them right after the game did. */
-static int on_process_particles(struct CPUState* cpu, uint32_t address) {
-    if (g_calling_original) return 0;
+/* Runs the hooked function itself; its filter then lets this call through. */
+static void call_original(struct CPUState* cpu, uint32_t address) {
     g_calling_original = 1;
     psx_mod_call_guest(cpu, address, cpu->gpr[MIPS_REG_RA], 0, 0, 0, 0);
     g_calling_original = 0;
+}
+
+/* The packets are rebuilt every frame, so tag them right after the game did. */
+static int on_process_particles(struct CPUState* cpu, uint32_t address) {
+    if (g_calling_original) return 0;
+    call_original(cpu, address);
     anchor_hud_particles();
+    return 1;
+}
+
+/* Rewritten each frame so the flash and fade follow window resizes. */
+static void widen_lethargy_flash(void) {
+    const int margin = psx_mod_widescreen_view_x_margin();
+    const int right = (int)psx_mod_read_word(VAR_DISPLAY_WIDTH) + LETHARGY_POLY_RIGHT_PAD + margin;
+    for (uint32_t env = 0; env < 2; ++env) {
+        const uint32_t poly = VAR_LETHARGY_POLY + env * POLY_FT4_SIZE;
+        psx_mod_write_half(poly + POLY_FT4_X0, (uint16_t)(int16_t)-margin);
+        psx_mod_write_half(poly + POLY_FT4_X2, (uint16_t)(int16_t)-margin);
+        psx_mod_write_half(poly + POLY_FT4_X1, (uint16_t)(int16_t)right);
+        psx_mod_write_half(poly + POLY_FT4_X3, (uint16_t)(int16_t)right);
+    }
+}
+
+/* The pill's trail copies the previous frame through two sprites; native-wide
+ * continues them into the bands from that frame's wide surface. The pickup
+ * flash must cover the bands too: it sets bit 15 that keeps the copies
+ * blending instead of overwriting (darkening) frame after frame. */
+static int on_draw_lethargy(struct CPUState* cpu, uint32_t address) {
+    if (g_calling_original) return 0;
+    call_original(cpu, address);
+    if (!psx_mod_read_word(VAR_LETHARGY_MODE)) return 1;
+    widen_lethargy_flash();
+    const uint32_t env = psx_mod_read_word(VAR_WHICH_DRAW_ENV);
+    for (uint32_t i = 0; i < LETHARGY_SPRITES_PER_ENV; ++i)
+        psx_mod_tag_feedback_rect(VAR_LETHARGY_SPRITES +
+                                  (env * LETHARGY_SPRITES_PER_ENV + i) * TSPRITE_SIZE + SPRT_TAG_OFFSET);
     return 1;
 }
 
@@ -177,9 +223,7 @@ static void link_band_tiles(void) {
 
 static int on_draw_button_bg(struct CPUState* cpu, uint32_t address) {
     if (g_calling_original) return 0;
-    g_calling_original = 1;
-    psx_mod_call_guest(cpu, address, cpu->gpr[MIPS_REG_RA], 0, 0, 0, 0);
-    g_calling_original = 0;
+    call_original(cpu, address);
     g_still_screen = 1;
     link_band_tiles();
     return 1;
@@ -266,6 +310,7 @@ PSX_MOD_CONSTRUCTOR(register_kula_widescreen) {
     (void)psx_mod_register_activation_plugin(PLUGIN_ID, on_activate);
     (void)psx_mod_register_vblank_plugin(PLUGIN_ID, on_vblank);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_PROCESS_PARTICLES, on_process_particles);
+    (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_LETHARGY, on_draw_lethargy);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_BUTTON_BG, on_draw_button_bg);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_RENDER_BACKGROUND, on_render_background);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_SCORE_GRAPH, on_draw_score_graph);

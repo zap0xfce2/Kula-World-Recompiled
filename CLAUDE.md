@@ -200,11 +200,13 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - HUD in den Ecken: Das Plugin verankert pro VBlank die Pakete von `keySprites` (0x800ADBB4, links) und `fruitSprites` (0x800ADD74, rechts) per `psx_mod_anchor_hud_primitive`. `nw_hud_corners` scheidet aus, weil es auch Himmels-Sprites verschiebt.
        - Gotcha: Das API liest den GP0-Farbbefehl an `primitive + 4`. Bei Kulas zusammengeführtem TSprite (DR_TPAGE + SPRT, 28 Byte) ist deshalb TSprite + 8 zu übergeben, also das SPRT-Tag-Wort.
        - Prüfen: `{"cmd":"ws_tag_stats"}`, `hud.hit` muss steigen.
-     - Standbilder in 4:3 (2026-10-19): Ladebildschirm beim Weltwechsel und Highscore-Tabelle hielt der GTE-Klassifikator für 3D (Lade-Nachlauf ca. 45 Frames, fliegende Würfel in der Tabelle). In den Bändern stand alter VRAM-Inhalt.
-       - Das Plugin meldet `gpu_ws_set_native_scene_predicate` (`gpu.h`, das Framework setzt es bei jeder Aktivierung zurück). Ein Flag wird beim Einstieg in `LoadingScreen` (0x4DD78) oder `HighScoreUi` (0x4C09C) gesetzt und beim nächsten `RenderBackground` (0x2AA7C, nur die Hauptschleife) gelöscht.
-       - Kein `loadNewWorld`-Test: Das Spiel setzt den Wert teils schon während der Game-Over-Abrechnung (`main.c:952`).
-       - Bewusst breit: Menü und die Abrechnung (Well Done/Game Over/Time Out, 3D-Himmel dahinter).
-       - Prüfen: `gpu_state.ws.present_native_43` muss in beiden Screens 1 sein. Die Balken zeigt nur ein X11-Capture (`xwd`), der Debug-Screenshot liefert das 320er-Bild.
+     - Standbilder mit gefüllten Bändern (2026-10-19): Ladebildschirm, Highscore-Tabelle und Memory-Card-Menüs zeichnen den Tasten-Hintergrund `DrawPsxButtonBackground` (0x1D9B4). Vorher zeigten die Bänder alten VRAM-Inhalt.
+       - Der Hintergrund ist ein scrollendes Feld aus 20×10 Kacheln zu 48 px (960×480). Das Spiel setzt die XY aller Kacheln, hängt aber nur die in `-48 … W+48` in die OT (`otag[env][0][1024 - (button + 1)]`).
+       - Der Hook ruft das Original auf und hängt danach die Kacheln im Band selbst ein. Liegt eine Kachel jenseits des Bands, wird sie um eine Feldbreite (±960) versetzt. Nötig, wenn das Feld ganz zur Seite gescrollt ist. Reine Logik in `mods/src/widescreen_logic.c`, C-Test in `task test`.
+       - Ein Flag (gesetzt im Hook, gelöscht bei `RenderBackground` 0x2AA7C, das nur die Hauptschleife ruft) hält die Screens per `psx_mod_set_world_scene_predicate` breit. Sonst fällt der GTE-Klassifikator nach ca. 45 Frames Laden auf 4:3.
+       - Die Würfel der Tabelle fliegen von selbst in die Bänder. Texte, Score-Graph-Panel und `LOADING!`-Logo bleiben mittig.
+       - Verworfen: 4:3 mit Balken über `gpu_ws_set_native_scene_predicate` (Branch `fix/widescreen-still-screens-43`, funktioniert, aber Balken statt Kulisse).
+       - Prüfen: X11-Capture (`xwd`) bei 16:9 und 2:1, `present_native_43` muss 0 bleiben. Der Debug-Screenshot zeigt nur das Framebuffer-Bild.
      - `gpu_state.ws.configured/active = 0` ist bei native-wide normal (Felder des Squash-Pfads). Aussagekräftig sind `mode 2`, `x_margin` (16:9: 53, 2:1: 80), `game_mode`, `present_native_43`.
      - Das Suchskript braucht Python 3.10+ (`int | None`), auf dem Mac also `PYTHON=python3.12`.
      - Prüfen: Debug-Kommando `window_size` (`w`, `h`) ändert das Fenster wie ein Spieler, auch unter Xvfb.
@@ -303,6 +305,7 @@ cmake --build build-dev
 - musl hat keine `getcontext`/`makecontext`/`swapcontext`, die `psx_fiber.c` braucht. Abhilfe: `sudo apk add libucontext-dev` und bei jedem CMake-Configure `-DCMAKE_C_STANDARD_LIBRARIES=-lucontext -DCMAKE_CXX_STANDARD_LIBRARIES=-lucontext`.
 - Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --bios bios/SCPH1001.BIN --disc disc/SCES01000.CUE --debug-port 4370`.
 - Generate dauert ca. 2 min (569 Shards, 31 Mio. Zeilen C, ~950 MB). Der Runtime-Build dauert auf 8 Kernen ca. 23 min.
+- Serena mit C (`clangd`): `sudo apk add clang-extra-tools`. Dazu `.claude/settings.local.json` mit `env.UV_PYTHON=/usr/bin/python3` (lokal, über `.git/info/exclude` ignoriert), danach `/mcp` reconnect. Unter uvs statischem musl-Python liefert `platform.libc_ver()` `('libc', '')`, Serena meldet dann „Unknown platform“. `compile_commands.json` im Root ist ein Symlink auf `build-dev/` (`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`).
 - Oracle: `psxrecomp/beetle-psx` (im Submodule gitignored) auf `5759277b` plus `docs/beetle_*.patch`, siehe `psxrecomp/docs/beetle-linux.md`.
 
 ## Smoke-Test

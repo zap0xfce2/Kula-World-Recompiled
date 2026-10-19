@@ -57,7 +57,8 @@ psxrecomp_add_game_runtime(psx-runtime
 target_sources(psx-runtime PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/kula_level_select.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/level_select_logic.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/kula_widescreen.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/kula_widescreen.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/widescreen_logic.c")
 target_include_directories(psx-runtime PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/mods/src")
 
 # Stage runtime configs next to the exe for direct build/ launches. Only copy

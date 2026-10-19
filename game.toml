@@ -34,8 +34,8 @@ seeds = "seeds/ghidra_funcs.txt"
 out_dir = "generated"
 strict = true
 # Mod hooks: level select (SinglePlayerMenu, HighScoreUi, DrawWidgets),
-# widescreen still screens (HighScoreUi, LoadingScreen, RenderBackground)
-mod_function_entry_funcs = ["0x000491a8", "0x0004c09c", "0x00017ae8", "0x0004dd78", "0x0002aa7c"]
+# widescreen band fill (DrawPsxButtonBackground, RenderBackground)
+mod_function_entry_funcs = ["0x000491a8", "0x0004c09c", "0x00017ae8", "0x0001d9b4", "0x0002aa7c"]
 
 [runtime]
 window_title = "Kula World Recompiled"

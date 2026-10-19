@@ -103,6 +103,8 @@ tasks:
       - ./build-tests/test_level_select_logic
       - cc -std=c99 -Wall -Wextra -Werror -Imods/src -o build-tests/test_widescreen_logic tests/test_widescreen_logic.c mods/src/widescreen_logic.c
       - ./build-tests/test_widescreen_logic
+      - cc -std=c99 -Wall -Wextra -Werror -Ipsxrecomp/runtime/include -o build-tests/test_ws_feedback_rect psxrecomp/runtime/tests/test_ws_feedback_rect.c
+      - ./build-tests/test_ws_feedback_rect
 
   lint:
     desc: ruff and black on project Python

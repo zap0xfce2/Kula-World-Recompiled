@@ -25,6 +25,7 @@ keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, vorerst privat). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
 - Submodule: `psxrecomp` @ `0edce1d3`, `recomp-ui` @ `41c88ff` (Snapshot in `framework_pins.txt`)
   - `psxrecomp` kommt seit 2026-10-16 aus dem Fork `zap0xfce2/psxrecomp`, Branch `kula/ws-screen-x-sltu-band`: Upstream-Pin `f9c287f5` plus die `sltu`-Bandform für `screen_x_sites`.
+  - Darauf aufbauend Branch `feat/ws-feedback-rect` (Framebuffer-Feedback in den Bändern, Pillen-Effekt, 2026-10-19), Upstream-PR offen.
   - Upstream: Issue RetroPortingToolKit/psxrecomp#675, PR #676 (auf aktuellem `master`). Nach dem Merge `.gitmodules` zurück auf Upstream stellen und neu pinnen.
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
 - BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
@@ -213,6 +214,13 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - `LoadSaveMenu` (0x43348) und `MemCardUi` (0x43F04) lesen die Karte vor dem ersten Frame. Ohne Hook fiel der Klassifikator in dieser Pause auf 4:3 (Linux: 41 Frames). Beide setzen jetzt beim Eintritt das Standbild-Flag.
        - Verworfen: 4:3 mit Balken über `gpu_ws_set_native_scene_predicate` (Branch `fix/widescreen-still-screens-43`, funktioniert, aber Balken statt Kulisse).
        - Prüfen: `present_native_43` muss 0 bleiben. Der Debug-Screenshot enthält bei breiter Darstellung die Bänder (16:9: 428×256), bei 4:3 nur 320×256 ohne Balken. Müll in den Bändern ist also per Screenshot prüfbar, Balken nur per X11-Capture (`xwd`).
+     - Pillen-Effekt (Nachziehen, 2026-10-19, Spec/Plan `docs/superpowers/*/2026-10-19-widescreen-framebuffer-feedback*`):
+       - `DrawLethargyEffects` (0x20B30) kopiert jeden Frame das vorherige Bild per zwei 15-bit-Sprites (`lethargyEffectSprite`, 0x800A3EE4) über die Szene. Im VRAM gibt es nur 320 Spalten, deshalb hatte vorher nur die Mitte den Effekt.
+       - Framework-Erweiterung im Fork (Branch `feat/ws-feedback-rect`): `gpu_ws_tag_feedback_rect` / `psx_mod_tag_feedback_rect` markiert ein solches Sprite. `gpu.c` setzt es an den Rändern als Band-Rechtecke fort (`ws_feedback_rect.h`, C-Test in `task test`). Die neue Backend-Operation `wide_feedback_rect` (GL inklusive Render-Thread, Software, kein Vulkan) liest aus der breiten Fläche des Quell-Puffers.
+       - Gotcha Bit 15: Halbtransparenz wirkt nur auf Texel mit Bit 15. Der Start-Blitz beim Einsammeln (`lethargyEffectPoly`, 0x800A3E94, fest 0…W+1) setzt es in der Mitte, danach erhält es sich über die Kopien. Der Mod zieht den Blitz in die Bänder, und die Band-Kopie behandelt jedes Texel als Bit 15 gesetzt. Sonst verdunkeln Band-Pixel ohne Bit 15 Frame für Frame zu Schwarz, besonders im Pausenmenü (vorher 2 von 3 Läufen).
+       - Software-Renderer: `put_textured` schreibt jetzt das Texel-Bit 15 in den Pixel (vorher verloren, kanonisches VRAM zeigt es: ca. 57 % STP live).
+       - Debug: `{"cmd":"wide_full","base_x":0,"alpha":1}` zeigt Bit 15 der breiten Fläche (GL) als Weiß.
+       - Repro: Levelauswahl W1/L10, links drehen, 2× vor, rechts drehen, 3× vor, rechts drehen, 2× vor, dann START. Software-Renderer per `--renderer software`.
      - `gpu_state.ws.configured/active = 0` ist bei native-wide normal (Felder des Squash-Pfads). Aussagekräftig sind `mode 2`, `x_margin` (16:9: 53, 2:1: 80), `game_mode`, `present_native_43`.
      - Das Suchskript braucht Python 3.10+ (`int | None`), auf dem Mac also `PYTHON=python3.12`.
      - Prüfen: Debug-Kommando `window_size` (`w`, `h`) ändert das Fenster wie ein Spieler, auch unter Xvfb.
@@ -336,6 +344,7 @@ cmake --build build-dev
 - Spielstart per Eingabe: Kreuz → Untermenü (`curMenu` 3) → Kreuz → 1-Spieler-Arcade (Welt 0, Level 0). Spielerposition `playerCombinedPos` = `0x800A45D0` (8 Byte).
 
 ## Werkzeuge in dieser Umgebung
+- Serena immer nutzen, wo es geht: Code lesen, navigieren und ändern über die Symbol-Werkzeuge (`find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `replace_symbol_body` usw.) statt `grep`/`sed`/Volltext-Lesen. Gilt auch für `psxrecomp/` (Wunsch des Nutzers vom 2026-10-19).
 - Erste Anlaufstelle für Code-Verständnis ist das dezgeg-Decomp, nicht Ghidra.
 - Ghidra ist optional (noch nicht installiert, kein JDK), nur für die 27 ASM-Funktionen oder zum Gegenprüfen.
   Dann mit `ghidra_psx_ldr` die EXE im KUSEG-Segment laden (Basis `0x00011000`) und Funktionsgrenzen per `psxrecomp-analyze --emit-ghidra` importieren.

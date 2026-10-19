@@ -3,7 +3,8 @@
  * game's generated sky covers (about 1.7x the 4:3 width). The key HUD moves to
  * the left wide corner and the fruit HUD to the right one. Still screens on the
  * PS-button background (loading, high scores, memory card) fill the side bands
- * with more of that background. */
+ * with more of that background, and the score table's shade and flying cubes
+ * reach into them too. */
 #include <stdint.h>
 #include "cpu_state.h"
 #include "mod_plugins.h"
@@ -29,6 +30,10 @@ enum { HUD_EDGE_LEFT = -1, HUD_EDGE_RIGHT = 1 };
 enum {
     FN_DRAW_BUTTON_BG = 0x0001d9b4u,
     FN_RENDER_BACKGROUND = 0x0002aa7cu,
+    FN_DRAW_SCORE_GRAPH = 0x0002224cu,
+    FN_ROT_SMD_FT4 = 0x000621b0u,
+    FN_LOAD_SAVE_MENU = 0x00043348u,
+    FN_MEMCARD_UI = 0x00043f04u,
 };
 /* PsxButtonBackground { TSprite sprites[2][200]; short buttons[200]; }. The
  * game sets every tile's XY but links only tiles within -48..W+48 into
@@ -43,8 +48,34 @@ enum {
     BG_BUTTONS_OFFSET = 2 * BG_TILES * TSPRITE_SIZE,
     OT_LEN = 1026,
     OT_BUTTON_BG_BASE = 1024,
+    MIPS_REG_A0 = 4,
+    MIPS_REG_A1 = 5,
+    MIPS_REG_A2 = 6,
+    MIPS_REG_A3 = 7,
+    MIPS_REG_SP = 29,
     MIPS_REG_RA = 31,
 };
+/* ScoreGraph.polys3[env][1]: the table's POLY_G4 shade, hard-wired to 0..320
+ * in high-score mode (vertex 2 at x 0), at x+8 under a memory-card graph. */
+enum {
+    VAR_SCORE_GRAPH_PRIMS = 0x800a4068u,
+    POLY_G4_SIZE = 36,
+    SCORE_SHADE_OFFSET = 69704 + POLY_G4_SIZE,
+    SCORE_SHADE_ENV_STRIDE = 3 * POLY_G4_SIZE,
+    POLY_G4_X0 = 8, POLY_G4_X1 = 16, POLY_G4_X2 = 24, POLY_G4_X3 = 32,
+};
+/* RotSMD_FT4(pa, ot, otlen, id, sclip, hclip, vclip, nclip) keeps a face only
+ * while one corner lies in 0..hclip. pa = { long count; { POLY_FT4 polys[2];
+ * SVECTOR v[4]; } faces[] }, id picks the POLY_FT4. */
+enum {
+    SMD_HCLIP_ARG_OFFSET = 0x14,
+    SMD_FACE_SIZE = 0x70,
+    SMD_FIRST_FACE = 4,
+    POLY_FT4_SIZE = 40,
+    GTE_OFX = 24,
+    GTE_FRACTION_BITS = 16,
+};
+static const uint32_t POLY_FT4_X_OFFSETS[] = { 8, 16, 24, 32 };
 enum { PRIM_LEN_MASK = 0xff000000u, PRIM_ADDR_MASK = 0x00ffffffu };
 
 static int g_still_screen;
@@ -103,6 +134,68 @@ static int on_draw_button_bg(struct CPUState* cpu, uint32_t address) {
     return 1;
 }
 
+/* The shade is redrawn from these words every frame, so the margin can follow
+ * window resizes. */
+static int on_draw_score_graph(struct CPUState* cpu, uint32_t address) {
+    (void)cpu;
+    (void)address;
+    const int margin = psx_mod_widescreen_view_x_margin();
+    const int width = (int)psx_mod_read_word(VAR_DISPLAY_WIDTH);
+    const uint32_t shade = psx_mod_read_word(VAR_SCORE_GRAPH_PRIMS) + SCORE_SHADE_OFFSET;
+    if ((int16_t)psx_mod_read_half(shade + POLY_G4_X2) > 0) return 0;
+    for (uint32_t env = 0; env < 2; ++env) {
+        const uint32_t poly = shade + env * SCORE_SHADE_ENV_STRIDE;
+        psx_mod_write_half(poly + POLY_G4_X0, (uint16_t)(int16_t)-margin);
+        psx_mod_write_half(poly + POLY_G4_X2, (uint16_t)(int16_t)-margin);
+        psx_mod_write_half(poly + POLY_G4_X1, (uint16_t)(int16_t)(width + margin));
+        psx_mod_write_half(poly + POLY_G4_X3, (uint16_t)(int16_t)(width + margin));
+    }
+    return 0;
+}
+
+static void shift_smd_corners(uint32_t model, uint32_t poly_offset, int dx) {
+    const uint32_t faces = psx_mod_read_word(model);
+    for (uint32_t f = 0; f < faces; ++f) {
+        const uint32_t poly = model + SMD_FIRST_FACE + f * SMD_FACE_SIZE + poly_offset;
+        for (int c = 0; c < 4; ++c) {
+            const uint32_t at = poly + POLY_FT4_X_OFFSETS[c];
+            psx_mod_write_half(at, (uint16_t)(int16_t)((int16_t)psx_mod_read_half(at) + dx));
+        }
+    }
+}
+
+/* Projects the cubes as if the screen started at the left band edge, then
+ * moves the written corners back. Faces that stay culled keep stale corners,
+ * but they are not linked. */
+static int on_rot_smd_ft4(struct CPUState* cpu, uint32_t address) {
+    const int margin = psx_mod_widescreen_view_x_margin();
+    if (g_calling_original || !g_still_screen || margin <= 0) return 0;
+    const uint32_t model = cpu->gpr[MIPS_REG_A0];
+    const uint32_t poly_offset = cpu->gpr[MIPS_REG_A3] ? POLY_FT4_SIZE : 0;
+    const uint32_t hclip_slot = cpu->gpr[MIPS_REG_SP] + SMD_HCLIP_ARG_OFFSET;
+    const uint32_t hclip = psx_mod_read_word(hclip_slot);
+    const uint32_t ofx = gte_read_ctrl(cpu, GTE_OFX);
+    psx_mod_write_word(hclip_slot, hclip + 2u * (uint32_t)margin);
+    gte_write_ctrl(cpu, GTE_OFX, ofx + ((uint32_t)margin << GTE_FRACTION_BITS));
+    g_calling_original = 1;
+    psx_mod_call_guest(cpu, address, cpu->gpr[MIPS_REG_RA], model, cpu->gpr[MIPS_REG_A1],
+                       cpu->gpr[MIPS_REG_A2], cpu->gpr[MIPS_REG_A3]);
+    g_calling_original = 0;
+    gte_write_ctrl(cpu, GTE_OFX, ofx);
+    psx_mod_write_word(hclip_slot, hclip);
+    shift_smd_corners(model, poly_offset, -margin);
+    return 1;
+}
+
+/* Both menus read the card before their first frame; without a GTE scene the
+ * classifier would show that pause at 4:3. */
+static int on_memcard_menu(struct CPUState* cpu, uint32_t address) {
+    (void)cpu;
+    (void)address;
+    g_still_screen = 1;
+    return 0;
+}
+
 static int on_render_background(struct CPUState* cpu, uint32_t address) {
     (void)cpu;
     (void)address;
@@ -123,4 +216,8 @@ PSX_MOD_CONSTRUCTOR(register_kula_widescreen) {
     (void)psx_mod_register_vblank_plugin(PLUGIN_ID, on_vblank);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_BUTTON_BG, on_draw_button_bg);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_RENDER_BACKGROUND, on_render_background);
+    (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_SCORE_GRAPH, on_draw_score_graph);
+    (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_ROT_SMD_FT4, on_rot_smd_ft4);
+    (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_LOAD_SAVE_MENU, on_memcard_menu);
+    (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_MEMCARD_UI, on_memcard_menu);
 }

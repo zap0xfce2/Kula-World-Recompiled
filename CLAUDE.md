@@ -204,9 +204,12 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Der Hintergrund ist ein scrollendes Feld aus 20×10 Kacheln zu 48 px (960×480). Das Spiel setzt die XY aller Kacheln, hängt aber nur die in `-48 … W+48` in die OT (`otag[env][0][1024 - (button + 1)]`).
        - Der Hook ruft das Original auf und hängt danach die Kacheln im Band selbst ein. Liegt eine Kachel jenseits des Bands, wird sie um eine Feldbreite (±960) versetzt. Nötig, wenn das Feld ganz zur Seite gescrollt ist. Reine Logik in `mods/src/widescreen_logic.c`, C-Test in `task test`.
        - Ein Flag (gesetzt im Hook, gelöscht bei `RenderBackground` 0x2AA7C, das nur die Hauptschleife ruft) hält die Screens per `psx_mod_set_world_scene_predicate` breit. Sonst fällt der GTE-Klassifikator nach ca. 45 Frames Laden auf 4:3.
-       - Die Würfel der Tabelle fliegen von selbst in die Bänder. Texte, Score-Graph-Panel und `LOADING!`-Logo bleiben mittig.
+       - Texte, Score-Graph-Panel und `LOADING!`-Logo bleiben mittig.
+       - Dunkler Verlauf der Tabelle: ein POLY_G4 (`ScoreGraph.polys3[env][1]`), im Highscore-Modus fest auf x 0…320. Der Hook vor `DrawScoreGraph` (0x2224C) setzt die x-Werte jeden Frame auf −Rand … Breite + Rand (erkennbar an Ecke 2 bei x ≤ 0, unter dem Memory-Card-Graph liegt sie bei x + 8).
+       - Würfel der Tabelle: `RotSMD_FT4` (0x621B0, PsyQ-Lib) verwirft eine Fläche, sobald keine Ecke mehr in 0 ≤ x < hclip liegt. Im Band fehlten deshalb einzelne Flächen. Der Hook verschiebt GTE-OFX um +Rand, vergrößert `hclip` (Stack-Argument, `sp + 0x14`) um 2 × Rand, ruft das Original und schiebt die geschriebenen Ecken um −Rand zurück.
+       - `LoadSaveMenu` (0x43348) und `MemCardUi` (0x43F04) lesen die Karte vor dem ersten Frame. Ohne Hook fiel der Klassifikator in dieser Pause auf 4:3 (Linux: 41 Frames). Beide setzen jetzt beim Eintritt das Standbild-Flag.
        - Verworfen: 4:3 mit Balken über `gpu_ws_set_native_scene_predicate` (Branch `fix/widescreen-still-screens-43`, funktioniert, aber Balken statt Kulisse).
-       - Prüfen: X11-Capture (`xwd`) bei 16:9 und 2:1, `present_native_43` muss 0 bleiben. Der Debug-Screenshot zeigt nur das Framebuffer-Bild.
+       - Prüfen: `present_native_43` muss 0 bleiben. Der Debug-Screenshot enthält bei breiter Darstellung die Bänder (16:9: 428×256), bei 4:3 nur 320×256 ohne Balken. Müll in den Bändern ist also per Screenshot prüfbar, Balken nur per X11-Capture (`xwd`).
      - `gpu_state.ws.configured/active = 0` ist bei native-wide normal (Felder des Squash-Pfads). Aussagekräftig sind `mode 2`, `x_margin` (16:9: 53, 2:1: 80), `game_mode`, `present_native_43`.
      - Das Suchskript braucht Python 3.10+ (`int | None`), auf dem Mac also `PYTHON=python3.12`.
      - Prüfen: Debug-Kommando `window_size` (`w`, `h`) ändert das Fenster wie ein Spieler, auch unter Xvfb.

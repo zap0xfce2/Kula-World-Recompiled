@@ -200,6 +200,9 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - HUD in den Ecken: Das Plugin verankert pro VBlank die Pakete von `keySprites` (0x800ADBB4, links) und `fruitSprites` (0x800ADD74, rechts) per `psx_mod_anchor_hud_primitive`. `nw_hud_corners` scheidet aus, weil es auch Himmels-Sprites verschiebt.
        - Gotcha: Das API liest den GP0-Farbbefehl an `primitive + 4`. Bei Kulas zusammengeführtem TSprite (DR_TPAGE + SPRT, 28 Byte) ist deshalb TSprite + 8 zu übergeben, also das SPRT-Tag-Wort.
        - Prüfen: `{"cmd":"ws_tag_stats"}`, `hud.hit` muss steigen.
+       - Die „FRUIT BONUS“-Buchstaben (`fruitBonusTextSprites` 0x800ADFA4) verankert dasselbe VBlank-Plugin rechts.
+       - Funken beim Einsammeln: Schlüssel, Früchte, Sanduhr und FRUIT BONUS erzeugen Partikel in Bildschirmkoordinaten (`pos.vz < 0`) an festen 4:3-Positionen. Ohne Anker saßen sie um den Rand versetzt neben den Symbolen. Ein Hook um `ProcessAndRenderParticles` (0x12918) ruft das Original und verankert danach jeden dieser Partikel nach seiner Bildhälfte (Mitte = Sanduhr bleibt mittig). Die Pakete werden jeden Frame neu gebaut, deshalb Tagging direkt nach dem Original statt im VBlank.
+       - Repro ohne Navigation: im Level `particles[0][0..1]` (0x800AB014, 184 Byte) per `write_ram` mit pos (22, 230, −1) bzw. (208, 233, −1) und `animData` = `PARTICLE_TYPE_PTRS[0]` (0x800A3D80) füllen, dann `numParticles[0]` (0x800A3DB0) = 2. Für FRUIT BONUS `fruitsCollectedBitmask` (0x800A51F0) = 0x1F.
      - Standbilder mit gefüllten Bändern (2026-10-19): Ladebildschirm, Highscore-Tabelle und Memory-Card-Menüs zeichnen den Tasten-Hintergrund `DrawPsxButtonBackground` (0x1D9B4). Vorher zeigten die Bänder alten VRAM-Inhalt.
        - Der Hintergrund ist ein scrollendes Feld aus 20×10 Kacheln zu 48 px (960×480). Das Spiel setzt die XY aller Kacheln, hängt aber nur die in `-48 … W+48` in die OT (`otag[env][0][1024 - (button + 1)]`).
        - Der Hook ruft das Original auf und hängt danach die Kacheln im Band selbst ein. Liegt eine Kachel jenseits des Bands, wird sie um eine Feldbreite (±960) versetzt. Nötig, wenn das Feld ganz zur Seite gescrollt ist. Reine Logik in `mods/src/widescreen_logic.c`, C-Test in `task test`.
@@ -274,6 +277,8 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. A
   - ccache ist auf dem Mac aktiv, Folgebuilds dauern Sekunden.
   - Mods ohne Launcher reproduzierbar schalten: `<build>/mods/state.toml` (`[[package]] id`, `[[feature]] package_id/id/enabled`, Optionen unter `[feature.values]`). `--no-launcher` übernimmt die Datei.
   - Der Mac hat kein Sony-BIOS mehr und läuft nur mit OpenBIOS.
+  - Tests immer stumm: jeder Runtime-Start mit `SDL_AUDIO_DRIVER=dummy` (Freigabe vom 2026-10-19).
+  - yabai vor Tests ohne Rückfrage stoppen (`yabai --stop-service`) und danach wieder starten (`yabai --start-service`), weil es `window_size` aushebelt (Freigabe vom 2026-10-19).
 - 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Memory Card unter Retail und OpenBIOS ok. Levelauswahl-Mod ok. Offen: Controller, Ending-FMV.
 - Gotchas:
   - Ein verwaister `CommandLineTools/usr/include/c++/v1` überdeckt die SDK-Header (`'string' file not found`).
@@ -325,6 +330,7 @@ cmake --build build-dev
   - Im Menü (640 px Breite) ist `x_margin` doppelt so groß wie im Level (16:9: 107, 2:1: 160).
 - Lange Testsitzungen: `task freeze-timer` (`tools/freeze_timer.py`) hält den Level-Timer per `write_ram` voll (nur Dev-Build). `SDL_AUDIO_DRIVER=dummy` schaltet den Ton ab, das Spiel läuft normal weiter.
 - `write_ram` schreibt ein Byte pro Anfrage.
+- Vor jedem Lauf prüfen, dass kein alter Runtime-Prozess den Debug-Port hält (`pgrep -af Kula_World`). Verliert ein Prozess sein Xvfb, nimmt er weiter Verbindungen an, antwortet aber nicht mehr (Timeout bei `frame`), und reagiert nicht auf SIGTERM, dann `kill -9`.
 - Debug-Protokoll: eine Anfrage pro TCP-Verbindung. Frame-Nummer: Runtime über `frame`, Beetle im `ping`.
 - **`press`/`set_input` erwarten das Pad-Wort active-low** (`0xFFFF` = nichts gedrückt). Kreuz drücken heißt also `0xFFFF ^ 0x4000`. Bits: `PAD_*` im Decomp `include/common.h`.
 - Spielstart per Eingabe: Kreuz → Untermenü (`curMenu` 3) → Kreuz → 1-Spieler-Arcade (Welt 0, Level 0). Spielerposition `playerCombinedPos` = `0x800A45D0` (8 Byte).

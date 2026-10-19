@@ -1,7 +1,8 @@
 /* Kula World widescreen: selects psxrecomp's native-wide view. 16:9 shapes the
  * first window, then the view follows the window up to 2:1, the widest the
  * game's generated sky covers (about 1.7x the 4:3 width). The key HUD moves to
- * the left wide corner and the fruit HUD to the right one. Still screens on the
+ * the left wide corner and the fruit HUD to the right one, together with their
+ * pickup sparkles. Still screens on the
  * PS-button background (loading, high scores, memory card) fill the side bands
  * with more of that background, and the score table's shade and flying cubes
  * reach into them too. */
@@ -19,9 +20,25 @@ enum { FIRST_WINDOW_NUM = 16, FIRST_WINDOW_DEN = 9, MAX_ASPECT_NUM = 2, MAX_ASPE
 enum {
     VAR_KEY_SPRITES = 0x800adbb4u,   /* TSprite keySprites[2][4][2] */
     VAR_FRUIT_SPRITES = 0x800add74u, /* TSprite fruitSprites[2][5][2] */
+    VAR_FRUIT_BONUS_TEXT_SPRITES = 0x800adfa4u, /* TSprite fruitBonusTextSprites[2][5][2] */
     TSPRITE_SIZE = 28,
     KEY_SPRITE_COUNT = 2 * 4 * 2,
     FRUIT_SPRITE_COUNT = 2 * 5 * 2,
+};
+/* Particle particles[2][16] = { POLY_FT4 prims[2][2]; SVECTOR pos; ParticleType*
+ * animData; ... } (184 bytes); pos.vz < 0 marks a screen-space HUD sparkle. */
+enum {
+    FN_PROCESS_PARTICLES = 0x00012918u,
+    VAR_PARTICLES = 0x800ab014u,
+    VAR_NUM_PARTICLES = 0x800a3db0u,
+    VAR_CAMERA_INDEX = 0x800a2e68u,
+    PARTICLE_SIZE = 184,
+    PARTICLES_PER_CAMERA = 16,
+    PARTICLE_POS_X = 160,
+    PARTICLE_POS_Z = 164,
+    PARTICLE_ANIM_DATA = 168,
+    PARTICLE_PRIM_SIZE = 40,
+    PARTICLE_PRIMS_PER_ENV = 2,
 };
 enum { HUD_EDGE_LEFT = -1, HUD_EDGE_RIGHT = 1 };
 
@@ -95,6 +112,40 @@ static void anchor_pool(uint32_t base, int count, int edge) {
 static void on_vblank(void) {
     anchor_pool(VAR_KEY_SPRITES, KEY_SPRITE_COUNT, HUD_EDGE_LEFT);
     anchor_pool(VAR_FRUIT_SPRITES, FRUIT_SPRITE_COUNT, HUD_EDGE_RIGHT);
+    anchor_pool(VAR_FRUIT_BONUS_TEXT_SPRITES, FRUIT_SPRITE_COUNT, HUD_EDGE_RIGHT);
+}
+
+/* Sparkles spawn at fixed 4:3 HUD spots (keys left, fruits right, hourglass
+ * centred), so they follow the side of the screen they were placed on. */
+static int hud_edge_of(int x, int width) {
+    if (x < width / 2) return HUD_EDGE_LEFT;
+    if (x > width / 2) return HUD_EDGE_RIGHT;
+    return 0;
+}
+
+static void anchor_hud_particles(void) {
+    const uint32_t camera = psx_mod_read_word(VAR_CAMERA_INDEX);
+    const uint32_t env = psx_mod_read_word(VAR_WHICH_DRAW_ENV);
+    const int width = (int)psx_mod_read_word(VAR_DISPLAY_WIDTH);
+    const int count = (int)psx_mod_read_word(VAR_NUM_PARTICLES + camera * 4u);
+    for (int i = 0; i < count; ++i) {
+        const uint32_t particle = VAR_PARTICLES + (camera * PARTICLES_PER_CAMERA + (uint32_t)i) * PARTICLE_SIZE;
+        if ((int16_t)psx_mod_read_half(particle + PARTICLE_POS_Z) >= 0) continue;
+        const int edge = hud_edge_of((int16_t)psx_mod_read_half(particle + PARTICLE_POS_X), width);
+        const int prims = (int16_t)psx_mod_read_half(psx_mod_read_word(particle + PARTICLE_ANIM_DATA));
+        for (int j = 0; j < prims && j < PARTICLE_PRIMS_PER_ENV; ++j)
+            psx_mod_anchor_hud_primitive(particle + (env * PARTICLE_PRIMS_PER_ENV + (uint32_t)j) * PARTICLE_PRIM_SIZE, edge);
+    }
+}
+
+/* The packets are rebuilt every frame, so tag them right after the game did. */
+static int on_process_particles(struct CPUState* cpu, uint32_t address) {
+    if (g_calling_original) return 0;
+    g_calling_original = 1;
+    psx_mod_call_guest(cpu, address, cpu->gpr[MIPS_REG_RA], 0, 0, 0, 0);
+    g_calling_original = 0;
+    anchor_hud_particles();
+    return 1;
 }
 
 /* The GTE classifier would drop these screens to 4:3 once the cubes stop or
@@ -214,6 +265,7 @@ static void on_activate(void) {
 PSX_MOD_CONSTRUCTOR(register_kula_widescreen) {
     (void)psx_mod_register_activation_plugin(PLUGIN_ID, on_activate);
     (void)psx_mod_register_vblank_plugin(PLUGIN_ID, on_vblank);
+    (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_PROCESS_PARTICLES, on_process_particles);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_BUTTON_BG, on_draw_button_bg);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_RENDER_BACKGROUND, on_render_background);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_SCORE_GRAPH, on_draw_score_graph);

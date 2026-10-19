@@ -200,6 +200,11 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - HUD in den Ecken: Das Plugin verankert pro VBlank die Pakete von `keySprites` (0x800ADBB4, links) und `fruitSprites` (0x800ADD74, rechts) per `psx_mod_anchor_hud_primitive`. `nw_hud_corners` scheidet aus, weil es auch Himmels-Sprites verschiebt.
        - Gotcha: Das API liest den GP0-Farbbefehl an `primitive + 4`. Bei Kulas zusammengeführtem TSprite (DR_TPAGE + SPRT, 28 Byte) ist deshalb TSprite + 8 zu übergeben, also das SPRT-Tag-Wort.
        - Prüfen: `{"cmd":"ws_tag_stats"}`, `hud.hit` muss steigen.
+     - Standbilder in 4:3 (2026-10-19): Ladebildschirm beim Weltwechsel und Highscore-Tabelle hielt der GTE-Klassifikator für 3D (Lade-Nachlauf ca. 45 Frames, fliegende Würfel in der Tabelle). In den Bändern stand alter VRAM-Inhalt.
+       - Das Plugin meldet `gpu_ws_set_native_scene_predicate` (`gpu.h`, das Framework setzt es bei jeder Aktivierung zurück). Ein Flag wird beim Einstieg in `LoadingScreen` (0x4DD78) oder `HighScoreUi` (0x4C09C) gesetzt und beim nächsten `RenderBackground` (0x2AA7C, nur die Hauptschleife) gelöscht.
+       - Kein `loadNewWorld`-Test: Das Spiel setzt den Wert teils schon während der Game-Over-Abrechnung (`main.c:952`).
+       - Bewusst breit: Menü und die Abrechnung (Well Done/Game Over/Time Out, 3D-Himmel dahinter).
+       - Prüfen: `gpu_state.ws.present_native_43` muss in beiden Screens 1 sein. Die Balken zeigt nur ein X11-Capture (`xwd`), der Debug-Screenshot liefert das 320er-Bild.
      - `gpu_state.ws.configured/active = 0` ist bei native-wide normal (Felder des Squash-Pfads). Aussagekräftig sind `mode 2`, `x_margin` (16:9: 53, 2:1: 80), `game_mode`, `present_native_43`.
      - Das Suchskript braucht Python 3.10+ (`int | None`), auf dem Mac also `PYTHON=python3.12`.
      - Prüfen: Debug-Kommando `window_size` (`w`, `h`) ändert das Fenster wie ein Spieler, auch unter Xvfb.

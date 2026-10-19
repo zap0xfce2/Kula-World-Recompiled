@@ -101,6 +101,8 @@ tasks:
       - mkdir -p build-tests
       - cc -std=c99 -Wall -Wextra -Werror -Imods/src -o build-tests/test_level_select_logic tests/test_level_select_logic.c mods/src/level_select_logic.c
       - ./build-tests/test_level_select_logic
+      - cc -std=c99 -Wall -Wextra -Werror -Imods/src -o build-tests/test_widescreen_logic tests/test_widescreen_logic.c mods/src/widescreen_logic.c
+      - ./build-tests/test_widescreen_logic
 
   lint:
     desc: ruff and black on project Python

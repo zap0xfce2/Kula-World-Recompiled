@@ -20,7 +20,7 @@ a retail BIOS is optional because the bundled, MIT-licensed OpenBIOS works.
 
 ## Status
 
-Playable; all ten worlds start and run (checked via Level Select, the ending FMV is not verified yet). The recompiled game reaches the same
+Playable; all ten worlds start and run (checked via Level Select), the ending FMV plays. The recompiled game reaches the same
 attract demo, with the same timer values, as the psx-beetle reference
 emulator.
 
@@ -37,7 +37,7 @@ All mods are switchable in the launcher (recomp-ui).
 | Mod | Default | What it does |
 |---|---|---|
 | Level Select | on | "Arcade" opens START / WORLD / LEVEL. Starting anywhere but world 1, level 1 counts as cheated: no save points, no high-score entry. |
-| Widescreen | on | Shows the world wider than 4:3 and follows the window up to 2:1. The key and fruit HUD move to the wide corners. Menus, the warning screen and memory-card screens stay 4:3. |
+| Widescreen | on | Shows the world wider than 4:3 and follows the window up to 2:1. The key and fruit HUD (with their pickup sparkles) move to the wide corners. The loading screen, high-score table and memory-card screens fill the side bands too, and the pill's motion trail covers the full width. The warning screen and FMVs stay 4:3. |
 | CD Speed | on, 2x | Shorter loading. 4x is faster but hangs world changes that start past level 1, so the project default is 2x. |
 
 ## Requirements
@@ -61,7 +61,8 @@ task run        # start with the launcher
 ```
 
 Until [psxrecomp#676](https://github.com/RetroPortingToolKit/psxrecomp/pull/676)
-is merged, the `psxrecomp` submodule points at a fork that carries it.
+and [#692](https://github.com/RetroPortingToolKit/psxrecomp/pull/692) are merged,
+the `psxrecomp` submodule points at a fork that carries them.
 
 `task --list` shows everything else (tests, lint, smoke test, the psx-beetle
 oracle, a level-timer freeze for long test sessions). On macOS pass
@@ -81,6 +82,10 @@ Done:
 - [x] CD Speed default (2x)
 - [x] Upstream reports: KUSEG result and portability findings for musl/macOS
 - [x] Upstream PR: widescreen band form for register compares ([psxrecomp#676](https://github.com/RetroPortingToolKit/psxrecomp/pull/676))
+- [x] Widescreen: filled side bands on still screens, HUD sparkles in the corners, pill trail at full width
+- [x] Upstream PR: framebuffer-feedback sprites in the bands ([psxrecomp#692](https://github.com/RetroPortingToolKit/psxrecomp/pull/692))
+- [x] Upstream PRs for the musl/macOS findings ([#693](https://github.com/RetroPortingToolKit/psxrecomp/pull/693), [#694](https://github.com/RetroPortingToolKit/psxrecomp/pull/694))
+- [x] Ending FMV plays
 
 Next:
 - [ ] Widescreen: sky refresh after resizing the window inside a level
@@ -88,7 +93,7 @@ Next:
 - [ ] 60 fps (parked: psxrecomp's frame generation does not see Kula's flips yet; an NTSC-style patch would change the gameplay timing)
 - [ ] Own loading screen instead of the piracy warning shown during the first load
 - [ ] HD textures, wobble fix
-- [ ] Controller test on macOS, ending FMV check
+- [ ] Controller test on macOS
 - [ ] Windows build
 - [ ] Release packaging
 

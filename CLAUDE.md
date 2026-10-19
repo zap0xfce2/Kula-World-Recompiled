@@ -149,8 +149,11 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt (`analysis/play-native2/`).
 5. Offene Punkte aus dem Smoke-Test:
    - ~~Ergebnis upstream melden~~ (erledigt 2026-10-15): RetroPortingToolKit/psxrecomp#671 (KUSEG) und #672 (6 Portabilitäts-Befunde). Quelle: `docs/upstream-report-kuseg.md`.
+     - Zu #671 (2026-10-19): PR #695 trägt das Ergebnis in `docs/SEGMENT_AWARE_CODE.md` §7 ein. Neu gemessen auf Upstream `bce31aff` (Testbaum ohne Mods/Fork): 971 Funktionen, Kalt- gegen Warm-Cache (5 Shards: 4× `seg-kuseg`, 1× `seg-kseg1`) über 10.000 Frames in allen `frame_fingerprint`-Spalten identisch, `segment_native` 0 → 59.524, 0 Misses. Demo-Enden wie Beetle: 3603/9950 und 3017/6845. Gotchas: Upstream braucht das Untermodul `lib/retcomm-rbengine` (`git submodule update --init --recursive`), und mit aktiven Mods ohne Plugins startet die Runtime nicht (`mods/state.toml` abschalten). Captures schreibt `overlay_capture_dump`, nicht `kill -9`.
      - Zu #672 (2026-10-19): PR #693 (Punkte 1, 2, 5, 6: libucontext-Erkennung, `uint16_t`, `python3` zuerst, `../build-recompiler`) und PR #694 (Punkt 4: `generate --bios` schreibt den Emitter-Stempel). Punkt 3 (glibc-Toolchain-Download unter musl) ist upstream durch `2c92ac3f` erledigt: Linux/macOS nutzen native Tools, kein Download, keine PATH-Hooks. Nach dem Merge können die musl-Flags und `regen_bios.sh` aus der `Taskfile.yaml` bzw. den Build-Gotchas entfallen.
-   - Auf dem Mac verifiziert: XA-Musik und SFX, Memory Card (`saves/card1.mcd`), LLE-Boot. Offen: Controller (kein Gamepad zur Hand) und Ending-FMV (per Levelauswahl Welt 10 erreichbar, noch nicht gezielt geprüft).
+   - Auf dem Mac verifiziert: XA-Musik und SFX, Memory Card (`saves/card1.mcd`), LLE-Boot. Offen: Controller (kein Gamepad zur Hand).
+   - Ending-FMV (`FINAL.STR`) läuft (Mac, 2026-10-19, Nutzer live gesehen). Weg: Levelauswahl W10/L15, nach dem Laden `fruitsCollectedBitmask` (0x800A51F0) = 0 (sonst Bonuslevel) und `levelEndReason` (0x800A591C) = 1 → „Well Done!“, X → FMV, danach Score-Tabelle. Während des FMV `present_native_43` = 1 (4:3 mit Balken). `cheated` blockiert es nicht. Ungeprüft: volle Länge (Skript drückte X, lief ca. 30 s) und FMV-Ton.
+   - Speichern und Laden über die Memory Card bestätigt der Nutzer (2026-10-19).
    - ~~Performance auf echter GPU messen~~ (erledigt): Der Mac schafft 49,5 fps. Die 35 bis 44 fps unter Xvfb/llvmpipe kommen von der Umgebung.
    - OpenBIOS (MIT, vom Framework mitgeliefert und mitgelinkt) funktioniert, getestet am 2026-10-15:
      - Start: `--bios build-dev/bios/openbios.bin`
@@ -168,7 +171,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - „Arcade“ öffnet START / WORLD 1–10 / LEVEL 1–15. Standardmäßig an.
      - Ein Start ≠ 1/1 setzt `cheated = 1` und macht aus der Highscore-Eingabe die reine Tabelle.
      - Linux und Mac (M1 Pro, OpenBIOS) verifiziert: Starts 1/1, 3/5, 7/3, 10/3, 10/12; Optik; Kreis/Dreieck zurück; Highscore-Sperre und Gegenprobe 1/1; Launcher an/aus; keine Artefakte in anderen Texten.
-     - Offen: Speicherpunkte nach Start ≠ 1/1 im Spiel bestätigen (laut Decomp unterdrückt `cheated` sie), Ending-FMV über Welt 10.
+     - Offen: Speicherpunkte nach Start ≠ 1/1 im Spiel bestätigen (laut Decomp unterdrückt `cheated` sie). Ending-FMV über W10/L15 erreichbar (siehe Smoke-Test-Abschnitt oben).
      - Plugin `mods/src/kula_level_select.c` + reine Logik `mods/src/level_select_logic.c` (C-Test in `task test`).
      - Hooks über `game.toml [recompiler] mod_function_entry_funcs`, danach `task generate`.
      - Prüfen: `tools/check_level_select.py --world W --level L` gegen eine frisch gestartete Dev-Runtime.
@@ -289,7 +292,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. A
   - Der Mac hat kein Sony-BIOS mehr und läuft nur mit OpenBIOS.
   - Tests immer stumm: jeder Runtime-Start mit `SDL_AUDIO_DRIVER=dummy` (Freigabe vom 2026-10-19).
   - yabai vor Tests ohne Rückfrage stoppen (`yabai --stop-service`) und danach wieder starten (`yabai --start-service`), weil es `window_size` aushebelt (Freigabe vom 2026-10-19).
-- 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Memory Card unter Retail und OpenBIOS ok. Levelauswahl-Mod ok. Offen: Controller, Ending-FMV.
+- 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Memory Card unter Retail und OpenBIOS ok. Levelauswahl-Mod ok. Ending-FMV ok (2026-10-19). Offen: Controller.
 - Gotchas:
   - Ein verwaister `CommandLineTools/usr/include/c++/v1` überdeckt die SDK-Header (`'string' file not found`).
   - `runtime.cmake` sucht `python` vor `python3`, deshalb `-DPSX_PYTHON=$(command -v python3.12)`.

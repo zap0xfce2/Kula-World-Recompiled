@@ -35,9 +35,9 @@ out_dir = "generated"
 strict = true
 # Mod hooks: level select (SinglePlayerMenu, HighScoreUi, DrawWidgets),
 # widescreen band fill (DrawPsxButtonBackground, RenderBackground, DrawScoreGraph,
-# RotSMD_FT4, LoadSaveMenu, MemCardUi)
+# RotSMD_FT4, LoadSaveMenu, MemCardUi), HUD sparkles (ProcessAndRenderParticles)
 mod_function_entry_funcs = ["0x000491a8", "0x0004c09c", "0x00017ae8", "0x0001d9b4", "0x0002aa7c",
-                            "0x0002224c", "0x000621b0", "0x00043348", "0x00043f04"]
+                            "0x0002224c", "0x000621b0", "0x00043348", "0x00043f04", "0x00012918"]
 
 [runtime]
 window_title = "Kula World Recompiled"

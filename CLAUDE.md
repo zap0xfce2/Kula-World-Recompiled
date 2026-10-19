@@ -149,6 +149,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt (`analysis/play-native2/`).
 5. Offene Punkte aus dem Smoke-Test:
    - ~~Ergebnis upstream melden~~ (erledigt 2026-10-15): RetroPortingToolKit/psxrecomp#671 (KUSEG) und #672 (6 Portabilitäts-Befunde). Quelle: `docs/upstream-report-kuseg.md`.
+     - Zu #672 (2026-10-19): PR #693 (Punkte 1, 2, 5, 6: libucontext-Erkennung, `uint16_t`, `python3` zuerst, `../build-recompiler`) und PR #694 (Punkt 4: `generate --bios` schreibt den Emitter-Stempel). Punkt 3 (glibc-Toolchain-Download unter musl) ist upstream durch `2c92ac3f` erledigt: Linux/macOS nutzen native Tools, kein Download, keine PATH-Hooks. Nach dem Merge können die musl-Flags und `regen_bios.sh` aus der `Taskfile.yaml` bzw. den Build-Gotchas entfallen.
    - Auf dem Mac verifiziert: XA-Musik und SFX, Memory Card (`saves/card1.mcd`), LLE-Boot. Offen: Controller (kein Gamepad zur Hand) und Ending-FMV (per Levelauswahl Welt 10 erreichbar, noch nicht gezielt geprüft).
    - ~~Performance auf echter GPU messen~~ (erledigt): Der Mac schafft 49,5 fps. Die 35 bis 44 fps unter Xvfb/llvmpipe kommen von der Umgebung.
    - OpenBIOS (MIT, vom Framework mitgeliefert und mitgelinkt) funktioniert, getestet am 2026-10-15:

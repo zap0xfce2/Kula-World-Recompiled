@@ -170,6 +170,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Plugin `mods/src/kula_level_select.c` + reine Logik `mods/src/level_select_logic.c` (C-Test in `task test`).
      - Hooks über `game.toml [recompiler] mod_function_entry_funcs`, danach `task generate`.
      - Prüfen: `tools/check_level_select.py --world W --level L` gegen eine frisch gestartete Dev-Runtime.
+     - Gotcha Flackern: START ruft den Original-`SinglePlayerMenu` auf, der `DrawWidgets` vor der Kreuz-Abfrage zeichnet. Ohne den dritten Hook (`DrawWidgets` 0x17AE8, überspringt nur während `g_calling_original`) blitzte für einen Frame das Einspieler-Panel auf (2026-10-19 behoben).
      - Gotcha: `DrawTextCrappyFont` zeichnet eine Zeile nur bei `\n`. `<`/`>` sind in dieser Schrift Tasten-Symbole.
      - Optik: alles in der kleinen Schrift, hellblau getönt. START zentriert, WORLD/LEVEL rechtsbündig an gemeinsamer Kante, `-`, Zahl und `+` je in fester Spalte, die gewählte Zeile hell, leichter Schatten. Kreis und Dreieck gehen zurück (Kreis nur im Untermenü).
      - Gotcha Schatten: Die kleine Schrift blendet additiv (`fontSprites` 0x800AA47C, abr 1), eine dunkle Kopie bleibt unsichtbar. Der Mod schaltet für den Schatten-Durchgang die Glyph-Vorlagen kurz auf subtraktiv (abr 2) und stellt sie danach wieder her.

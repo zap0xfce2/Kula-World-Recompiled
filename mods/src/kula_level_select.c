@@ -1,6 +1,7 @@
 /* Kula World arcade level select: a function filter on SinglePlayerMenu draws
  * a START/WORLD/LEVEL submenu and redirects the arcade start; a filter on
- * HighScoreUi drops the name entry after a non-1/1 start.
+ * HighScoreUi drops the name entry after a non-1/1 start; a filter on
+ * DrawWidgets hides the menu panel while the arcade start runs the original.
  * Guest addresses: EU SCES-01000, from the dezgeg/kula-world-decomp config. */
 #include <stdio.h>
 #include "cpu_state.h"
@@ -10,6 +11,7 @@
 #define PLUGIN_ID "kula.level-select"
 
 enum {
+    FN_DRAW_WIDGETS = 0x00017ae8u,
     FN_SET_TEXT_PARAMS = 0x00014c10u,
     FN_DRAW_TEXT_CRAPPY = 0x00014c90u,
     FN_SINGLE_PLAYER_MENU = 0x000491a8u,
@@ -182,6 +184,14 @@ static int on_single_player_menu(struct CPUState* cpu, uint32_t address) {
     return 1;
 }
 
+/* The original menu draws its panel before testing Cross, so the confirm
+ * frame would flash the one-player panel over the submenu. */
+static int on_draw_widgets(struct CPUState* cpu, uint32_t address) {
+    (void)cpu;
+    (void)address;
+    return g_calling_original;
+}
+
 /* After a non-1/1 arcade start, show the score table instead of the entry. */
 static int on_highscore_ui(struct CPUState* cpu, uint32_t address) {
     (void)address;
@@ -211,4 +221,5 @@ PSX_MOD_CONSTRUCTOR(register_kula_level_select) {
     (void)psx_mod_register_vblank_plugin(PLUGIN_ID, on_vblank);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_SINGLE_PLAYER_MENU, on_single_player_menu);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_HIGHSCORE_UI, on_highscore_ui);
+    (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_WIDGETS, on_draw_widgets);
 }

@@ -25,7 +25,7 @@ keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, vorerst privat). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
 - Submodule: `psxrecomp` @ `0edce1d3`, `recomp-ui` @ `41c88ff` (Snapshot in `framework_pins.txt`)
   - `psxrecomp` kommt seit 2026-10-16 aus dem Fork `zap0xfce2/psxrecomp`, Branch `kula/ws-screen-x-sltu-band`: Upstream-Pin `f9c287f5` plus die `sltu`-Bandform für `screen_x_sites`.
-  - Darauf aufbauend Branch `feat/ws-feedback-rect` (Framebuffer-Feedback in den Bändern, Pillen-Effekt, 2026-10-19), Upstream-PR offen.
+  - Darauf aufbauend Branch `feat/ws-feedback-rect` (Framebuffer-Feedback in den Bändern, Pillen-Effekt, 2026-10-19). Upstream: PR RetroPortingToolKit/psxrecomp#692 (Branch `feat/ws-feedback-rect-upstream`, auf aktuellem `master`). Nach dem Merge wie bei #676 zurück auf Upstream pinnen.
   - Upstream: Issue RetroPortingToolKit/psxrecomp#675, PR #676 (auf aktuellem `master`). Nach dem Merge `.gitmodules` zurück auf Upstream stellen und neu pinnen.
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
 - BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)

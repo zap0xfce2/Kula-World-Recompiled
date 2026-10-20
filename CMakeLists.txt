@@ -48,8 +48,10 @@ psxrecomp_add_game_runtime(psx-runtime
     MAX_PLAYERS 2
     # Kula only uses memory card port 1 (decomp: MemCardAccept(0)).
     MEMCARD_SLOTS 1
-    # LAUNCHER_BOXART "${CMAKE_CURRENT_SOURCE_DIR}/launcher_assets/img/boxart.tga"
-    APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/psxrecomp.ico"
+    # Original launcher art, rendered from assets/launcher/*.svg (task launcher-art).
+    LAUNCHER_BOXART "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/boxart.tga"
+    LAUNCHER_BRAND "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/brand.tga"
+    APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/kula.ico"
     # Committed game C (psxrecomp_cli.py generate; git add generated). Release
     # CI configures with -DPSXRECOMP_REQUIRE_GAME_C=ON so a checkout without
     # it fails instead of building a setup host.

@@ -11,13 +11,8 @@ vars:
   # Prefix for headless runs, e.g. RUNNER="xvfb-run -a"
   RUNNER: '{{.RUNNER | default ""}}'
   # musl lacks getcontext/makecontext/swapcontext (psx_fiber.c), see CLAUDE.md
-  LIBC_FLAGS:
-    sh: |
-      if ldd --version 2>&1 | grep -qi musl; then
-        echo "-DCMAKE_C_STANDARD_LIBRARIES=-lucontext -DCMAKE_CXX_STANDARD_LIBRARIES=-lucontext"
-      fi
   CMAKE_FLAGS: >-
-    -G Ninja -DCMAKE_BUILD_TYPE=Release {{.LIBC_FLAGS}}
+    -G Ninja -DCMAKE_BUILD_TYPE=Release
     -DPSX_PYTHON="$(command -v {{.PYTHON}})"
 
 tasks:
@@ -27,23 +22,17 @@ tasks:
       - ./psxrecomp/tools/ci/build_emitters.sh
 
   generate:
-    desc: Recompile BIOS and game into generated/ and write the BIOS stamp
+    desc: Recompile BIOS and game into generated/ (the CLI writes the BIOS stamp)
     vars:
       # Without a retail dump only the bundled OpenBIOS is regenerated
       BIOS_ARG:
         sh: '[ -f {{.BIOS}} ] && echo "--bios {{.BIOS}}" || true'
-      BIOS_TOML:
-        sh: '[ -f {{.BIOS}} ] && echo SCPH1001.toml || echo OpenBIOS.toml'
     cmds:
-      # Without --no-toolchain-download the CLI fetches a glibc toolchain and edits shell rc files
+      # Without --no-toolchain-download the CLI fetches a glibc toolchain and edits shell rc files.
+      # After a framework update: task generate -- --force-bios (an existing BIOS backend is kept otherwise).
       - >-
         {{.PYTHON}} psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root .
-        --disc {{.DISC}} {{.BIOS_ARG}} --no-toolchain-download
-      # generate --bios leaves out the emitter stamp, CMake would report the BIOS as STALE
-      # Point it at task emitters' tree when that exists, else let it probe psxrecomp/recompiler/build*
-      - >-
-        cd psxrecomp && if [ -f ../build-recompiler/CMakeCache.txt ]; then export PSXRECOMP_BIOS_BUILD=../build-recompiler; fi;
-        bash tools/regen_bios.sh --config bios/{{.BIOS_TOML}}
+        --disc {{.DISC}} {{.BIOS_ARG}} --no-toolchain-download {{.CLI_ARGS}}
 
   build:
     desc: Release build without debug server (build-release/)

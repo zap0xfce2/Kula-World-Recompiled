@@ -23,9 +23,8 @@ keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 
 ## Stand (2026-10-15)
 Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, vorerst privat). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
-- Submodule: `psxrecomp` @ `0edce1d3`, `recomp-ui` @ `41c88ff` (Snapshot in `framework_pins.txt`)
-  - `psxrecomp` kommt seit 2026-10-16 aus dem Fork `zap0xfce2/psxrecomp`, Branch `kula/ws-screen-x-sltu-band`: Upstream-Pin `f9c287f5` plus die `sltu`-Bandform für `screen_x_sites`.
-  - Darauf aufbauend Branch `feat/ws-feedback-rect` (Framebuffer-Feedback in den Bändern, Pillen-Effekt, 2026-10-19). Upstream: PR RetroPortingToolKit/psxrecomp#692 (Branch `feat/ws-feedback-rect-upstream`, auf aktuellem `master`). Nach dem Merge wie bei #676 zurück auf Upstream pinnen.
+- Submodule (seit 2026-10-20 wieder auf Upstream, nachdem #676/#692/#693/#694/#695 gemergt sind): `psxrecomp` @ `fe8d937d`, `recomp-ui` @ `7c635c6`, beide `master` von RetroPortingToolKit. Für eigene Upstream-PRs gibt es die Forks `zap0xfce2/psxrecomp` und `zap0xfce2/recomp-ui` (Remote `fork` im jeweiligen Submodul).
+  - Historie: Vom 2026-10-16 bis 2026-10-20 kam `psxrecomp` aus dem Fork (`sltu`-Bandform, dann Framebuffer-Feedback).
   - Upstream: Issue RetroPortingToolKit/psxrecomp#675, PR #676 (auf aktuellem `master`). Nach dem Merge `.gitmodules` zurück auf Upstream stellen und neu pinnen.
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
 - BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
@@ -150,7 +149,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 5. Offene Punkte aus dem Smoke-Test:
    - ~~Ergebnis upstream melden~~ (erledigt 2026-10-15): RetroPortingToolKit/psxrecomp#671 (KUSEG) und #672 (6 Portabilitäts-Befunde). Quelle: `docs/upstream-report-kuseg.md`.
      - Zu #671 (2026-10-19): PR #695 trägt das Ergebnis in `docs/SEGMENT_AWARE_CODE.md` §7 ein. Neu gemessen auf Upstream `bce31aff` (Testbaum ohne Mods/Fork): 971 Funktionen, Kalt- gegen Warm-Cache (5 Shards: 4× `seg-kuseg`, 1× `seg-kseg1`) über 10.000 Frames in allen `frame_fingerprint`-Spalten identisch, `segment_native` 0 → 59.524, 0 Misses. Demo-Enden wie Beetle: 3603/9950 und 3017/6845. Gotchas: Upstream braucht das Untermodul `lib/retcomm-rbengine` (`git submodule update --init --recursive`), und mit aktiven Mods ohne Plugins startet die Runtime nicht (`mods/state.toml` abschalten). Captures schreibt `overlay_capture_dump`, nicht `kill -9`.
-     - Zu #672 (2026-10-19): PR #693 (Punkte 1, 2, 5, 6: libucontext-Erkennung, `uint16_t`, `python3` zuerst, `../build-recompiler`) und PR #694 (Punkt 4: `generate --bios` schreibt den Emitter-Stempel). Punkt 3 (glibc-Toolchain-Download unter musl) ist upstream durch `2c92ac3f` erledigt: Linux/macOS nutzen native Tools, kein Download, keine PATH-Hooks. Nach dem Merge können die musl-Flags und `regen_bios.sh` aus der `Taskfile.yaml` bzw. den Build-Gotchas entfallen.
+     - Zu #672 (2026-10-19): PR #693 (Punkte 1, 2, 5, 6: libucontext-Erkennung, `uint16_t`, `python3` zuerst, `../build-recompiler`) und PR #694 (Punkt 4: `generate --bios` schreibt den Emitter-Stempel). Punkt 3 (glibc-Toolchain-Download unter musl) ist upstream durch `2c92ac3f` erledigt: Linux/macOS nutzen native Tools, kein Download, keine PATH-Hooks. Alle gemergt (2026-10-19); musl-Flags und `regen_bios.sh`-Umweg sind seit der Upstream-Umstellung aus der `Taskfile.yaml` entfernt.
    - Auf dem Mac verifiziert: XA-Musik und SFX, Memory Card (`saves/card1.mcd`), LLE-Boot. Offen: Controller (kein Gamepad zur Hand).
    - Ending-FMV (`FINAL.STR`) läuft (Mac, 2026-10-19, Nutzer live gesehen). Weg: Levelauswahl W10/L15, nach dem Laden `fruitsCollectedBitmask` (0x800A51F0) = 0 (sonst Bonuslevel) und `levelEndReason` (0x800A591C) = 1 → „Well Done!“, X → FMV, danach Score-Tabelle. Während des FMV `present_native_43` = 1 (4:3 mit Balken). `cheated` blockiert es nicht. Ungeprüft: volle Länge (Skript drückte X, lief ca. 30 s) und FMV-Ton.
    - Speichern und Laden über die Memory Card bestätigt der Nutzer (2026-10-19).
@@ -269,7 +268,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - ~~Branch `test/kuseg-boot-smoke` nach `main` mergen~~ (erledigt)
    - ~~`.serena/` committen oder ignorieren~~ (erledigt, gitignored)
    - ~~`Taskfile.yaml` anlegen~~ (erledigt, siehe Build-Gotchas)
-   - Offen: `task generate` scheitert ohne `bios/SCPH1001.BIN` (Mac hat nur OpenBIOS). Das Sony-BIOS nur nutzen, wenn die Datei existiert, sonst nur OpenBIOS generieren. Branch-Vorschlag `fix/taskfile-openbios-generate`.
+   - ~~`task generate` ohne `bios/SCPH1001.BIN`~~ (erledigt, `BIOS_ARG` nur mit vorhandener Datei)
    - Offen, Kleinkram aus dem Review des Levelauswahl-Mods:
      - `g_calling_original` bleibt nach einem Watchdog-longjmp auf 1.
      - `tools/check_level_select.py`: doppelte Reads in den Fehlermeldungen, Docstrings fehlen.
@@ -306,7 +305,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. A
 - Der Launcher schaltet BIOS-Call-HLE ein (`bios_backend=HLE`). Mit `--no-launcher` gilt der Default LLE. Für A/B gegen Beetle `PSX_BIOS_HLE=0` setzen.
 
 ## Build-Gotchas (Alpine/musl)
-Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task generate` läuft auch ohne Sony-BIOS. Dann regeneriert es nur OpenBIOS (Mac). `task all` erledigt Emitter, Generate und Dev-Build. Die musl-Flags setzt sie automatisch. Weitere Tasks:
+Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task generate` läuft auch ohne Sony-BIOS. Dann regeneriert es nur OpenBIOS (Mac). `task all` erledigt Emitter, Generate und Dev-Build. Weitere Tasks:
 - `run`, `run:dev`, `beetle`: Starten, headless mit `RUNNER="xvfb-run -a"`.
 - `smoke PORT=4380`, `test`, `lint`.
 - Auf dem Mac `PYTHON=python3.12`.
@@ -316,9 +315,7 @@ Der Ablauf als rohe Befehle (Begründung der Flags unten):
 ./psxrecomp/tools/ci/build_emitters.sh
 python3 psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root . \
     --disc disc/SCES01000.CUE --bios bios/SCPH1001.BIN --no-toolchain-download
-(cd psxrecomp && PSXRECOMP_BIOS_BUILD=../build-recompiler bash tools/regen_bios.sh --config bios/SCPH1001.toml)
-cmake -S . -B build-dev -G Ninja -DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON \
-    -DCMAKE_C_STANDARD_LIBRARIES=-lucontext -DCMAKE_CXX_STANDARD_LIBRARIES=-lucontext
+cmake -S . -B build-dev -G Ninja -DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON
 cmake --build build-dev
 ```
 - Systempakete: `sudo apk add cmake samurai pkgconf sdl3-dev mesa-dev linux-headers` (samurai liefert `ninja`). Zum Headless-Testen: `xvfb xvfb-run mesa-dri-gallium`.
@@ -327,8 +324,8 @@ cmake --build build-dev
   - Es trägt PATH-Hooks in `~/.zshrc` und `~/.profile` ein.
   - Es schreibt `toolchain/.psxrecomp-bin`.
   - Das CLI durchsucht `~/.local/share/retcomm` immer. Der Ordner darf also nicht existieren (glibc-Reste wurden am 2026-10-15 gelöscht).
-- Nach `generate --bios` fehlt `psxrecomp/generated/SCPH1001.emitter.sha` (CLI-Lücke), dann meldet CMake „BIOS … STALE“. Abhilfe: `regen_bios.sh` wie oben. Das Skript sucht nur `psxrecomp/recompiler/build*`. Die Ausgabe von `build_emitters.sh` liegt aber in `build-recompiler/`, deshalb `PSXRECOMP_BIOS_BUILD=../build-recompiler` setzen (relativ zu `psxrecomp/`). Hier lief es bisher nur wegen eines alten `recompiler/build`.
-- musl hat keine `getcontext`/`makecontext`/`swapcontext`, die `psx_fiber.c` braucht. Abhilfe: `sudo apk add libucontext-dev` und bei jedem CMake-Configure `-DCMAKE_C_STANDARD_LIBRARIES=-lucontext -DCMAKE_CXX_STANDARD_LIBRARIES=-lucontext`.
+- Seit #694 schreibt `generate --bios` den Emitter-Stempel selbst. Ein schon vorhandenes BIOS-Backend überspringt das CLI aber („already present — skipping bios regen“). Nach einem Framework-Update meldet CMake dann „BIOS … STALE“. Abhilfe: `task generate -- --force-bios`.
+- musl hat keine `getcontext`/`makecontext`/`swapcontext`, die `psx_fiber.c` braucht. `sudo apk add libucontext-dev` genügt, seit #693 erkennt CMake das und linkt `libucontext` selbst.
 - Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --bios bios/SCPH1001.BIN --disc disc/SCES01000.CUE --debug-port 4370`.
 - Generate dauert ca. 2 min (569 Shards, 31 Mio. Zeilen C, ~950 MB). Der Runtime-Build dauert auf 8 Kernen ca. 23 min.
 - Serena mit C (`clangd`): `sudo apk add clang-extra-tools`. Dazu `.claude/settings.local.json` mit `env.UV_PYTHON=/usr/bin/python3` (lokal, über `.git/info/exclude` ignoriert), danach `/mcp` reconnect. Unter uvs statischem musl-Python liefert `platform.libc_ver()` `('libc', '')`, Serena meldet dann „Unknown platform“. `compile_commands.json` im Root ist ein Symlink auf `build-dev/` (`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`).

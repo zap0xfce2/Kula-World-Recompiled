@@ -46,6 +46,8 @@ psxrecomp_add_game_runtime(psx-runtime
     WINDOW_TITLE "Kula World Recompiled"
     DEFAULT_GAME_CONFIG_PATH "game.toml"
     MAX_PLAYERS 2
+    # Kula only uses memory card port 1 (decomp: MemCardAccept(0)).
+    MEMCARD_SLOTS 1
     # LAUNCHER_BOXART "${CMAKE_CURRENT_SOURCE_DIR}/launcher_assets/img/boxart.tga"
     APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/psxrecomp.ico"
     # Committed game C (psxrecomp_cli.py generate; git add generated). Release

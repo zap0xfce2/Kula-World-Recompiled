@@ -35,7 +35,10 @@ if(NOT IS_DIRECTORY "${PSX_PRELOADED_MODS}")
     set(PSX_PRELOADED_MODS "NONE")
 endif()
 
+# PGXP hook flavor: the psx.enhancement.pgxp override in mods/preloaded turns it
+# on by default; without the hook build its coverage drops (ENHANCEMENTS.md G1.11).
 psxrecomp_add_game_runtime(psx-runtime
+    PGXP
     PRELOADED_MODS_DIR "${PSX_PRELOADED_MODS}"
     # ENABLE_NETPLAY_IF_PRESENT
     # NETPLAY_LOBBY_URL "ws://netplay.retcomm.net:8765"

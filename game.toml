@@ -48,6 +48,10 @@ overlay_cache = true
 [video]
 renderer = "opengl"
 aspect_ratio = "4:3"
+# PGXP comes only from its mod (default on, see mods/preloaded), so netplay and
+# the launcher switch can turn it off. Geometry correction needs >= 2x.
+pgxp_mod_only = true
+internal_resolution = "1080p"
 
 [controller]
 default_mode = "digital"

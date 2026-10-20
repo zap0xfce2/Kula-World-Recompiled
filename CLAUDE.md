@@ -241,7 +241,12 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Upstream-Issue zur Flip-Erkennung: erst Ursache eingrenzen, braucht Freigabe des Nutzers.
        - NTSC-Weg mit den rund 130 angepassten Werten: großer Aufwand, eigenes Brainstorming.
        - Vor einem neuen Anlauf `frame_gen` auf aktuellem Framework erneut auf dem Mac messen (Demo, Rollen, Springen, Kanten-Kippen).
-   - Wobble-Fix
+   - Wobble-Fix über PGXP (2026-10-20, Branch `feat/pgxp-default`):
+     - Framework-Feature G1 (`psxrecomp/docs/ENHANCEMENTS.md`), Vorlage Ridge Racer Type 4 (G1.11/G1.12): `PGXP` in `psxrecomp_add_game_runtime` (Hook-Build, `generated/` unverändert), Override `mods/preloaded/packages/psx.enhancement.pgxp` mit `default_enabled = true`, `[video] pgxp_mod_only = true`.
+     - `[video] internal_resolution = "1080p"` als Spiel-Vorgabe: Die Geometriekorrektur braucht ≥ 2x, nativ rundet sie zurück aufs Pixel. Der Spieler kann es im Launcher ändern.
+     - Spike: Linux-Demo 81.699 Dreiecke präzise / 0 gemischt / 442 nativ in 5 s. Mac live: Wackeln und Textur-Schwimmen sind weg, keine Risse, Widescreen inkl. Pille gleich, 50 fps an und aus bei 1080p.
+     - Gotcha Linux-Tests: Unter Xvfb (llvmpipe) schafft 1080p (5x) nur ~11 fps, der Smoke-Test erreicht die Demo dann nicht. Headless-Läufe deshalb mit `PSX_INTERNAL_RESOLUTION=native` starten. PGXP ist rein visuell: Demo 1 endet weiter mit 3603/9950 (der Hook-Build läuft hier ~10 % langsamer, Smoke-Fenster ggf. mit `--duration` verlängern).
+     - Prüfen: `{"cmd":"geom_correction"}` (`pgxp.tri_mixed` = Riss-Risiko, muss klein bleiben), live umschalten mit `{"cmd":"pgxp","geometry":0|1,"texture":0|1}`. Standbilder zeigen nur ~1 % Unterschied; der Effekt ist in Bewegung sichtbar. Same-Frame-A/B: zwei Demo-Läufe, `screenshot_hires` bei festen Frames (die Demo ist deterministisch), der normale `screenshot` ist für die Korrektur blind.
    - HD-Texturen aus TGI/GGI
    - Eigener Ladebildschirm statt Piraterie-Hinweis (`HIRO\WARNING.TIM`, Idee 2026-10-15):
      - Der Hinweis ist der Ladebildschirm des Erststarts (`LoadWarningTim` → `LoadImage` 640x256), ohne feste Wartezeit.

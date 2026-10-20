@@ -88,6 +88,7 @@ Done:
 - [x] Upstream PRs for the musl/macOS findings ([#693](https://github.com/RetroPortingToolKit/psxrecomp/pull/693), [#694](https://github.com/RetroPortingToolKit/psxrecomp/pull/694))
 - [x] Ending FMV plays
 - [x] Wobble fix: PGXP on by default
+- [x] Launcher: only memory card 1, own box art, brand mark and app icon
 
 Next:
 - [ ] Widescreen: sky refresh after resizing the window inside a level
@@ -95,6 +96,8 @@ Next:
 - [ ] 60 fps (parked: psxrecomp's frame generation does not see Kula's flips yet; an NTSC-style patch would change the gameplay timing)
 - [ ] Own loading screen instead of the piracy warning shown during the first load
 - [ ] HD textures
+- [ ] Upstream PR: game brand mark overrides the console's in the launcher (recomp-ui)
+- [ ] Launcher colors per game (recomp-ui extension)
 - [ ] Controller test on macOS
 - [ ] Windows build
 - [ ] Release packaging

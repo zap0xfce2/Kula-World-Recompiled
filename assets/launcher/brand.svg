@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Launcher brand mark (top left): the beach ball from boxart.svg. Original artwork. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="-110 -110 220 220">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1d63c4"/>
+      <stop offset="0.55" stop-color="#4fa3e8"/>
+      <stop offset="1" stop-color="#bfe6ff"/>
+    </linearGradient>
+    <radialGradient id="ballLight" cx="0.32" cy="0.28" r="0.75">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.75"/>
+      <stop offset="0.35" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.38"/>
+    </radialGradient>
+    <clipPath id="ballClip"><circle cx="0" cy="0" r="100"/></clipPath>
+    <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+    <!-- Beach ball: white sphere, coloured gores meeting at the poles. -->
+    <g id="ball">
+      <circle cx="0" cy="0" r="100" fill="#f7f7f2"/>
+      <g clip-path="url(#ballClip)">
+        <path d="M0,-100 A64,100 0 0 1 0,100 A26,100 0 0 0 0,-100 Z" fill="#e3342f"/>
+        <path d="M0,-100 A64,100 0 0 0 0,100 A26,100 0 0 1 0,-100 Z" fill="#1f6fd1"/>
+        <path d="M0,-100 A100,100 0 0 1 0,100 A64,100 0 0 0 0,-100 Z" fill="#f6c21b"/>
+        <path d="M0,-100 A100,100 0 0 0 0,100 A64,100 0 0 1 0,-100 Z" fill="#2fae4f"/>
+      </g>
+      <circle cx="0" cy="0" r="100" fill="url(#ballLight)"/>
+      <circle cx="0" cy="-100" r="9" fill="#f7f7f2"/>
+    </g>
+    <!-- Sandstone cube in isometric view, simple carved border on each face. -->
+    <g id="cube">
+      <path d="M0,-60 L104,0 L0,60 L-104,0 Z" fill="#ecc57d"/>
+      <path d="M-104,0 L0,60 L0,180 L-104,120 Z" fill="#c8913f"/>
+      <path d="M0,60 L104,0 L104,120 L0,180 Z" fill="#a46c29"/>
+      <path d="M0,-42 L72,0 L0,42 L-72,0 Z" fill="none" stroke="#d6a95c" stroke-width="5"/>
+      <path d="M-88,22 L-16,64 L-16,152 L-88,110 Z" fill="none" stroke="#b07a33" stroke-width="5"/>
+      <path d="M16,64 L88,22 L88,110 L16,152 Z" fill="none" stroke="#8d5a20" stroke-width="5"/>
+    </g>
+  </defs>
+  <use href="#ball"/>
+</svg>

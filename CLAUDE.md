@@ -22,14 +22,13 @@ keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 `disc/`, `bios/`, `generated/` (bis zur Release-Entscheidung) gehören in `.gitignore`.
 
 ## Stand (2026-10-15)
-Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, vorerst privat). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
-- Submodule (seit 2026-10-20 wieder auf Upstream, nachdem #676/#692/#693/#694/#695 gemergt sind): `psxrecomp` @ `fe8d937d`, `recomp-ui` @ `7c635c6`, beide `master` von RetroPortingToolKit. Für eigene Upstream-PRs gibt es die Forks `zap0xfce2/psxrecomp` und `zap0xfce2/recomp-ui` (Remote `fork` im jeweiligen Submodul).
+Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, seit 2026-10-16 öffentlich). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
+- Submodule: Basis ist Upstream-`master` von RetroPortingToolKit (`psxrecomp` `fe8d937d`, `recomp-ui` `7c635c6`, seit 2026-10-20, nachdem #676/#692/#693/#694/#695 gemergt sind). Für offene eigene PRs zeigen sie vorübergehend auf Fork-Branches (`zap0xfce2/psxrecomp`, `zap0xfce2/recomp-ui`, Remote `fork` im Submodul): aktuell die Memory-Card-Slots (recomp-ui#110, psxrecomp#704), recomp-ui dazu das Spiel-Logo (`feat/game-brand-mark`, noch kein PR). Nach dem Merge jeweils zurück auf Upstream-`master` und `.gitmodules` zurückstellen.
   - Historie: Vom 2026-10-16 bis 2026-10-20 kam `psxrecomp` aus dem Fork (`sltu`-Bandform, dann Framebuffer-Feedback).
-  - Upstream: Issue RetroPortingToolKit/psxrecomp#675, PR #676 (auf aktuellem `master`). Nach dem Merge `.gitmodules` zurück auf Upstream stellen und neu pinnen.
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
 - BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
 - 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Recompiled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D** (X11-Screenshots in `analysis/smoke-native/`). Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
-  - Gemessen (`build-dev`, `tools/smoke_boot.py`): gleiche Demo-Abfolge und gleiche Endwerte wie psx-beetle, 0 Dispatch-Misses. Ergebnis noch nicht upstream gemeldet (Entwurf in `docs/upstream-report-kuseg.md`).
+  - Gemessen (`build-dev`, `tools/smoke_boot.py`): gleiche Demo-Abfolge und gleiche Endwerte wie psx-beetle, 0 Dispatch-Misses. Upstream gemeldet (#671) und in `SEGMENT_AWARE_CODE.md` §7 eingetragen (PR #695, gemergt).
 - **Abweichung von Upstream:** `generated/` ist bewusst gitignored (Upstream committet es), bis die Release-Entscheidung gefallen ist.
 - `disc/kula-quest-jp/` enthält Kula Quest (Japan), nur als Referenz, nicht Teil des Builds.
 
@@ -196,7 +195,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Lädt man direkt bei 2:1 oder dreht die Kamera einmal, ist der Keil weg. Die Bodenlücke links (Nutzer) hat vermutlich denselben Mechanismus.
      - Bodenlücke links (Mac-Live-Aufnahme, 2026-10-16, Branch `fix/widescreen-left-floor`): Am Hieroglyphen-Würfel links der Grube fehlt im linken Band die Vorderfläche bis Spiel-x ≈ 50 (bei 2:1). Rechts tritt das nicht auf, Fenstergröße und Ladezeitpunkt spielen keine Rolle.
        - Ursache: Die „behalten“-Ketten (Ecken 1–3, `sltu x, W` + `bne`) verwerfen negatives X vorzeichenlos. Rechts deckt das die Ladestelle ab, links fehlt eine untere Grenze.
-       - Lösung: Alle `sltu`-X-Vergleiche (94) stehen als `screen_x_sites` in der `game.toml`. Sie brauchen die `sltu`-Bandform aus dem Fork (`psx_ws_cull_sltu_band`): Im Breitbild gilt `-4·Rand ≤ x < W`, bei 4:3 das Original. Es stehen nur Adressen im Repo.
+       - Lösung: Alle `sltu`-X-Vergleiche (94) stehen als `screen_x_sites` in der `game.toml`. Sie brauchen die `sltu`-Bandform `psx_ws_cull_sltu_band` (unser PR #676, gemergt): Im Breitbild gilt `-4·Rand ≤ x < W`, bei 4:3 das Original. Es stehen nur Adressen im Repo.
        - Verworfen: `[[widescreen.cull.keep]] result = 1`, also „immer sichtbar“. Das behob die Lücke, ließ aber in `RenderLevelGeometryQuads` alle Quads außerhalb des Bildes durch, und das W10-Intro stand ca. 5 s (Pufferüberlauf, per Halbierung auf die 3 Level-Quad-Stellen eingegrenzt). Mit nur einem Rand Reichweite blieb die Lücke, weil große nahe Quads keine Ecke im Band haben.
        - Die vorzeichenbehafteten Vergleiche (Lens-Flares) laufen weiter über `branch_keep_sites`. Partikel (`slt` + `bne`) bleiben links unverändert.
        - Repro, deterministisch (direkt bei 2:1 laden, T0 = erster Frame mit `levelTimeLeft` < 4950, `press` 4 Frames): R@100, U@150, U@200, U@250, L@310, U@370+55·i (i = 0..7). Blick wie im Nutzerbild bei rel ≈ 400–410, Pfad bei ≈ 600–650.
@@ -219,7 +218,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Prüfen: `present_native_43` muss 0 bleiben. Der Debug-Screenshot enthält bei breiter Darstellung die Bänder (16:9: 428×256), bei 4:3 nur 320×256 ohne Balken. Müll in den Bändern ist also per Screenshot prüfbar, Balken nur per X11-Capture (`xwd`).
      - Pillen-Effekt (Nachziehen, 2026-10-19, Spec/Plan `docs/superpowers/*/2026-10-19-widescreen-framebuffer-feedback*`):
        - `DrawLethargyEffects` (0x20B30) kopiert jeden Frame das vorherige Bild per zwei 15-bit-Sprites (`lethargyEffectSprite`, 0x800A3EE4) über die Szene. Im VRAM gibt es nur 320 Spalten, deshalb hatte vorher nur die Mitte den Effekt.
-       - Framework-Erweiterung im Fork (Branch `feat/ws-feedback-rect`): `gpu_ws_tag_feedback_rect` / `psx_mod_tag_feedback_rect` markiert ein solches Sprite. `gpu.c` setzt es an den Rändern als Band-Rechtecke fort (`ws_feedback_rect.h`, C-Test in `task test`). Die neue Backend-Operation `wide_feedback_rect` (GL inklusive Render-Thread, Software, kein Vulkan) liest aus der breiten Fläche des Quell-Puffers.
+       - Framework-Erweiterung (unser PR #692, gemergt; der Maintainer ergänzte, dass Sprites ganz außerhalb des Bildes keine Band-Rechtecke bekommen): `gpu_ws_tag_feedback_rect` / `psx_mod_tag_feedback_rect` markiert ein solches Sprite. `gpu.c` setzt es an den Rändern als Band-Rechtecke fort (`ws_feedback_rect.h`, C-Test in `task test`). Die neue Backend-Operation `wide_feedback_rect` (GL inklusive Render-Thread, Software, kein Vulkan) liest aus der breiten Fläche des Quell-Puffers.
        - Gotcha Bit 15: Halbtransparenz wirkt nur auf Texel mit Bit 15. Der Start-Blitz beim Einsammeln (`lethargyEffectPoly`, 0x800A3E94, fest 0…W+1) setzt es in der Mitte, danach erhält es sich über die Kopien. Der Mod zieht den Blitz in die Bänder, und die Band-Kopie behandelt jedes Texel als Bit 15 gesetzt. Sonst verdunkeln Band-Pixel ohne Bit 15 Frame für Frame zu Schwarz, besonders im Pausenmenü (vorher 2 von 3 Läufen).
        - Gotcha GL-Helligkeit (Mac-Befund): Die Mitte liest jeden Frame das auf 5 Bit gepackte VRAM (`PACK_FS`), die Band-Kopie die 8-Bit-Fläche. Ohne dieselbe Abrundung drifteten die Bänder über das Feedback 2–4 Graustufen heller, eine sichtbare Stufe an der 4:3-Kante. Der Band-Shader rundet jetzt wie `PACK_FS` ab und moduliert wie `TEX_FS` (`* 2 / 255`). Messung: mittleres Grau der Spalten links/rechts der Kante, Zeilen 0–199.
        - Software-Renderer: `put_textured` schreibt jetzt das Texel-Bit 15 in den Pixel (vorher verloren, kanonisches VRAM zeigt es: ca. 57 % STP live).
@@ -240,12 +239,19 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Upstream-Issue zur Flip-Erkennung: erst Ursache eingrenzen, braucht Freigabe des Nutzers.
        - NTSC-Weg mit den rund 130 angepassten Werten: großer Aufwand, eigenes Brainstorming.
        - Vor einem neuen Anlauf `frame_gen` auf aktuellem Framework erneut auf dem Mac messen (Demo, Rollen, Springen, Kanten-Kippen).
-   - Launcher, nur eine Memory Card (2026-10-20, Branch `feat/launcher-memcard-slots`): Kula nutzt nur Port 1 (Decomp `memcard2.c`: nur `MemCardAccept(0)`). `MEMCARD_SLOTS 1` in `psxrecomp_add_game_runtime` → Launcher zeigt nur Karte 1 (`GameInfo.memcard_slots`), Runtime lässt Slot 2 leer (kein `card2.mcd`). Upstream: RetroPortingToolKit/recomp-ui#110 und psxrecomp#704; bis zum Merge zeigen die Submodule auf die Fork-Branches `feat/game-memcard-slots-upstream` (`.gitmodules`). Danach zurück auf Upstream-`master`.
-   - Launcher-Look (Plan, offen): eigene Box-Art/Logo/Icon, dann Theme-Farben pro Spiel als recomp-ui-Erweiterung. Gotcha: `LAUNCHER_BRAND` landet als `brand_mark.tga`, das PSX-Profil lädt aber `brand_psx.tga`, ein Spiel-Logo greift bei PSX deshalb nicht (recomp-ui-Fix nötig).
-   - Wobble-Fix über PGXP (2026-10-20, Branch `feat/pgxp-default`):
+   - Launcher, nur eine Memory Card (2026-10-20, in `main`): Kula nutzt nur Port 1 (Decomp `memcard2.c`: nur `MemCardAccept(0)`). `MEMCARD_SLOTS 1` in `psxrecomp_add_game_runtime` → Launcher zeigt nur Karte 1 (`GameInfo.memcard_slots`), Runtime lässt Slot 2 leer (kein `card2.mcd`). Upstream: RetroPortingToolKit/recomp-ui#110 und psxrecomp#704; bis zum Merge zeigen die Submodule auf die Fork-Branches `feat/game-memcard-slots-upstream` (`.gitmodules`). Danach zurück auf Upstream-`master`.
+   - Launcher-Art (2026-10-20, in `main`): eigene Grafiken, keine Spiel-Assets. Quellen `assets/launcher/{boxart,brand,icon}.svg` (Wasserball auf Sandstein-Würfel vor Himmel), gerendert per `task launcher-art` (ImageMagick + librsvg) nach `boxart.tga` (512×712), `brand.tga` (140×140) und `kula.ico` (16–256). Die erzeugten Dateien liegen im Repo, damit der Build ohne ImageMagick geht. Eingebunden über `LAUNCHER_BOXART`, `LAUNCHER_BRAND`, `APP_ICON`.
+     - Mac verifiziert (2026-10-20): Logo, Box-Art mit korrekten Farben, Dock-Icon, nur Karte 1, Spielstart aus dem Launcher.
+     - Gotcha Logo: `LAUNCHER_BRAND` landete als `brand_mark.tga`, das PSX-Profil lädt aber `brand_psx.tga`. recomp-ui-Fix (Branch `feat/game-brand-mark`): Das Spiel-Logo wird als `brand_game.tga` abgelegt und vor dem Profil-Logo geladen.
+     - Gotcha: `POST_BUILD`-Kopien (Box-Art, Logo) laufen nur, wenn neu gelinkt wird. Nach einem Grafik-Wechsel ohne Code-Änderung das Binary löschen oder neu konfigurieren.
+     - Gotcha Linux: Unter Xvfb/llvmpipe zeigt der Launcher alle Bilder mit vertauschtem Rot/Blau, auch die mitgelieferten (PlayStation-✕ rot statt blau). Am Mac korrekt (Nutzer). Spielbilder aus derselben X11-Aufnahme sind korrekt. Launcher-Farben also nur am Mac beurteilen.
+   - Launcher-Art in `main` (2026-10-20). Roadmap: den Logo-Fix (`feat/game-brand-mark`) auf Upstream-`master` setzen und als kurzen PR an RetroPortingToolKit/recomp-ui stellen (nur mit Freigabe).
+   - Launcher-Farben pro Spiel (Plan, offen): Theme-Farben als recomp-ui-Erweiterung (Upstream-PR), Kula-Palette aus dem Spiel.
+   - Wobble-Fix über PGXP (2026-10-20, in `main`):
      - Framework-Feature G1 (`psxrecomp/docs/ENHANCEMENTS.md`), Vorlage Ridge Racer Type 4 (G1.11/G1.12): `PGXP` in `psxrecomp_add_game_runtime` (Hook-Build, `generated/` unverändert), Override `mods/preloaded/packages/psx.enhancement.pgxp` mit `default_enabled = true`, `[video] pgxp_mod_only = true`.
      - `[video] internal_resolution = "1080p"` als Spiel-Vorgabe: Die Geometriekorrektur braucht ≥ 2x, nativ rundet sie zurück aufs Pixel. Der Spieler kann es im Launcher ändern.
      - Spike: Linux-Demo 81.699 Dreiecke präzise / 0 gemischt / 442 nativ in 5 s. Mac live: Wackeln und Textur-Schwimmen sind weg, keine Risse, Widescreen inkl. Pille gleich, 50 fps an und aus bei 1080p.
+     - Befund (2026-10-20, niedrige Priorität): Unter Linux/Xvfb (llvmpipe) fehlt mit PGXP in W1/L1 oben links ein Himmelskeil (schwarz, ~30 % der Ecke), bei 1x, 2x und 1080p, im echten Fenster (X11-Capture) wie im Debug-Screenshot. Ohne PGXP sauber. Am Mac (Apple-GPU, 1080p, 16:9 und 2:1, live umgeschaltet) nicht reproduzierbar. Hypothese: PGXP liefert für weit links liegende Himmelsecken unbeschnittene Koordinaten (statt der auf −1024 gekappten GTE-Werte), und llvmpipe verwirft bzw. beschneidet solche Riesendreiecke anders. Spur im Code: `gpu_triangle_rejected` (Rettung zu großer Breitbild-Dreiecke) in `psxrecomp/runtime/src/gpu.c`. Bestätigung nur auf echter GPU unter Linux/Windows möglich.
      - Gotcha Linux-Tests: Unter Xvfb (llvmpipe) schafft 1080p (5x) nur ~11 fps, der Smoke-Test erreicht die Demo dann nicht. Headless-Läufe deshalb mit `PSX_INTERNAL_RESOLUTION=native` starten. PGXP ist rein visuell: Demo 1 endet weiter mit 3603/9950 (der Hook-Build läuft hier ~10 % langsamer, Smoke-Fenster ggf. mit `--duration` verlängern).
      - Prüfen: `{"cmd":"geom_correction"}` (`pgxp.tri_mixed` = Riss-Risiko, muss klein bleiben), live umschalten mit `{"cmd":"pgxp","geometry":0|1,"texture":0|1}`. Standbilder zeigen nur ~1 % Unterschied; der Effekt ist in Bewegung sichtbar. Same-Frame-A/B: zwei Demo-Läufe, `screenshot_hires` bei festen Frames (die Demo ist deterministisch), der normale `screenshot` ist für die Korrektur blind.
    - HD-Texturen aus TGI/GGI
@@ -285,7 +291,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 10. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher bei dezgeg Lizenz und PC-Port-Pläne erfragen.
 
 ## macOS
-Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Auf dem Mac wird das private Remote geklont.
+Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Der Mac klont das Repo per SSH.
 - Rolle des Macs: reine Teststation für alles, was unter Linux ohne Display/GPU nicht geht (echte fps, Audio, Launcher-UI, Sichtprüfungen).
   - Der Nutzer sitzt nur für Beobachtungen am Mac (Stoppuhr, Gehör, Eingaben). Alles Messbare automatisiert die Mac-Session über den Debug-Server.
 - Testablauf mit der Mac-Session (Claude Code über Remote Control, Name per `ListAgents`):
@@ -301,7 +307,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. A
 - 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Memory Card unter Retail und OpenBIOS ok. Levelauswahl-Mod ok. Ending-FMV ok (2026-10-19). Offen: Controller.
 - Gotchas:
   - Ein verwaister `CommandLineTools/usr/include/c++/v1` überdeckt die SDK-Header (`'string' file not found`).
-  - `runtime.cmake` sucht `python` vor `python3`, deshalb `-DPSX_PYTHON=$(command -v python3.12)`.
+  - `runtime.cmake` sucht seit #693 `python3` vor `python`. Die `Taskfile.yaml` setzt `-DPSX_PYTHON` trotzdem explizit (auf dem Mac `PYTHON=python3.12`).
   - Das Default-`python3` ist 3.9, also überall `python3.12`.
 - Der Launcher schreibt bei jedem Start `[controller] multitap_analog` in `game.toml`. Der Wert ist deshalb fest eingetragen, damit kein Diff entsteht.
 - Der Launcher schaltet BIOS-Call-HLE ein (`bios_backend=HLE`). Mit `--no-launcher` gilt der Default LLE. Für A/B gegen Beetle `PSX_BIOS_HLE=0` setzen.

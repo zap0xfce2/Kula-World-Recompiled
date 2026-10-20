@@ -5,4 +5,4 @@
 [submodule "recomp-ui"]
 	path = recomp-ui
 	url = https://github.com/zap0xfce2/recomp-ui.git
-	branch = feat/game-memcard-slots-upstream
+	branch = feat/game-brand-mark

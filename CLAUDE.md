@@ -240,6 +240,8 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Upstream-Issue zur Flip-Erkennung: erst Ursache eingrenzen, braucht Freigabe des Nutzers.
        - NTSC-Weg mit den rund 130 angepassten Werten: großer Aufwand, eigenes Brainstorming.
        - Vor einem neuen Anlauf `frame_gen` auf aktuellem Framework erneut auf dem Mac messen (Demo, Rollen, Springen, Kanten-Kippen).
+   - Launcher, nur eine Memory Card (2026-10-20, Branch `feat/launcher-memcard-slots`): Kula nutzt nur Port 1 (Decomp `memcard2.c`: nur `MemCardAccept(0)`). `MEMCARD_SLOTS 1` in `psxrecomp_add_game_runtime` → Launcher zeigt nur Karte 1 (`GameInfo.memcard_slots`), Runtime lässt Slot 2 leer (kein `card2.mcd`). Upstream: RetroPortingToolKit/recomp-ui#110 und psxrecomp#704; bis zum Merge zeigen die Submodule auf die Fork-Branches `feat/game-memcard-slots-upstream` (`.gitmodules`). Danach zurück auf Upstream-`master`.
+   - Launcher-Look (Plan, offen): eigene Box-Art/Logo/Icon, dann Theme-Farben pro Spiel als recomp-ui-Erweiterung. Gotcha: `LAUNCHER_BRAND` landet als `brand_mark.tga`, das PSX-Profil lädt aber `brand_psx.tga`, ein Spiel-Logo greift bei PSX deshalb nicht (recomp-ui-Fix nötig).
    - Wobble-Fix über PGXP (2026-10-20, Branch `feat/pgxp-default`):
      - Framework-Feature G1 (`psxrecomp/docs/ENHANCEMENTS.md`), Vorlage Ridge Racer Type 4 (G1.11/G1.12): `PGXP` in `psxrecomp_add_game_runtime` (Hook-Build, `generated/` unverändert), Override `mods/preloaded/packages/psx.enhancement.pgxp` mit `default_enabled = true`, `[video] pgxp_mod_only = true`.
      - `[video] internal_resolution = "1080p"` als Spiel-Vorgabe: Die Geometriekorrektur braucht ≥ 2x, nativ rundet sie zurück aufs Pixel. Der Spieler kann es im Launcher ändern.

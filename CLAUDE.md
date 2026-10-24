@@ -23,7 +23,8 @@ keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 
 ## Stand (2026-10-15)
 Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, seit 2026-10-16 öffentlich). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
-- Submodule: Basis ist Upstream-`master` von RetroPortingToolKit (`psxrecomp` `fe8d937d`, `recomp-ui` `7c635c6`, seit 2026-10-20, nachdem #676/#692/#693/#694/#695 gemergt sind). Für offene eigene PRs zeigen sie vorübergehend auf Fork-Branches (`zap0xfce2/psxrecomp`, `zap0xfce2/recomp-ui`, Remote `fork` im Submodul): aktuell die Memory-Card-Slots (recomp-ui#110, psxrecomp#704), recomp-ui dazu das Spiel-Logo (`feat/game-brand-mark`, noch kein PR). Nach dem Merge jeweils zurück auf Upstream-`master` und `.gitmodules` zurückstellen.
+- Submodule: Basis ist Upstream-`master` von RetroPortingToolKit. `psxrecomp` steht seit 2026-10-24 auf `31df2e1e` (inkl. #704). Für offene eigene PRs zeigen sie vorübergehend auf Fork-Branches (`zap0xfce2/…`, Remote `fork` im Submodul). Aktuell betrifft das nur `recomp-ui`: Memory-Card-Slots (recomp-ui#110) plus Spiel-Logo (`feat/game-brand-mark`, noch kein PR). Nach dem Merge zurück auf Upstream-`master` und `.gitmodules` zurückstellen.
+  - recomp-ui#110 wartet auf ein Review. **Nachfragen frühestens am 31.10.2026, spätestens am 07.11.2026**, nur mit Freigabe des Nutzers.
   - Historie: Vom 2026-10-16 bis 2026-10-20 kam `psxrecomp` aus dem Fork (`sltu`-Bandform, dann Framebuffer-Feedback).
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
 - BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
@@ -92,12 +93,12 @@ Dort gefixt und laut `docs/ecosystem-watch.md` nach upstream übernommen:
 - Pinnt den eigenen Fork `Alexbeav/psxrecomp@08ec704`. Merge-Base mit Upstream ist vom 2026-08-30, also **vor** dem KUSEG-Codegen `d67f0f93` (2026-09-29). Gegenüber Upstream 91 Commits voraus (u. a. PAL-VBlank-Timing, SPU-IRQ, Savestates) und 1482 zurück.
 - Fazit: Bootstrap bringt er nichts mit, was wir übernehmen müssten. Mods und KUSEG auf aktuellem Upstream hat noch niemand gemacht.
 
-**dezgeg/kula-world-decomp** (Matching-Decomp, **keine Lizenz**, seit 2024, 947 Commits, aktiv bis 2026-10-13):
+**dezgeg/kula-world-decomp** (Matching-Decomp, Nutzung mit Erlaubnis von dezgeg, seit 2024, 947 Commits, aktiv bis 2026-10-13):
 - Zielt auf genau unsere EXE: `config/eu-SCES_010.00`, SHA256-Check `28c8f46d…` ist identisch mit `disc/SCES_010.00`.
 - 939 benannte Funktionen (`function_addrs.txt`, nur 5 `FUN_`), 937 typisierte Variablen, 347 PsyQ-Lib-Symbole, Strings und Relocs. Format: splat/`name = 0x…; // type:…`.
 - Nur noch 27 Funktionen in ASM, v. a. Render, GTE, Subdivide, Light-Effects, `WaitForVBlank`. Der Rest ist matchendes C (`src/*.c`, u. a. `cheats.c`, `level_update*.c`, `player_movement.c`, `vsync.c`).
 - Portiert gerade nach US/JP (`VER_US`, `VID_NTSC`). `psyz` (PsyQ-Reimplementierung für PC) ist als Submodule eingebunden, wird im Makefile aber noch nicht genutzt.
-- Nutzen für uns: vollständige Funktionsgrenzen für Seeds/Indirect Targets, Symbole für `symbols.toml`, lesbares C als Grundlage für die Mods (Timer, Kamera, Cheats). Ohne Lizenz die Dateien nur lokal als Referenz nutzen und vor dem Committen abgeleiteter Listen beim Maintainer nachfragen.
+- Nutzen für uns: vollständige Funktionsgrenzen für Seeds/Indirect Targets, Symbole für `symbols.toml`, lesbares C als Grundlage für die Mods (Timer, Kamera, Cheats). Symbolnamen und Variablenadressen dürfen laut dezgeg öffentlich stehen (dezgeg/kula-world-decomp#1, 2026-10-16).
 
 **Pixelsprout/rocco-engine** (UPL-1.0, Odin/Roc): Klon-Engine mit 3 Leveln und eigenen Assets, Code für uns unbrauchbar.
 Nützlich ist `games/kula/SPEC.md`: Gameplay-Fakten aus dem Decomp (Commit `2ca79ff`) mit Zeilenverweisen.
@@ -134,10 +135,9 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 ## Strategie (entschieden 2026-10-14)
 - **Jetzt: Recomp mit psxrecomp.** Das dezgeg-Decomp dient nur als Wissens- und Symbolquelle, es fließt kein Code daraus ein.
 - **Roadmap: nativer Port aus dem dezgeg-Decomp über psyz.** Voraussetzungen:
-  - dezgeg vergibt eine Lizenz oder stimmt zu
   - die 27 ASM-Funktionen liegen als C vor
   - psyz ist angebunden
-  - vorher bei dezgeg nachfragen, ob ein eigener PC-Port geplant ist (Zusammenarbeit statt Doppelarbeit)
+  - Abstimmung mit dezgeg (Zusammenarbeit statt Doppelarbeit). Er hat lokal einen hackigen PsyZ-Port: Menüs laufen, 3D fehlt, weil der Render-Kern in ASM steckt. Plan: ASM erst zeilenweise nach C übertragen. Liegt auf Eis, bis US/JP fertig sind (#1, 2026-10-16).
 
 ## Nächste Schritte
 1. ~~Repo nach New Project Layout aufsetzen~~ (erledigt)
@@ -163,7 +163,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Die Demo startet mit Retail-HLE und OpenBIOS bei gleichem Frame (~3100–3200). Mit Retail-LLE (echtes Intro) kommt sie ca. 10 s später. Linux erreicht den Frame wegen llvmpipe in Sekunden später.
      - Offen: interaktives Spielen und A/B gegen Beetle mit OpenBIOS. Damit kann ein Release ohne Sony-BIOS auskommen, die Disc braucht es weiterhin.
    - `vsyncCounter` (`0x800A2F64`) ist auf beiden Backends immer 0. Klären, ob die Adresse aus dem Decomp für PAL stimmt.
-6. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps (lokal, siehe Lizenzhinweis), Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
+6. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps, Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
 7. Mods (vor jedem Mod Brainstorming mit dem Nutzer, Vorschlag: mit der Levelauswahl anfangen):
    - Levelauswahl-Mod `kula.level-select` (in `main` seit 2026-10-15, Spec und Plan unter `docs/superpowers/`):
      - „Arcade“ öffnet START / WORLD 1–10 / LEVEL 1–15. Standardmäßig an.
@@ -190,6 +190,8 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Rechts reicht die Ladestelle, links verwarf der Test alles bei x < −r. Repro: W1/L1, rechts antippen, zwei Felder vor, der Schlüssel verschwand bei x ≈ −12.
        - Das Suchskript erfasst abgeleitete Grenzen (`add rd, bound, x`) und findet so 3 weitere Sites: 0x540B4 Items, 0x55C30 Bonus-Hintergrund, 0x565E8 Himmel.
      - Offen, Himmelskeil nach Fenster-Aufziehen im Level: Lädt man bei 16:9 und zieht dann auf 2:1, bleibt oben rechts ein schwarzer Keil, bis sich die Kamera dreht.
+       - 2026-10-24 auf `psxrecomp` `31df2e1e` weiter offen. Mac-Repro (`mac-ws6/repro_sky_wedge.py`: W1/L1 bei 1280×720 laden, Eingaben bis rel 560, dann `window_size` 1280×640) zeigt ca. 774 dunkle Pixel nativ, mit PGXP an und aus gleich. Direkt bei 2:1 geladen: 0. Ein Linux-Lauf ohne Eingaben vor dem Aufziehen zeigte 0, ist also kein gültiges Repro.
+       - Gotcha: Bei 1080p ist der Debug-Screenshot 5x groß (2:1 → 2400×1280), Bänder und Ecken entsprechend skalieren.
        - Repro: Mac-Skript, W1/L1, 757 dunkle Pixel im Band x 420–479, y 0–127.
        - Ursache: `RenderNonSpecialBackground` erneuert die Himmelskacheln nur bei Kamerabewegung. Die Ladestelle lieferte beim letzten Erneuern 320 + 53, deshalb fehlen die Kacheln zwischen +53 und +80.
        - Lädt man direkt bei 2:1 oder dreht die Kamera einmal, ist der Keil weg. Die Bodenlücke links (Nutzer) hat vermutlich denselben Mechanismus.
@@ -200,6 +202,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Die vorzeichenbehafteten Vergleiche (Lens-Flares) laufen weiter über `branch_keep_sites`. Partikel (`slt` + `bne`) bleiben links unverändert.
        - Repro, deterministisch (direkt bei 2:1 laden, T0 = erster Frame mit `levelTimeLeft` < 4950, `press` 4 Frames): R@100, U@150, U@200, U@250, L@310, U@370+55·i (i = 0..7). Blick wie im Nutzerbild bei rel ≈ 400–410, Pfad bei ≈ 600–650.
        - Breitenvergleiche zeigen den Fehler nicht, weil er bei jeder Breite im negativen X liegt.
+       - Nach dem Upstream-Fix `b285f08f` (`screen_x_sites` im Dirty-RAM-Interpreter) mit dem Repro erneut geprüft (2026-10-24, Linux und Mac): keine Lücke, keine Regression. Mac: 51 Bilder über rel 400–650, 0 dunkle Pixel im linken Band, PGXP an und aus.
      - HUD in den Ecken: Das Plugin verankert pro VBlank die Pakete von `keySprites` (0x800ADBB4, links) und `fruitSprites` (0x800ADD74, rechts) per `psx_mod_anchor_hud_primitive`. `nw_hud_corners` scheidet aus, weil es auch Himmels-Sprites verschiebt.
        - Gotcha: Das API liest den GP0-Farbbefehl an `primitive + 4`. Bei Kulas zusammengeführtem TSprite (DR_TPAGE + SPRT, 28 Byte) ist deshalb TSprite + 8 zu übergeben, also das SPRT-Tag-Wort.
        - Prüfen: `{"cmd":"ws_tag_stats"}`, `hud.hit` muss steigen.
@@ -239,7 +242,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Upstream-Issue zur Flip-Erkennung: erst Ursache eingrenzen, braucht Freigabe des Nutzers.
        - NTSC-Weg mit den rund 130 angepassten Werten: großer Aufwand, eigenes Brainstorming.
        - Vor einem neuen Anlauf `frame_gen` auf aktuellem Framework erneut auf dem Mac messen (Demo, Rollen, Springen, Kanten-Kippen).
-   - Launcher, nur eine Memory Card (2026-10-20, in `main`): Kula nutzt nur Port 1 (Decomp `memcard2.c`: nur `MemCardAccept(0)`). `MEMCARD_SLOTS 1` in `psxrecomp_add_game_runtime` → Launcher zeigt nur Karte 1 (`GameInfo.memcard_slots`), Runtime lässt Slot 2 leer (kein `card2.mcd`). Upstream: RetroPortingToolKit/recomp-ui#110 und psxrecomp#704; bis zum Merge zeigen die Submodule auf die Fork-Branches `feat/game-memcard-slots-upstream` (`.gitmodules`). Danach zurück auf Upstream-`master`.
+   - Launcher, nur eine Memory Card (2026-10-20, in `main`): Kula nutzt nur Port 1 (Decomp `memcard2.c`: nur `MemCardAccept(0)`). `MEMCARD_SLOTS 1` in `psxrecomp_add_game_runtime` → Launcher zeigt nur Karte 1 (`GameInfo.memcard_slots`), Runtime lässt Slot 2 leer (kein `card2.mcd`). Upstream: psxrecomp#704 gemergt (2026-10-21, `da0c98b9`; der Parser nimmt nur noch die Literale 1 oder 2). recomp-ui#110 ist offen, bis zum Merge zeigt `recomp-ui` auf den Fork (`.gitmodules`). Mit Upstream-psxrecomp am Mac verifiziert (2026-10-24): nur Karte 1, Speichern und Laden ok, kein neues `card2.mcd`.
    - Launcher-Art (2026-10-20, in `main`): eigene Grafiken, keine Spiel-Assets. Quellen `assets/launcher/{boxart,brand,icon}.svg` (Wasserball auf Sandstein-Würfel vor Himmel), gerendert per `task launcher-art` (ImageMagick + librsvg) nach `boxart.tga` (512×712), `brand.tga` (140×140) und `kula.ico` (16–256). Die erzeugten Dateien liegen im Repo, damit der Build ohne ImageMagick geht. Eingebunden über `LAUNCHER_BOXART`, `LAUNCHER_BRAND`, `APP_ICON`.
      - Mac verifiziert (2026-10-20): Logo, Box-Art mit korrekten Farben, Dock-Icon, nur Karte 1, Spielstart aus dem Launcher.
      - Gotcha Logo: `LAUNCHER_BRAND` landete als `brand_mark.tga`, das PSX-Profil lädt aber `brand_psx.tga`. recomp-ui-Fix (Branch `feat/game-brand-mark`): Das Spiel-Logo wird als `brand_game.tga` abgelegt und vor dem Profil-Logo geladen.
@@ -252,6 +255,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - `[video] internal_resolution = "1080p"` als Spiel-Vorgabe: Die Geometriekorrektur braucht ≥ 2x, nativ rundet sie zurück aufs Pixel. Der Spieler kann es im Launcher ändern.
      - Spike: Linux-Demo 81.699 Dreiecke präzise / 0 gemischt / 442 nativ in 5 s. Mac live: Wackeln und Textur-Schwimmen sind weg, keine Risse, Widescreen inkl. Pille gleich, 50 fps an und aus bei 1080p.
      - Befund (2026-10-20, niedrige Priorität): Unter Linux/Xvfb (llvmpipe) fehlt mit PGXP in W1/L1 oben links ein Himmelskeil (schwarz, ~30 % der Ecke), bei 1x, 2x und 1080p, im echten Fenster (X11-Capture) wie im Debug-Screenshot. Ohne PGXP sauber. Am Mac (Apple-GPU, 1080p, 16:9 und 2:1, live umgeschaltet) nicht reproduzierbar. Hypothese: PGXP liefert für weit links liegende Himmelsecken unbeschnittene Koordinaten (statt der auf −1024 gekappten GTE-Werte), und llvmpipe verwirft bzw. beschneidet solche Riesendreiecke anders. Spur im Code: `gpu_triangle_rejected` (Rettung zu großer Breitbild-Dreiecke) in `psxrecomp/runtime/src/gpu.c`. Bestätigung nur auf echter GPU unter Linux/Windows möglich.
+       - Nachtest 2026-10-24 auf `psxrecomp` `31df2e1e`, inklusive `67200909` „PGXP: keep full depth and unclamped XY for far geometry“: Die Keile bleiben. Live umgeschaltet in derselben Szene: PGXP an 618 dunkle Pixel oben links (X11-Capture), aus 0. Im Widescreen-Repro bei 2:1 tritt er je nach Blick auch oben rechts auf (an: 210 rechts / 50 links, aus: 0/0). `tri_mixed` = 0. Mac (Apple-GPU) am selben Tag: keine Keile, weder in W1/L1 bei 16:9 noch bei 2:1, noch über 173 Bilder des Floor-Repros. Das spricht für einen llvmpipe-Effekt.
      - Gotcha Linux-Tests: Unter Xvfb (llvmpipe) schafft 1080p (5x) nur ~11 fps, der Smoke-Test erreicht die Demo dann nicht. Headless-Läufe deshalb mit `PSX_INTERNAL_RESOLUTION=native` starten. PGXP ist rein visuell: Demo 1 endet weiter mit 3603/9950 (der Hook-Build läuft hier ~10 % langsamer, Smoke-Fenster ggf. mit `--duration` verlängern).
      - Prüfen: `{"cmd":"geom_correction"}` (`pgxp.tri_mixed` = Riss-Risiko, muss klein bleiben), live umschalten mit `{"cmd":"pgxp","geometry":0|1,"texture":0|1}`. Standbilder zeigen nur ~1 % Unterschied; der Effekt ist in Bewegung sichtbar. Same-Frame-A/B: zwei Demo-Läufe, `screenshot_hires` bei festen Frames (die Demo ist deterministisch), der normale `screenshot` ist für die Korrektur blind.
    - HD-Texturen aus TGI/GGI
@@ -284,11 +288,10 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Kommentar zur Annahme hinter `LS_MAX_MISSED_VBLANKS` fehlt.
 9. Veröffentlichung (Repo auf public stellen). Vorher:
    - ~~Repo öffentlich schalten~~ (erledigt 2026-10-16, https://github.com/zap0xfce2/Kula-World-Recompiled)
-   - mit dezgeg klären, ob Symbolnamen und Variablenadressen aus dem Decomp öffentlich stehen dürfen und ob ein eigener PC-Port geplant ist: angefragt in dezgeg/kula-world-decomp#1 (2026-10-16), Antwort offen
    - Entscheidung zu `generated/` (aktuell gitignored)
    - ~~README auf Projektstand bringen~~ (erledigt 2026-10-16, mit Screenshots unter `docs/images/`, Roadmap und KI-Hinweis)
    - erneuter Check der ganzen Historie auf Spieldaten, Secrets und persönliche Pfade
-10. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher bei dezgeg Lizenz und PC-Port-Pläne erfragen.
+10. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher das Vorgehen mit dezgeg abstimmen.
 
 ## macOS
 Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Der Mac klont das Repo per SSH.

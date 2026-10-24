@@ -46,6 +46,9 @@ SCPH*.BIN
 SCES_*
 probe.json
 
+# Original cover from libretro-thumbnails (task boxart), copyrighted, local only
+/assets/launcher/original/
+
 # Local path/config stubs
 bios.cfg
 disc.cfg

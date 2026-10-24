@@ -35,6 +35,14 @@ if(NOT IS_DIRECTORY "${PSX_PRELOADED_MODS}")
     set(PSX_PRELOADED_MODS "NONE")
 endif()
 
+# The original cover is copyrighted and only fetched locally (task boxart);
+# without it the launcher shows our own box art.
+set(KULA_BOXART "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/original/boxart.tga")
+if(NOT EXISTS "${KULA_BOXART}")
+    set(KULA_BOXART "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/boxart.tga")
+endif()
+message(STATUS "Launcher box art: ${KULA_BOXART}")
+
 # PGXP hook flavor: the psx.enhancement.pgxp override in mods/preloaded turns it
 # on by default; without the hook build its coverage drops (ENHANCEMENTS.md G1.11).
 psxrecomp_add_game_runtime(psx-runtime
@@ -48,8 +56,8 @@ psxrecomp_add_game_runtime(psx-runtime
     MAX_PLAYERS 2
     # Kula only uses memory card port 1 (decomp: MemCardAccept(0)).
     MEMCARD_SLOTS 1
-    # Original launcher art, rendered from assets/launcher/*.svg (task launcher-art).
-    LAUNCHER_BOXART "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/boxart.tga"
+    # Own launcher art, rendered from assets/launcher/*.svg (task launcher-art).
+    LAUNCHER_BOXART "${KULA_BOXART}"
     LAUNCHER_BRAND "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/brand.tga"
     APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/kula.ico"
     # Committed game C (psxrecomp_cli.py generate; git add generated). Release

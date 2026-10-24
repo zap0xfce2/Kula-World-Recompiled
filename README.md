@@ -61,9 +61,13 @@ task build      # release build
 task run        # start with the launcher
 ```
 
-Until [psxrecomp#676](https://github.com/RetroPortingToolKit/psxrecomp/pull/676)
-and [#692](https://github.com/RetroPortingToolKit/psxrecomp/pull/692) are merged,
-the `psxrecomp` submodule points at a fork that carries them.
+Until [recomp-ui#110](https://github.com/RetroPortingToolKit/recomp-ui/pull/110)
+is merged, the `recomp-ui` submodule points at a fork that carries it.
+
+The launcher ships with its own box art. `task boxart` fetches the original
+PAL cover from [libretro-thumbnails](https://github.com/libretro-thumbnails/libretro-thumbnails)
+into `assets/launcher/original/` for your local build only (it is not part of
+this repository). Reconfigure and relink afterwards.
 
 `task --list` shows everything else (tests, lint, smoke test, the psx-beetle
 oracle, a level-timer freeze for long test sessions). On macOS pass

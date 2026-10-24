@@ -53,7 +53,7 @@ Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `githu
 |---|---|
 | Load / Text | `0x00011000`, `0x93000` Bytes – **KUSEG-gelinkt** |
 | Entry | `0x00069F60` |
-| GP | 0, kein `$gp`-relatives Addressing |
+| GP | Header 0, aber crt0 setzt `$gp = 0x000A29E0` (0x69FDC). C-Code adressiert Globals `$gp`-relativ (z. B. `vsyncCounter` = `0x584(gp)`). ASM-Renderfunktionen nutzen `$gp` als Arbeitsregister und sichern es vorher. |
 | Stack | Header `0x801FFFF0`, crt0 legt `$sp` aber in den 4. RAM-Mirror (`0x807FFFF8`) |
 | Code | `0x00012344`–`0x00072AC0`, danach Daten und Strings |
 | Funktionen | 727 JAL-Ziele (`seeds/ghidra_funcs.txt`), plus 88 Prolog-Kandidaten (`seeds/heuristic_candidates.txt`) |
@@ -162,7 +162,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Ein Build nur mit OpenBIOS geht: `-DPSXRECOMP_BIOS_STEMS=OpenBIOS`, ohne SCPH1001-Quellen, Smoke ohne `--bios` ok (Mac).
      - Die Demo startet mit Retail-HLE und OpenBIOS bei gleichem Frame (~3100–3200). Mit Retail-LLE (echtes Intro) kommt sie ca. 10 s später. Linux erreicht den Frame wegen llvmpipe in Sekunden später.
      - Offen: interaktives Spielen und A/B gegen Beetle mit OpenBIOS. Damit kann ein Release ohne Sony-BIOS auskommen, die Disc braucht es weiterhin.
-   - `vsyncCounter` (`0x800A2F64`) ist auf beiden Backends immer 0. Klären, ob die Adresse aus dem Decomp für PAL stimmt.
+   - ~~`vsyncCounter` immer 0~~ (geklärt 2026-10-24): Die Adresse `0x800A2F64` stimmt (`SioRecvVsyncCallback` 0x40EC0 erhöht `0x584(gp)`, `$gp = 0x000A29E0`). Der Zähler läuft nur, während der SIO-Debug-Upload (`sioCheatActivated`) Daten empfängt, und ist im normalen Spiel korrekt 0. Als Frame-Zähler ungeeignet, dafür `frame` des Debug-Servers nehmen.
 6. Seeds und Indirect Targets verfeinern. Auf dem Pfad Boot/Menü/Demo gibt es 0 Dispatch-Misses. 6 Decomp-Funktionen sind keine Einstiegspunkte (`zcalloc`, `StrCallback`, `_spu_2pitch`, `Libpad_Padportd_654`, `DebugSaveScreenshotToPc`, `zcallocUnused`); erst handeln, wenn `unknown_dispatch_log` sie meldet. Die Funktionsgrenzen kommen aus `function_addrs.txt` des dezgeg-Decomps, Namen über `symbols.toml`. Vorlage für das Format: Hercules `decomp/config/indirect_targets.json`.
 7. Mods (vor jedem Mod Brainstorming mit dem Nutzer, Vorschlag: mit der Levelauswahl anfangen):
    - Levelauswahl-Mod `kula.level-select` (in `main` seit 2026-10-15, Spec und Plan unter `docs/superpowers/`):

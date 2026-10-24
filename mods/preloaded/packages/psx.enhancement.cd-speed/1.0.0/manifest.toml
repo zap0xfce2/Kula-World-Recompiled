@@ -7,10 +7,9 @@ description = "Emulated CD drive speed. Shortens loads without speeding the game
 resolver = "declarative"
 save_compatibility = "shared"
 
-# Kula World override of the framework builtin (same id and version), only to
-# turn 2x on by default. 4x hangs a world load that starts past level 1 (level
-# select, Load Game at a save point): the level never initialises. 2x and 1x
-# load it. Instant crashes this title (DISPATCH FATAL).
+# Kula World override of the framework builtin (same id and version): 2x on
+# by default and capped at 2x, because 4x hangs a world load that starts past
+# level 1 (the level never initialises). Instant crashes this title (DISPATCH FATAL).
 # Keep in sync with psxrecomp/mods/builtin/packages/psx.enhancement.cd-speed.
 [[target]]
 game_id = "*"
@@ -18,7 +17,7 @@ game_id = "*"
 [[feature]]
 id = "cd-speed"
 name = "CD Speed"
-description = "Enabled by default at 2x for Kula World (4x hangs some world loads). Divides the emulated sector delay, so the drive delivers data sooner while the game itself keeps running at normal speed. Unlike host pacing this changes WHEN the game receives CD interrupts, so a high value can expose timing bugs -- raise it gradually and back off if a load stalls. FMV and CD audio always keep authentic timing."
+description = "Enabled by default at 2x for Kula World. Divides the emulated sector delay, so the drive delivers data sooner while the game itself keeps running at normal speed. FMV and CD audio always keep authentic timing."
 group = "Quality of Life"
 default_enabled = true
 
@@ -26,11 +25,11 @@ default_enabled = true
 feature = "cd-speed"
 id = "multiplier"
 label = "CD speed multiplier"
-description = "1 is authentic 1x. Try 2-32; higher is faster but likelier to trip a timing bug. Any positive value is accepted so you can find this game's limit. Ignored while Instant is ticked."
+description = "1 is authentic 1x, 2 is the fastest setting that loads every Kula World level reliably. Ignored while Instant is ticked."
 group = "Quality of Life"
 type = "integer"
 min = 1
-max = 1024
+max = 2
 step = 1
 default = 2
 disabled_by = "instant"

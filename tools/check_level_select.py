@@ -33,11 +33,13 @@ def press(conn: DebugConnection, buttons: int) -> None:
 
 
 def press_times(conn: DebugConnection, buttons: int, count: int) -> None:
+    """Step a menu value by pressing the same button count times."""
     for _ in range(count):
         press(conn, buttons)
 
 
 def wait_for_menu(conn: DebugConnection) -> None:
+    """The main menu holds levelTimeLeft at its reset value."""
     deadline = time.monotonic() + MENU_WAIT_S
     while conn.read_s32(WATCHED_S32["levelTimeLeft"]) != MENU_TIMER:
         if time.monotonic() > deadline:
@@ -48,6 +50,7 @@ def wait_for_menu(conn: DebugConnection) -> None:
 def select_and_start(
     conn: DebugConnection, world: int, level: int, shots: Path
 ) -> None:
+    """Open the submenu from the main menu, set world and level, press START."""
     press(conn, PAD_CROSS)  # main menu: 1 Player
     press(conn, PAD_CROSS)  # one-player menu: Arcade opens the submenu
     press(conn, PAD_DOWN)
@@ -81,6 +84,7 @@ def timer_runs(conn: DebugConnection) -> bool:
 
 
 def check_started(conn: DebugConnection, world: int, level: int) -> list[str]:
+    """Return a failure message per game variable that does not match the start."""
     wait_for_load(conn)
     expected = {
         "curWorld": world - 1,
@@ -88,20 +92,23 @@ def check_started(conn: DebugConnection, world: int, level: int) -> list[str]:
         "gameState": 1,
         "isDemoMode": 0,
     }
+    actual = {name: conn.read_s32(WATCHED_S32[name]) for name in expected}
     failures = [
-        f"{name}: expected {want}, got {conn.read_s32(WATCHED_S32[name])}"
+        f"{name}: expected {want}, got {actual[name]}"
         for name, want in expected.items()
-        if conn.read_s32(WATCHED_S32[name]) != want
+        if actual[name] != want
     ]
     if not timer_runs(conn):
         failures.append("levelTimeLeft does not count down")
     want_cheated = 0 if (world, level) == (1, 1) else 1
-    if conn.read_s32(CHEATED_ADDR) != want_cheated:
-        failures.append(f"cheated: expected {want_cheated}")
+    cheated = conn.read_s32(CHEATED_ADDR)
+    if cheated != want_cheated:
+        failures.append(f"cheated: expected {want_cheated}, got {cheated}")
     return failures
 
 
 def main() -> int:
+    """Start the requested world/level and print level_select_ok or the failures."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", type=int, default=4370)
     parser.add_argument("--world", type=int, default=7, choices=range(1, 11))

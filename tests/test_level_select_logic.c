@@ -10,11 +10,16 @@ static LsState opened(void) {
     return s;
 }
 
-static void test_reset_starts_at_world1_level1(void) {
+static LsState reset(void) {
     LsState s;
     ls_reset(&s);
-    assert(s.world == 0 && s.level == 0 && s.cursor == LS_ITEM_START && !s.open);
+    return s;
 }
+
+static void test_reset_starts_at_world1(void) { assert(reset().world == 0); }
+static void test_reset_starts_at_level1(void) { assert(reset().level == 0); }
+static void test_reset_cursor_on_start(void) { assert(reset().cursor == LS_ITEM_START); }
+static void test_reset_closed(void) { assert(!reset().open); }
 
 static void test_down_wraps_after_level(void) {
     LsState s = opened();
@@ -44,10 +49,21 @@ static void test_level_right_wraps_to_1(void) {
     assert(s.level == 0);
 }
 
-static void test_left_right_ignored_on_start(void) {
+static void test_right_on_start_keeps_world(void) {
     LsState s = opened();
     ls_menu_input(&s, LS_PAD_R);
-    assert(s.world == 0 && s.level == 0);
+    assert(s.world == 0);
+}
+
+static void test_right_on_start_keeps_level(void) {
+    LsState s = opened();
+    ls_menu_input(&s, LS_PAD_R);
+    assert(s.level == 0);
+}
+
+static void test_dpad_returns_move(void) {
+    LsState s = opened();
+    assert(ls_menu_input(&s, LS_PAD_D) == LS_ACT_MOVE);
 }
 
 static void test_cross_on_start_confirms(void) {
@@ -131,12 +147,17 @@ static void test_strict_cleared_in_main_menu(void) { assert(!ls_keep_strict(1, 0
 static void test_strict_kept_during_play(void) { assert(ls_keep_strict(1, 1)); }
 
 int main(void) {
-    test_reset_starts_at_world1_level1();
+    test_reset_starts_at_world1();
+    test_reset_starts_at_level1();
+    test_reset_cursor_on_start();
+    test_reset_closed();
     test_down_wraps_after_level();
     test_up_wraps_before_start();
     test_world_left_wraps_to_10();
     test_level_right_wraps_to_1();
-    test_left_right_ignored_on_start();
+    test_right_on_start_keeps_world();
+    test_right_on_start_keeps_level();
+    test_dpad_returns_move();
     test_cross_on_start_confirms();
     test_cross_on_world_does_not_confirm();
     test_triangle_closes();

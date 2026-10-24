@@ -11,7 +11,9 @@ enum { LS_PAD_U = 0x0010, LS_PAD_R = 0x0020, LS_PAD_D = 0x0040, LS_PAD_L = 0x008
 typedef enum { LS_ITEM_START, LS_ITEM_WORLD, LS_ITEM_LEVEL, LS_ITEM_COUNT } LsItem;
 typedef enum { LS_ACT_NONE, LS_ACT_MOVE, LS_ACT_BACK, LS_ACT_CONFIRM } LsAction;
 
-/* VBlanks without a menu-filter call after which the submenu counts as left. */
+/* VBlanks without a menu-filter call after which the submenu counts as left.
+ * Assumption: the menu runs every frame, at worst at half the VBlank rate, so a
+ * gap of 8 (160 ms PAL) only happens once the menu itself is gone. */
 enum { LS_MAX_MISSED_VBLANKS = 8 };
 
 typedef struct {

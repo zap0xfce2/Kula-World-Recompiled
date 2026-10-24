@@ -39,7 +39,7 @@ All mods are switchable in the launcher (recomp-ui).
 | Level Select | on | "Arcade" opens START / WORLD / LEVEL. Starting anywhere but world 1, level 1 counts as cheated: no save points, no high-score entry. |
 | Widescreen | on | Shows the world wider than 4:3 and follows the window up to 2:1. The key and fruit HUD (with their pickup sparkles) move to the wide corners. The loading screen, high-score table and memory-card screens fill the side bands too, and the pill's motion trail covers the full width. The warning screen and FMVs stay 4:3. |
 | PGXP Precision | on | Stops the PS1 polygon wobble and texture warping (sub-pixel vertices, perspective-correct textures). The game defaults to 1080p internal resolution; the fix needs at least 2x. |
-| CD Speed | on, 2x | Shorter loading. 4x is faster but hangs world changes that start past level 1, so the project default is 2x. |
+| CD Speed | on, 2x | Shorter loading. |
 
 ## Requirements
 
@@ -106,7 +106,6 @@ Next:
 
 - Widening the window inside a level leaves a gap in the sky until the camera turns.
 - Particles can disappear early at the left edge of the widescreen band.
-- CD Speed 4x hangs world changes that start past level 1 (cause unknown, 2x is safe).
 
 ## Legal
 

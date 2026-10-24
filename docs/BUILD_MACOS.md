@@ -72,8 +72,8 @@ macOS 27.0.1 (26A434), Apple M1 Pro (10 cores), cmake 4.4.4, Apple clang 21.0.0,
 | Boot with LLE BIOS (`PSX_BIOS_HLE=0`) | ok, real BIOS intro, demo about 10 s later than with HLE |
 | OpenBIOS (no retail dump) | ok: launcher picks it when no BIOS is chosen; demo, 50.0 fps, XA/SFX, memory card (retail save loads and re-saves) |
 | OpenBIOS-only build (`-DPSXRECOMP_BIOS_STEMS=OpenBIOS`) | ok, no SCPH1001 sources linked |
-| CD Speed as project default (override in `mods/preloaded`) | on out of the box, toggle persists; default is 2x (warning screen ~6 s) because 4x (~5 s) hangs world changes that start past level 1 |
-| Load mods (OpenBIOS, time to menu) | baseline 12.1 s; `cd-speed` 4x 8.2 s, clean; `fast-loading` + `cd-speed` makes XA skip; `cd-speed` instant crashes (dispatch fatal) |
+| CD Speed as project default (override in `mods/preloaded`) | on out of the box, toggle persists; 2x (warning screen ~6 s) |
+| Load mods (OpenBIOS, time to menu) | baseline 12.1 s; `fast-loading` + `cd-speed` makes XA skip; `cd-speed` instant crashes (dispatch fatal) |
 | Level select mod (`kula.level-select`) | ok: on by default, submenu look and navigation, Circle/Triangle back, starts 1/1, 3/5, 7/3, 10/3, 10/12, high-score lock after a non-1/1 start, launcher toggle |
 | Widescreen mod (`kula.widescreen`) | ok at 16:9 and 2:1 (cap): worlds 1-10 without edge gaps, items and level geometry visible in both bands, key and fruit HUD in the wide corners, world-10 intro without stalls, 50 fps (world 10: 48.7), launcher toggle, 4:3 screens pillarboxed. Known: widening the window inside a level leaves a sky gap until the camera turns; above 2:1 the sky has gaps. A tiling window manager (yabai) overrides the debug server's `window_size`; turn it off for tests |
 | Ending FMV | not tested yet (reachable via level select, world 10) |

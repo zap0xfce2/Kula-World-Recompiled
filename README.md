@@ -37,7 +37,7 @@ All mods are switchable in the launcher (recomp-ui).
 | Mod | Default | What it does |
 |---|---|---|
 | Level Select | on | "Arcade" opens START / WORLD / LEVEL. Starting anywhere but world 1, level 1 counts as cheated: no save points, no high-score entry. |
-| Widescreen | on | Shows the world wider than 4:3 and follows the window up to 2:1. The key and fruit HUD (with their pickup sparkles) move to the wide corners. The loading screen, high-score table and memory-card screens fill the side bands too, and the pill's motion trail covers the full width. The warning screen and FMVs stay 4:3. |
+| Widescreen | on | Shows the world wider than 4:3 and follows the window up to 2.4:1 (21:9 ultrawide). The key and fruit HUD (with their pickup sparkles) move to the wide corners. The loading screen, high-score table and memory-card screens fill the side bands too, and the pill's motion trail covers the full width. The warning screen and FMVs stay 4:3. |
 | PGXP Precision | on | Stops the PS1 polygon wobble and texture warping (sub-pixel vertices, perspective-correct textures). The game defaults to 1080p internal resolution; the fix needs at least 2x. |
 | CD Speed | on, 2x | Shorter loading. |
 
@@ -83,7 +83,7 @@ Done:
 - [x] macOS build verified (50 fps, audio, memory card, launcher)
 - [x] OpenBIOS: plays without a retail BIOS, including memory card saves
 - [x] Level Select mod
-- [x] Widescreen mod up to 2:1, HUD in the corners, edge culling widened on both sides
+- [x] Widescreen mod up to 2.4:1 (21:9), HUD in the corners, edge culling widened on both sides
 - [x] CD Speed default (2x)
 - [x] Upstream reports: KUSEG result and portability findings for musl/macOS
 - [x] Upstream PR: widescreen band form for register compares ([psxrecomp#676](https://github.com/RetroPortingToolKit/psxrecomp/pull/676))
@@ -95,8 +95,8 @@ Done:
 - [x] Launcher: only memory card 1, own box art, brand mark and app icon
 
 Next:
-- [ ] Widescreen: sky refresh after resizing the window inside a level
-- [ ] Widescreen wider than 2:1 (needs a wider generated sky)
+- [x] Widescreen: sky reaches the wide corners
+- [x] Widescreen up to 21:9
 - [ ] 60 fps (parked: psxrecomp's frame generation does not see Kula's flips yet; an NTSC-style patch would change the gameplay timing)
 - [ ] Own loading screen instead of the piracy warning shown during the first load
 - [ ] HD textures
@@ -108,8 +108,7 @@ Next:
 
 ## Known issues
 
-- Widening the window inside a level leaves a gap in the sky until the camera turns.
-- Particles can disappear early at the left edge of the widescreen band.
+None known right now. Please open an issue if you find one.
 
 ## Legal
 

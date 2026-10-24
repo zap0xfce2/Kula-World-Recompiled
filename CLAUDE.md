@@ -179,7 +179,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Gotcha Schatten: Die kleine Schrift blendet additiv (`fontSprites` 0x800AA47C, abr 1), eine dunkle Kopie bleibt unsichtbar. Der Mod schaltet für den Schatten-Durchgang die Glyph-Vorlagen kurz auf subtraktiv (abr 2) und stellt sie danach wieder her.
      - Verworfen: Glas-Ziffern (`DrawTextFancyFont`) plus Menü-Kugel, Schriftmix gefiel nicht. Ein Glas-Alphabet gibt es nicht, Menüwörter sind fertige Bilder, und das Glas-`+` ist in PAL ein anderes Zeichen.
    - Widescreen-Mod `kula.widescreen` (in `main` seit 2026-10-15, Spec und Plan unter `docs/superpowers/`):
-     - Standardmäßig an. Startfenster 16:9, danach folgt die Ansicht dem Fenster von 4:3 bis maximal 2:1 (darüber Balken). Der Himmel ist nur für ca. 1,7x 4:3-Breite generiert.
+     - Standardmäßig an. Startfenster 16:9, danach folgt die Ansicht dem Fenster von 4:3 bis maximal 2:1 (darüber Balken). Das Himmelsnetz deckt nur die 4:3-Ansicht ab, der Mod streckt es deshalb (siehe Himmelsecken).
      - Plugin `mods/src/kula_widescreen.c` (`psx_mod_set_fixed_display_aspect` + `..._adaptive_...(2, 1)`), dazu `game.toml [widescreen] gte_game_mode = true` (ohne das bleibt die Ausgabe 4:3). `[video] aspect_ratio` allein wirkt nicht mehr.
      - Rand-Culling: Das Spiel verwirft alles außerhalb 0…320 gegen `screenOffsetX` (0x800A2E80, `sltu` + `beq`). Die 54 `beq` stehen als `[widescreen.cull] branch_keep_sites` in der `game.toml` und springen bei Breitbild nicht. Dazu kommen 10 Ladestellen von `screenOffsetX` als `clip_edge_x_load_sites`, die bei Breitbild 320 + Rand liefern. Damit nehmen auch die „behalten“-Ketten (Ecken 1–3) das rechte Band an. Ohne sie fehlte nahe Geometrie unten rechts (Vorderkante, Mac-Befund).
        - Liste nur über `python3 -I tools/find_ws_cull_sites.py disc/SCES_010.00` erzeugen. Es landen nur Adressen im Repo, keine Bytes.
@@ -189,12 +189,14 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Linker Rand (in `main` seit 2026-10-15): Objekte (Items, Schlüssel) sowie Himmel- und Bonus-Hintergrundkacheln haben vor den Polygon-Ketten einen Kugeltest `x + r < Breite + 2r` (vorzeichenlos) gegen eine aus der Breite abgeleitete Grenze (`add t8, t1, r`).
        - Rechts reicht die Ladestelle, links verwarf der Test alles bei x < −r. Repro: W1/L1, rechts antippen, zwei Felder vor, der Schlüssel verschwand bei x ≈ −12.
        - Das Suchskript erfasst abgeleitete Grenzen (`add rd, bound, x`) und findet so 3 weitere Sites: 0x540B4 Items, 0x55C30 Bonus-Hintergrund, 0x565E8 Himmel.
-     - Offen, Himmelskeil nach Fenster-Aufziehen im Level: Lädt man bei 16:9 und zieht dann auf 2:1, bleibt oben rechts ein schwarzer Keil, bis sich die Kamera dreht.
-       - 2026-10-24 auf `psxrecomp` `31df2e1e` weiter offen. Mac-Repro (`mac-ws6/repro_sky_wedge.py`: W1/L1 bei 1280×720 laden, Eingaben bis rel 560, dann `window_size` 1280×640) zeigt ca. 774 dunkle Pixel nativ, mit PGXP an und aus gleich. Direkt bei 2:1 geladen: 0. Ein Linux-Lauf ohne Eingaben vor dem Aufziehen zeigte 0, ist also kein gültiges Repro.
-       - Gotcha: Bei 1080p ist der Debug-Screenshot 5x groß (2:1 → 2400×1280), Bänder und Ecken entsprechend skalieren.
-       - Repro: Mac-Skript, W1/L1, 757 dunkle Pixel im Band x 420–479, y 0–127.
-       - Ursache: `RenderNonSpecialBackground` erneuert die Himmelskacheln nur bei Kamerabewegung. Die Ladestelle lieferte beim letzten Erneuern 320 + 53, deshalb fehlen die Kacheln zwischen +53 und +80.
-       - Lädt man direkt bei 2:1 oder dreht die Kamera einmal, ist der Keil weg. Die Bodenlücke links (Nutzer) hat vermutlich denselben Mechanismus.
+     - Himmelsecken (2026-10-24, behoben): Bei breitem Bild blieben die oberen Ecken der Bänder schwarz (Mac-Repro: W1/L1 bei 1280×720 laden, Eingaben bis rel 560, dann `window_size` 1280×640, 757 dunkle Pixel im Band x 420–479, y 0–127).
+       - Ursache: Das Himmelsnetz von `RenderNonSpecialBackground` (0x563C4, ASM) ist für 4:3 gebaut und reicht bei breitem Bild nicht bis in die Ecken. Die Kachel-Auswahl ist korrekt: GP0-Vergleich zeigt dieselben 281 Himmelsvierecke bei jeder Ladebreite, die Ecke deckt keines ab.
+       - Die frühere Hypothese (Kacheln nur bei Kamerabewegung erneuert, Ladestelle mit altem Rand) war falsch. Die Funktion läuft jeden Frame komplett, `psx_ws_clip_edge_x` liest den Rand live.
+       - Gotcha alte Pixel: Kula löscht den Bildschirm nicht. Ungemalte Flächen zeigen Schwarz oder alte Pixel, je nach Vorgeschichte. Deshalb sah „direkt bei 2:1 laden“ oder „Kamera drehen“ wie ein Fix aus. Dunkle Pixel zählen ist nur gültig, wenn die Stelle vorher sicher schwarz war. Belastbar ist die Abdeckung per `gpu_frame_dump` (Punkt-in-Dreieck über alle Polygone des Frames).
+       - Fix: Hook um `RenderNonSpecialBackground` setzt nur für diesen Aufruf `gteXScale` (0x800A2E70, skaliert die X-Zeile der Himmelsmatrix) auf Wert × (Breite + 2·Rand) / Breite (`ws_sky_x_scale`, C-Test) und stellt ihn danach zurück. `gteXScale` nutzen auch Pille, Linsenreflexe und `disp_mode.c`, deshalb nie global setzen. Der Faktor wächst mit dem Rand mit, also auch für breitere Formate als 2:1.
+       - Gemessen: Band-Abdeckung 42 → 0 von 960 Rasterpunkten, Level-Geometrie unverändert, Smoke 3603, 0 Misses. Bei 2:1 reichten in dieser Ansicht schon 1,19× (volle Verbreiterung = 1,5×, Entscheidung des Nutzers: volle Verbreiterung).
+       - Nebenbefund: Der Kugeltest in `RenderNonSpecialBackground` (0x565AC–0x565F0) ist toter Code. Die Site 0x565E4 wirkt nicht, schadet aber nicht. Eine `xclip`-Ladestelle 0x5651C änderte nichts (getestet, verworfen).
+       - Repro und Zählung liegen nur im Scratchpad. Bei 1080p ist der Debug-Screenshot 5x groß (2:1 → 2400×1280), Bänder entsprechend skalieren.
      - Bodenlücke links (Mac-Live-Aufnahme, 2026-10-16, Branch `fix/widescreen-left-floor`): Am Hieroglyphen-Würfel links der Grube fehlt im linken Band die Vorderfläche bis Spiel-x ≈ 50 (bei 2:1). Rechts tritt das nicht auf, Fenstergröße und Ladezeitpunkt spielen keine Rolle.
        - Ursache: Die „behalten“-Ketten (Ecken 1–3, `sltu x, W` + `bne`) verwerfen negatives X vorzeichenlos. Rechts deckt das die Ladestelle ab, links fehlt eine untere Grenze.
        - Lösung: Alle `sltu`-X-Vergleiche (94) stehen als `screen_x_sites` in der `game.toml`. Sie brauchen die `sltu`-Bandform `psx_ws_cull_sltu_band` (unser PR #676, gemergt): Im Breitbild gilt `-4·Rand ≤ x < W`, bei 4:3 das Original. Es stehen nur Adressen im Repo.
@@ -365,8 +367,9 @@ cmake --build build-dev
 ## Werkzeuge in dieser Umgebung
 - Serena immer nutzen, wo es geht: Code lesen, navigieren und ändern über die Symbol-Werkzeuge (`find_symbol`, `get_symbols_overview`, `find_referencing_symbols`, `replace_symbol_body` usw.) statt `grep`/`sed`/Volltext-Lesen. Gilt auch für `psxrecomp/` (Wunsch des Nutzers vom 2026-10-19).
 - Erste Anlaufstelle für Code-Verständnis ist das dezgeg-Decomp, nicht Ghidra.
-- Ghidra ist optional (noch nicht installiert, kein JDK), nur für die 27 ASM-Funktionen oder zum Gegenprüfen.
-  Dann mit `ghidra_psx_ldr` die EXE im KUSEG-Segment laden (Basis `0x00011000`) und Funktionsgrenzen per `psxrecomp-analyze --emit-ghidra` importieren.
+- Ghidra 12.1.2 ist als Alpine-Paket installiert (`/usr/share/ghidra`, interner Release-Name „DEV“). Dazu `ghidra_psx_ldr` (Release 2026.10.03, Build für 12.1.2) als Benutzer-Erweiterung in `~/.config/ghidra/ghidra_12.1.2_DEV/Extensions/` (nicht `_PUBLIC`, sonst lädt Headless sie nicht).
+  - Headless: `/usr/share/ghidra/support/analyzeHeadless <proj> kula -import disc/SCES_010.00 -noanalysis -postScript <Skript> <args>`. Der PSX-Loader erkennt die EXE selbst (Sprache `PSX:LE:32`, GTE-Befehle lesbar).
+  - Gut für die 27 ASM-Funktionen. Funktionsgrenzen ggf. per `psxrecomp-analyze --emit-ghidra` importieren.
 - Oracle: psx-beetle aus psxrecomp (`docs/beetle-linux.md`), gleiches TCP-Debug-Protokoll wie die Runtime.
 - psxrecomp-Regeln aus dessen `CLAUDE.md` beachten:
   - Kein HLE, keine Stubs

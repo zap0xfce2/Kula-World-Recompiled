@@ -1,6 +1,6 @@
 /* Kula World widescreen: selects psxrecomp's native-wide view. 16:9 shapes the
- * first window, then the view follows the window up to 2:1, the widest the
- * game's generated sky covers (about 1.7x the 4:3 width). The key HUD moves to
+ * first window, then the view follows the window up to 2:1. The sky mesh only
+ * covers the 4:3 view, so it is stretched by the widening. The key HUD moves to
  * the left wide corner and the fruit HUD to the right one, together with their
  * pickup sparkles. Still screens on the
  * PS-button background (loading, high scores, memory card) fill the side bands
@@ -103,6 +103,12 @@ enum {
     POLY_FT4_SIZE = 40,
     GTE_OFX = 24,
     GTE_FRACTION_BITS = 16,
+};
+/* RenderNonSpecialBackground(ot) scales its rotation matrix's X row by
+ * gteXScale; the sky mesh behind it only reaches the 4:3 corners. */
+enum {
+    FN_RENDER_SKY = 0x000563c4u,
+    VAR_GTE_X_SCALE = 0x800a2e70u,
 };
 static const uint32_t POLY_FT4_X_OFFSETS[] = { 8, 16, 24, 32 };
 enum { PRIM_LEN_MASK = 0xff000000u, PRIM_ADDR_MASK = 0x00ffffffu };
@@ -282,6 +288,22 @@ static int on_rot_smd_ft4(struct CPUState* cpu, uint32_t address) {
     return 1;
 }
 
+/* Without the stretch the top corners of the bands stay unpainted: black, or
+ * stale pixels from an earlier frame since the game never clears the screen.
+ * gteXScale is shared with lens flares and the pill, so only this call sees it. */
+static int on_render_sky(struct CPUState* cpu, uint32_t address) {
+    const int margin = psx_mod_widescreen_view_x_margin();
+    if (g_calling_original || margin <= 0) return 0;
+    const uint32_t scale = psx_mod_read_word(VAR_GTE_X_SCALE);
+    const int width = (int)psx_mod_read_word(VAR_DISPLAY_WIDTH);
+    psx_mod_write_word(VAR_GTE_X_SCALE, (uint32_t)ws_sky_x_scale((int)scale, width, margin));
+    g_calling_original = 1;
+    psx_mod_call_guest(cpu, address, cpu->gpr[MIPS_REG_RA], cpu->gpr[MIPS_REG_A0], 0, 0, 0);
+    g_calling_original = 0;
+    psx_mod_write_word(VAR_GTE_X_SCALE, scale);
+    return 1;
+}
+
 /* Both menus read the card before their first frame; without a GTE scene the
  * classifier would show that pause at 4:3. */
 static int on_memcard_menu(struct CPUState* cpu, uint32_t address) {
@@ -315,6 +337,7 @@ PSX_MOD_CONSTRUCTOR(register_kula_widescreen) {
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_RENDER_BACKGROUND, on_render_background);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_SCORE_GRAPH, on_draw_score_graph);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_ROT_SMD_FT4, on_rot_smd_ft4);
+    (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_RENDER_SKY, on_render_sky);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_LOAD_SAVE_MENU, on_memcard_menu);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_MEMCARD_UI, on_memcard_menu);
 }

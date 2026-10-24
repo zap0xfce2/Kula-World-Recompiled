@@ -17,3 +17,8 @@ int ws_band_tile_x(int x, int width, int margin, int* out_x) {
     }
     return 0;
 }
+
+int ws_sky_x_scale(int scale, int width, int margin) {
+    if (margin <= 0 || width <= 0) return scale;
+    return scale * (width + 2 * margin) / width;
+}

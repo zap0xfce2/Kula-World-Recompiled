@@ -108,7 +108,7 @@ Next:
 
 ## Known issues
 
-- Particles can disappear early at the left edge of the widescreen band.
+None known right now. Please open an issue if you find one.
 
 ## Legal
 

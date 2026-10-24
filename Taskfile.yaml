@@ -34,6 +34,14 @@ tasks:
         {{.PYTHON}} psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root .
         --disc {{.DISC}} {{.BIOS_ARG}} --no-toolchain-download {{.CLI_ARGS}}
 
+  boxart:
+    desc: Fetch the original PAL cover for the launcher (local only, never commit), then reconfigure
+    cmds:
+      # Copyrighted cover: stays in the gitignored original/ folder, CMake falls back to our own art without it.
+      - >-
+        {{.PYTHON}} -I psxrecomp/tools/new_project_layout/fetch_boxart.py
+        --name "Kula World (Europe)" --out assets/launcher/original/boxart.tga
+
   launcher-art:
     desc: Render the launcher box art, brand mark and app icon from assets/launcher/*.svg (ImageMagick + librsvg)
     dir: assets/launcher

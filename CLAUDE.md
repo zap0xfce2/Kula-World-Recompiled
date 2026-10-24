@@ -267,6 +267,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
        - Baseline: 12,1 s / ca. 7 s, Frame 775
        - `psx.enhancement.cd-speed` **2x** (entschieden 2026-10-24, 4x wird nicht gebraucht und nicht weiter untersucht):
          - Per Override in `mods/preloaded/packages/psx.enhancement.cd-speed/1.0.0/manifest.toml` standardmäßig an (`default_enabled = true`, Multiplikator 2), im Launcher abschaltbar. Der Regler ist auf `max = 2` begrenzt. Die Runtime verwirft gespeicherte Werte über `max` (`valid_option_value`).
+         - Mac verifiziert (2026-10-24, `34f3d59`): Im Launcher sind nur 1 und 2 einstellbar. `multiplier = 4` in `state.toml` wird verworfen (Launcher und Runtime nutzen 2, Log `disc speed divisor=2`). Die Wahl bleibt gespeichert. Hauptmenü bei Frame 571 (2x) bzw. 702 (1x), Linux 522 (2x).
          - Gotcha: Ab 4x hängt ein Weltwechsel, der nicht bei Level 1 startet (Level wird nie initialisiert, Bild schwarz). 1x und 2x laden korrekt (W3/L3, W3/L5, W9/L12).
          - Linux: Menü bei Frame 512 statt 713, Demo identisch (Timer-Endwert 3603).
          - Mac (2026-10-15): Launcher zeigt den Mod ohne Zutun an, die Wahl bleibt gespeichert. Warnscreen ca. 6 s bei 2x (ohne Mod ca. 7 s).
@@ -335,6 +336,7 @@ cmake --build build-dev
   - Es schreibt `toolchain/.psxrecomp-bin`.
   - Das CLI durchsucht `~/.local/share/retcomm` immer. Der Ordner darf also nicht existieren (glibc-Reste wurden am 2026-10-15 gelöscht).
 - Seit #694 schreibt `generate --bios` den Emitter-Stempel selbst. Ein schon vorhandenes BIOS-Backend überspringt das CLI aber („already present — skipping bios regen“). Nach einem Framework-Update meldet CMake dann „BIOS … STALE“. Abhilfe: `task generate -- --force-bios`.
+  - Gotcha: Upstream führt `psxrecomp/generated/OpenBIOS.emitter.sha` mit CRLF, `--force-bios` schreibt sie mit LF neu (gleicher Hash). Das Submodul ist danach „modified“ und blockiert den nächsten Checkout. Abhilfe: `git -C psxrecomp checkout -- generated/OpenBIOS.emitter.sha`.
 - musl hat keine `getcontext`/`makecontext`/`swapcontext`, die `psx_fiber.c` braucht. `sudo apk add libucontext-dev` genügt, seit #693 erkennt CMake das und linkt `libucontext` selbst.
 - Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --bios bios/SCPH1001.BIN --disc disc/SCES01000.CUE --debug-port 4370`.
 - Generate dauert ca. 2 min (569 Shards, 31 Mio. Zeilen C, ~950 MB). Der Runtime-Build dauert auf 8 Kernen ca. 23 min.

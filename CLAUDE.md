@@ -283,11 +283,8 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - ~~`.serena/` committen oder ignorieren~~ (erledigt, gitignored)
    - ~~`Taskfile.yaml` anlegen~~ (erledigt, siehe Build-Gotchas)
    - ~~`task generate` ohne `bios/SCPH1001.BIN`~~ (erledigt, `BIOS_ARG` nur mit vorhandener Datei)
-   - Offen, Kleinkram aus dem Review des Levelauswahl-Mods:
-     - `g_calling_original` bleibt nach einem Watchdog-longjmp auf 1.
-     - `tools/check_level_select.py`: doppelte Reads in den Fehlermeldungen, Docstrings fehlen.
-     - C-Tests: zwei prüfen kombinierte Bedingungen, ein Test für `LS_ACT_MOVE` fehlt.
-     - Kommentar zur Annahme hinter `LS_MAX_MISSED_VBLANKS` fehlt.
+   - ~~Kleinkram aus dem Review des Levelauswahl-Mods~~ (erledigt 2026-10-24): `g_calling_original` wird nach `LS_MAX_MISSED_VBLANKS` VBlanks zurückgesetzt, falls ein Render-Pass-Watchdog-longjmp den Reset übersprungen hat (Zähler `kula.level-select.guard_cleared`). Dazu Docstrings und einfache Reads in `check_level_select.py`, ein Assert pro C-Test, ein Test für `LS_ACT_MOVE` und ein Kommentar zur Annahme hinter `LS_MAX_MISSED_VBLANKS`.
+     - `kula_widescreen.c` hat dasselbe Guard-Muster (`g_calling_original`) ohne diese Absicherung. Relevant erst, wenn Frame-Generierung (Render-Pass) für Kula aktiv wird.
 9. Veröffentlichung (Repo auf public stellen). Vorher:
    - ~~Repo öffentlich schalten~~ (erledigt 2026-10-16, https://github.com/zap0xfce2/Kula-World-Recompiled)
    - Entscheidung zu `generated/` (aktuell gitignored)
@@ -360,6 +357,7 @@ cmake --build build-dev
 - Lange Testsitzungen: `task freeze-timer` (`tools/freeze_timer.py`) hält den Level-Timer per `write_ram` voll (nur Dev-Build). `SDL_AUDIO_DRIVER=dummy` schaltet den Ton ab, das Spiel läuft normal weiter.
 - `write_ram` schreibt ein Byte pro Anfrage.
 - Vor jedem Lauf prüfen, dass kein alter Runtime-Prozess den Debug-Port hält (`pgrep -af Kula_World`). Verliert ein Prozess sein Xvfb, nimmt er weiter Verbindungen an, antwortet aber nicht mehr (Timeout bei `frame`), und reagiert nicht auf SIGTERM, dann `kill -9`.
+- Gotcha: `timeout N xvfb-run … Kula_World_Recompiled` beendet nur `xvfb-run`, die Runtime läuft weiter und hält den Port. Ein späterer Test verbindet sich dann still mit dem alten Prozess (erkennbar an einer hohen `frame`-Zahl direkt nach dem Start).
 - Debug-Protokoll: eine Anfrage pro TCP-Verbindung. Frame-Nummer: Runtime über `frame`, Beetle im `ping`.
 - **`press`/`set_input` erwarten das Pad-Wort active-low** (`0xFFFF` = nichts gedrückt). Kreuz drücken heißt also `0xFFFF ^ 0x4000`. Bits: `PAD_*` im Decomp `include/common.h`.
 - Spielstart per Eingabe: Kreuz → Untermenü (`curMenu` 3) → Kreuz → 1-Spieler-Arcade (Welt 0, Level 0). Spielerposition `playerCombinedPos` = `0x800A45D0` (8 Byte).

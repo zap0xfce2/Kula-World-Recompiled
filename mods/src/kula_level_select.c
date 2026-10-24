@@ -55,6 +55,8 @@ enum { TPAGE_ABR_MASK = 0x60u, TPAGE_ABR_SUBTRACT = 0x40u };
 static LsState g_state;
 static int g_strict_armed;
 static int g_calling_original;
+/* A render-pass watchdog longjmp skips the reset after the original call. */
+static int g_original_call_vblanks;
 
 static uint32_t newly_pressed(void) {
     return psx_mod_read_word(VAR_CONTROLLER_BUTTONS) &
@@ -144,6 +146,7 @@ static void draw_submenu(struct CPUState* cpu) {
  * own start path does every reset; then redirect the load like Load Game. */
 static void start_arcade(struct CPUState* cpu, uint32_t address) {
     g_calling_original = 1;
+    g_original_call_vblanks = 0;
     psx_mod_call_guest(cpu, address, cpu->gpr[MIPS_REG_RA], 0, 0, 0, 0);
     g_calling_original = 0;
     const int cheated_start = ls_is_cheated_start(&g_state);
@@ -203,7 +206,16 @@ static int on_highscore_ui(struct CPUState* cpu, uint32_t address) {
     return 0;
 }
 
+/* The original menu call is one menu frame, so a guard still set after the
+ * submenu's own timeout was abandoned and would hide the menu panel for good. */
+static void clear_abandoned_guard(void) {
+    if (!g_calling_original || ++g_original_call_vblanks < LS_MAX_MISSED_VBLANKS) return;
+    g_calling_original = 0;
+    psx_mod_counter_add("kula.level-select.guard_cleared", 1);
+}
+
 static void on_vblank(void) {
+    clear_abandoned_guard();
     g_strict_armed = ls_keep_strict(g_strict_armed, (int)psx_mod_read_word(VAR_GAME_STATE));
     const int was_open = g_state.open;
     ls_on_vblank(&g_state);

@@ -1,5 +1,5 @@
 /* Kula World widescreen: selects psxrecomp's native-wide view. 16:9 shapes the
- * first window, then the view follows the window up to 2:1. The sky mesh only
+ * first window, then the view follows the window up to 12:5 (21:9). The sky mesh only
  * covers the 4:3 view, so it is stretched by the widening. The key HUD moves to
  * the left wide corner and the fruit HUD to the right one, together with their
  * pickup sparkles. Still screens on the
@@ -13,7 +13,7 @@
 
 #define PLUGIN_ID "kula.widescreen"
 
-enum { FIRST_WINDOW_NUM = 16, FIRST_WINDOW_DEN = 9, MAX_ASPECT_NUM = 2, MAX_ASPECT_DEN = 1 };
+enum { FIRST_WINDOW_NUM = 16, FIRST_WINDOW_DEN = 9, MAX_ASPECT_NUM = 12, MAX_ASPECT_DEN = 5 };
 
 /* HUD sprite pools (EU addresses, dezgeg/kula-world-decomp): TSprite is a
  * merged DR_TPAGE + SPRT packet of 28 bytes, double buffered. */

@@ -21,7 +21,7 @@ Vorlage für Projektstruktur, Mods und Launcher: [hercules-recompiled](https://g
 keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 `disc/`, `bios/`, `generated/` (bis zur Release-Entscheidung) gehören in `.gitignore`.
 
-## Stand (2026-10-15)
+## Stand (Grundlage 2026-10-15, laufend ergänzt bis 2026-10-24)
 Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, seit 2026-10-16 öffentlich). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
 - Submodule: Basis ist Upstream-`master` von RetroPortingToolKit. `psxrecomp` steht seit 2026-10-24 auf `31df2e1e` (inkl. #704). Für offene eigene PRs zeigen sie vorübergehend auf Fork-Branches (`zap0xfce2/…`, Remote `fork` im Submodul). Aktuell betrifft das nur `recomp-ui`: Memory-Card-Slots (recomp-ui#110) plus Spiel-Logo (recomp-ui#114, Upstream-Branch `feat/game-brand-mark-upstream`). Das Submodul steht auf dem Fork-Branch `feat/game-brand-mark`, der beides enthält. Erst wenn beide PRs gemergt sind, zurück auf Upstream-`master` und `.gitmodules` zurückstellen.
   - recomp-ui#110 wartet auf ein Review. **Nachfragen frühestens am 31.10.2026, spätestens am 07.11.2026**, nur mit Freigabe des Nutzers. recomp-ui#114 (Logo) ist seit 2026-10-24 offen, beim Nachfragen gleich mit erwähnen.
@@ -180,15 +180,15 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Verworfen: Glas-Ziffern (`DrawTextFancyFont`) plus Menü-Kugel, Schriftmix gefiel nicht. Ein Glas-Alphabet gibt es nicht, Menüwörter sind fertige Bilder, und das Glas-`+` ist in PAL ein anderes Zeichen.
    - Widescreen-Mod `kula.widescreen` (in `main` seit 2026-10-15, Spec und Plan unter `docs/superpowers/`):
      - Standardmäßig an. Startfenster 16:9, danach folgt die Ansicht dem Fenster von 4:3 bis maximal 12:5 = 2,4:1 (21:9, darüber Balken, seit 2026-10-24, vorher 2:1). Das Himmelsnetz deckt nur die 4:3-Ansicht ab, der Mod streckt es deshalb (siehe Himmelsecken).
-     - Plugin `mods/src/kula_widescreen.c` (`psx_mod_set_fixed_display_aspect` + `..._adaptive_...(2, 1)`), dazu `game.toml [widescreen] gte_game_mode = true` (ohne das bleibt die Ausgabe 4:3). `[video] aspect_ratio` allein wirkt nicht mehr.
-     - Rand-Culling: Das Spiel verwirft alles außerhalb 0…320 gegen `screenOffsetX` (0x800A2E80, `sltu` + `beq`). Die 54 `beq` stehen als `[widescreen.cull] branch_keep_sites` in der `game.toml` und springen bei Breitbild nicht. Dazu kommen 10 Ladestellen von `screenOffsetX` als `clip_edge_x_load_sites`, die bei Breitbild 320 + Rand liefern. Damit nehmen auch die „behalten“-Ketten (Ecken 1–3) das rechte Band an. Ohne sie fehlte nahe Geometrie unten rechts (Vorderkante, Mac-Befund).
+     - Plugin `mods/src/kula_widescreen.c` (`psx_mod_set_fixed_display_aspect` + `..._adaptive_...(12, 5)`), dazu `game.toml [widescreen] gte_game_mode = true` (ohne das bleibt die Ausgabe 4:3). `[video] aspect_ratio` allein wirkt nicht mehr.
+     - Rand-Culling: Das Spiel verwirft alles außerhalb 0…320 gegen `screenOffsetX` (0x800A2E80, `sltu` + `beq`). Alle 94 `sltu`-Vergleiche stehen als `[widescreen.cull] screen_x_sites` in der `game.toml` (Bandform, siehe Bodenlücke links), nur die 2 vorzeichenbehafteten der Lens-Flares als `branch_keep_sites`. Bis 2026-10-16 waren es 54 `beq` als `branch_keep_sites`. Dazu kommen 10 Ladestellen von `screenOffsetX` als `clip_edge_x_load_sites`, die bei Breitbild 320 + Rand liefern. Damit nehmen auch die „behalten“-Ketten (Ecken 1–3) das rechte Band an. Ohne sie fehlte nahe Geometrie unten rechts (Vorderkante, Mac-Befund).
        - Liste nur über `python3 -I tools/find_ws_cull_sites.py disc/SCES_010.00` erzeugen. Es landen nur Adressen im Repo, keine Bytes.
        - Danach `task generate`.
      - `DoSubdivide` bekommt die Grenze im Register `a3` vom Aufrufer, deshalb startet das Skript dort mit vorbelegtem Register.
      - Partikel (`ProcessAndRenderParticles`, Test 0x133E4–0x1346C) brauchen links nichts: Das Spiel prüft für alle vier Ecken `(x & 0x7FFF) < W` und `(y & 0x7FFF) < H` mit ODER und verwirft nur, wenn alle acht Werte außerhalb liegen. Ein sichtbares Partikel hat immer eine Ecke mit y im Bild, negative x im linken Band schaden also nicht. Die frühere Notiz („links können sie verschwinden“) war eine Vermutung und ist per Ghidra-Analyse widerlegt (2026-10-24).
      - Linker Rand (in `main` seit 2026-10-15): Objekte (Items, Schlüssel) sowie Himmel- und Bonus-Hintergrundkacheln haben vor den Polygon-Ketten einen Kugeltest `x + r < Breite + 2r` (vorzeichenlos) gegen eine aus der Breite abgeleitete Grenze (`add t8, t1, r`).
        - Rechts reicht die Ladestelle, links verwarf der Test alles bei x < −r. Repro: W1/L1, rechts antippen, zwei Felder vor, der Schlüssel verschwand bei x ≈ −12.
-       - Das Suchskript erfasst abgeleitete Grenzen (`add rd, bound, x`) und findet so 3 weitere Sites: 0x540B4 Items, 0x55C30 Bonus-Hintergrund, 0x565E8 Himmel.
+       - Das Suchskript erfasst abgeleitete Grenzen (`add rd, bound, x`) und findet so 3 weitere Sites: 0x540B0 Items, 0x55C2C Bonus-Hintergrund, 0x565E4 Himmel (Adressen der `sltu`, die zugehörigen `beq` liegen je 4 Byte dahinter).
      - Himmelsecken (2026-10-24, behoben): Bei breitem Bild blieben die oberen Ecken der Bänder schwarz (Mac-Repro: W1/L1 bei 1280×720 laden, Eingaben bis rel 560, dann `window_size` 1280×640, 757 dunkle Pixel im Band x 420–479, y 0–127).
        - Ursache: Das Himmelsnetz von `RenderNonSpecialBackground` (0x563C4, ASM) ist für 4:3 gebaut und reicht bei breitem Bild nicht bis in die Ecken. Die Kachel-Auswahl ist korrekt: GP0-Vergleich zeigt dieselben 281 Himmelsvierecke bei jeder Ladebreite, die Ecke deckt keines ab.
        - Die frühere Hypothese (Kacheln nur bei Kamerabewegung erneuert, Ladestelle mit altem Rand) war falsch. Die Funktion läuft jeden Frame komplett, `psx_ws_clip_edge_x` liest den Rand live.
@@ -321,7 +321,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. D
 - Der Launcher schaltet BIOS-Call-HLE ein (`bios_backend=HLE`). Mit `--no-launcher` gilt der Default LLE. Für A/B gegen Beetle `PSX_BIOS_HLE=0` setzen.
 
 ## Build-Gotchas (Alpine/musl)
-Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task generate` läuft auch ohne Sony-BIOS. Dann regeneriert es nur OpenBIOS (Mac). `task all` erledigt Emitter, Generate und Dev-Build. Weitere Tasks:
+Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task generate` läuft auch ohne Sony-BIOS. Dann regeneriert es nur OpenBIOS (Mac). `task all` erledigt Emitter, Generate und Dev-Build. Weitere Tasks (`boxart` und `launcher-art` siehe Launcher-Art):
 - `run`, `run:dev`, `beetle`: Starten, headless mit `RUNNER="xvfb-run -a"`.
 - `smoke PORT=4380`, `test`, `lint`.
 - Auf dem Mac `PYTHON=python3.12`.

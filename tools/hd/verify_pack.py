@@ -51,10 +51,12 @@ def main() -> None:
     args = parser.parse_args()
     pack = {k for n in png_names(args.pack / "replacements") if (k := parse_name(n))}
     names = png_names(args.dumps)
-    dumped = {k for n in names if (k := dump_key(n))}
+    keys = [dump_key(n) for n in names]
+    dumped = {k for k in keys if k}
     covered, missing = coverage(pack, dumped)
     print(
-        f"Pack: {len(pack)} Dateien, Dumps: {len(names)} ({len(names) - len(dumped)} ohne vollen Palettenbereich)"
+        f"Pack: {len(pack)} Dateien, Dumps: {len(names)} Dateien, {len(dumped)} Texturen,"
+        f" {keys.count(None)} ohne vollen Palettenbereich"
     )
     print(f"Abgedeckt: {len(covered)} von {len(dumped)}")
     for key in sorted(missing, key=lambda k: (k.depth, k.source_hash)):

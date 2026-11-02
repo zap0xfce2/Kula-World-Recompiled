@@ -1,5 +1,5 @@
-"""Sky atlas: each quad is filtered on its own so no filter crosses into a
-neighbouring strip (the cause of the sky lines, spike round 3)."""
+"""Sky atlas: each run of adjacent quads is filtered on its own so no filter
+crosses into a neighbouring strip (the cause of the sky lines, spike round 3)."""
 
 from PIL import Image
 
@@ -42,21 +42,18 @@ def segments(quads: list[SkyQuad]) -> list[tuple[int, int, int, int, int]]:
 def build_sky(
     atlas: Image.Image, quads: list[SkyQuad], clut_y: int, upscale: Upscaler
 ) -> Image.Image:
-    """The atlas in one palette at 4x: nearest base, every quad of clut_y filtered from its own crop."""
+    """The atlas in one palette at 4x: nearest base, every segment of clut_y filtered from its own crop.
+
+    Per segment, not per quad: quads are often one texel wide, alone they get no
+    horizontal filtering and the sky breaks into columns (W2, Mac acceptance)."""
     size = (atlas.width * SCALE, atlas.height * SCALE)
     out = atlas.resize(size, Image.Resampling.NEAREST)
     alpha = out.getchannel("A")
     atlas = fill_transparent(atlas)
-    for quad in quads:
-        if quad.clut_y != clut_y:
+    for segment_clut, x0, x1, y0, y1 in segments(quads):
+        if segment_clut != clut_y:
             continue
-        box = (
-            quad.atlas_x,
-            quad.atlas_y,
-            quad.atlas_x + quad.stride,
-            quad.atlas_y + USED_ROWS,
-        )
-        out.paste(upscale(atlas.crop(box)), (box[0] * SCALE, box[1] * SCALE))
+        out.paste(upscale(atlas.crop((x0, y0, x1, y1))), (x0 * SCALE, y0 * SCALE))
     out.putalpha(alpha)
     return clear_cutout(out)
 

@@ -1,4 +1,4 @@
-"""Tests for sky segmentation and per-quad filtering (synthetic images only)."""
+"""Tests for sky segmentation and per-segment filtering (synthetic images only)."""
 
 import sys
 import unittest
@@ -42,6 +42,13 @@ class SkyTest(unittest.TestCase):
         atlas = two_colour_atlas(left=(0, 0, 255), right=(255, 255, 255), split_x=16)
         out = build_sky(atlas, [quad(0, 232, 0, 16)], 232, lanczos4)
         self.assertEqual(out.getpixel((63, 8))[:3], (0, 0, 255))
+
+    def test_build_sky_filters_across_quads_of_one_segment(self) -> None:
+        # Quads are often one texel wide; filtered alone, each column only stretches.
+        atlas = two_colour_atlas(left=(0, 0, 255), right=(255, 255, 255), split_x=1)
+        quads = [quad(0, 232, 0, 1), quad(0, 232, 1, 1)]
+        out = build_sky(atlas, quads, 232, lanczos4)
+        self.assertNotEqual(out.getpixel((3, 8)), out.getpixel((0, 8)))
 
     def test_build_sky_has_no_dark_fringe(self) -> None:
         atlas = Image.new("RGBA", ATLAS_SIZE, (0, 0, 0, 0))

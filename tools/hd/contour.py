@@ -25,37 +25,68 @@ def binary(mask: Image.Image) -> Image.Image:
     return mask.point(lambda v: 255 if v >= CUT else 0)
 
 
-def region_count(image: Image.Image) -> int:
-    """4-connected regions of non-zero alpha (or of a single-band mask)."""
+NEIGHBOURS_4 = ((-1, 0), (1, 0), (0, -1), (0, 1))
+NEIGHBOURS_8 = NEIGHBOURS_4 + ((-1, -1), (1, -1), (-1, 1), (1, 1))
+MIN_AREA_SHARE = 0.75  # rounding may not eat more than a quarter of a glyph
+
+
+def single_band(image: Image.Image) -> Image.Image:
+    return image.getchannel("A") if image.mode == "RGBA" else image
+
+
+def components(
+    pixels: bytes, width: int, height: int, steps: tuple[tuple[int, int], ...]
+) -> int:
+    """Connected regions of non-zero pixels."""
     # ponytail: pure-Python BFS, fine for UI sprites; numpy/scipy if large images get here
-    band = image.getchannel("A") if image.mode == "RGBA" else image
-    width, height = band.size
-    pixels = band.tobytes()
     seen = bytearray(len(pixels))
     count = 0
     for start, value in enumerate(pixels):
         if value and not seen[start]:
             count += 1
-            flood(pixels, seen, start, width, height)
+            flood(pixels, seen, start, width, height, steps)
     return count
 
 
-def flood(pixels: bytes, seen: bytearray, start: int, width: int, height: int) -> None:
+def flood(
+    pixels: bytes,
+    seen: bytearray,
+    start: int,
+    width: int,
+    height: int,
+    steps: tuple[tuple[int, int], ...],
+) -> None:
     queue = deque([start])
     seen[start] = 1
     while queue:
         index = queue.popleft()
         x, y = index % width, index // width
-        for nx, ny in ((x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)):
+        for dx, dy in steps:
+            nx, ny = x + dx, y + dy
             neighbour = ny * width + nx
-            if (
-                0 <= nx < width
-                and 0 <= ny < height
-                and pixels[neighbour]
-                and not seen[neighbour]
-            ):
+            inside = 0 <= nx < width and 0 <= ny < height
+            if inside and pixels[neighbour] and not seen[neighbour]:
                 seen[neighbour] = 1
                 queue.append(neighbour)
+
+
+def region_count(image: Image.Image) -> int:
+    """4-connected regions of non-zero alpha (or of a single-band mask)."""
+    band = single_band(image)
+    return components(band.tobytes(), *band.size, NEIGHBOURS_4)
+
+
+def hole_count(image: Image.Image) -> int:
+    """Enclosed transparent areas, like the counter of an 'o'."""
+    band = single_band(image)
+    padded = Image.new("L", (band.width + 2, band.height + 2), 0)
+    padded.paste(band, (1, 1))
+    inverted = padded.point(lambda v: 0 if v else 255)
+    return components(inverted.tobytes(), *padded.size, NEIGHBOURS_8) - 1
+
+
+def lit_area(mask: Image.Image) -> int:
+    return len(mask.tobytes()) - mask.tobytes().count(0)
 
 
 def contour_mask(image: Image.Image, radius: float) -> Image.Image:
@@ -68,12 +99,15 @@ def contour_mask(image: Image.Image, radius: float) -> Image.Image:
 
 
 def pick_mask(image: Image.Image) -> Image.Image:
-    """The roundest mask that keeps the region count, else the nearest one."""
+    """The roundest mask that keeps regions, holes and most of the area, else nearest."""
     nearest = binary(upscale_alpha_nearest(image).point(lambda v: 255 if v else 0))
-    wanted = region_count(nearest)
+    wanted = (region_count(nearest), hole_count(nearest))
+    min_area = lit_area(nearest) * MIN_AREA_SHARE
     for radius in RADII:
         mask = contour_mask(image, radius)
-        if region_count(mask) == wanted:
+        if (region_count(mask), hole_count(mask)) == wanted and lit_area(
+            mask
+        ) >= min_area:
             return mask
     return nearest
 

@@ -8,7 +8,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-from hd.contour import check_classes, region_count, round_ui
+from hd.contour import check_classes, hole_count, region_count, round_ui
 from hd.upscale import lanczos4
 
 WHITE = (255, 255, 255, 255)
@@ -30,7 +30,33 @@ def blob_with_stp_texels() -> Image.Image:
     return image
 
 
+def ring_with_hole() -> Image.Image:
+    """A 3x3 ring around one transparent texel, like a small 'o'."""
+    image = Image.new("RGBA", (5, 5), (0, 0, 0, 0))
+    image.paste(WHITE, (1, 1, 4, 4))
+    image.putpixel((2, 2), (0, 0, 0, 0))
+    return image
+
+
+def thin_t() -> Image.Image:
+    image = Image.new("RGBA", (7, 7), (0, 0, 0, 0))
+    image.paste(WHITE, (1, 1, 6, 2))
+    image.paste(WHITE, (3, 2, 4, 6))
+    return image
+
+
+def lit(image: Image.Image) -> int:
+    return sum(1 for a in image.getchannel("A").tobytes() if a)
+
+
 class ContourTest(unittest.TestCase):
+    def test_round_ui_keeps_letter_hole(self) -> None:
+        self.assertEqual(hole_count(round_ui(ring_with_hole(), lanczos4)), 1)
+
+    def test_round_ui_keeps_thin_stroke_area(self) -> None:
+        original = lit(thin_t()) * 16
+        self.assertGreaterEqual(lit(round_ui(thin_t(), lanczos4)), original * 3 // 4)
+
     def test_contour_radius_keeps_thin_stroke(self) -> None:
         self.assertEqual(region_count(round_ui(one_pixel_wide_letter_i(), lanczos4)), 2)
 

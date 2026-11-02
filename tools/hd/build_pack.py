@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import os
+import re
 import shutil
 import struct
 import sys
@@ -30,7 +31,7 @@ from hd.names import TextureKey, format_name  # noqa: E402
 from hd.sky import build_sky  # noqa: E402
 from hd.tgi import read_bonus_sky, read_sky, read_tiles  # noqa: E402
 from hd.upscale import Upscaler, lanczos4  # noqa: E402
-from psxdisc import PVD_LBA, Disc, parse_dir  # noqa: E402
+from psxdisc import PVD_LBA, RAW_SECTOR, USER_DATA_OFFSET, Disc, parse_dir  # noqa: E402
 
 TOOL_VERSION = 2
 UPSCALER_NAME = "lanczos"
@@ -38,6 +39,9 @@ EXE_NAME = "/SCES_010.00"
 EXE_SIZE = 604160
 EXE_SHA256 = "28c8f46d28f971038ccd68135de4d5dfc0f7a1c00285748aea98276a5d37bf75"
 GGI_NAME = "/HIRO/HIRO.GGI"
+CUE_FILE = re.compile(r'FILE\s+"?(.+?)"?\s+\w+$', re.IGNORECASE)
+ISO_MAGIC = b"CD001"
+UNSUPPORTED_FORMAT = "Disc-Format nicht unterstützt: benötigt wird ein Raw-Image (BIN/CUE, 2352 Byte pro Sektor)."
 CONFIG_YAML = "ReducePaletteRange: false\n"
 PROGRESS_EVERY = 25
 KEPT_ON_INSTALL = "dumps"
@@ -52,11 +56,23 @@ def check_disc(exe: bytes) -> None:
         )
 
 
-def bin_of(cue: Path) -> Path:
-    for line in cue.read_text().splitlines():
-        if line.strip().upper().startswith("FILE"):
-            return cue.parent / line.split('"')[1]
-    raise SystemExit(f"Keine FILE-Zeile in {cue}")
+def image_of(path: Path) -> Path:
+    """The raw image behind a CUE sheet (quoted or not), else the path itself."""
+    if path.suffix.lower() != ".cue":
+        return path
+    for line in path.read_text(errors="replace").splitlines():
+        match = CUE_FILE.match(line.strip())
+        if match:
+            return path.parent / match[1]
+    raise SystemExit(f"Keine FILE-Zeile in {path}")
+
+
+def check_raw_image(image: Path) -> None:
+    """Only raw 2352-byte-sector images are readable by tools/psxdisc.py."""
+    with open(image, "rb") as f:
+        f.seek(PVD_LBA * RAW_SECTOR + USER_DATA_OFFSET + 1)
+        if f.read(len(ISO_MAGIC)) != ISO_MAGIC:
+            raise SystemExit(UNSUPPORTED_FORMAT)
 
 
 def disc_files(image: Path) -> dict[str, bytes]:
@@ -183,7 +199,12 @@ def main() -> None:
     parser.add_argument("--install", type=Path, required=True)
     parser.add_argument("--progress", type=Path)
     args = parser.parse_args()
-    files = disc_files(bin_of(args.cue))
+    image = image_of(args.cue)
+    try:
+        check_raw_image(image)
+        files = disc_files(image)
+    except (OSError, struct.error, IndexError) as error:
+        raise SystemExit(f"{UNSUPPORTED_FORMAT} ({error})") from error
     check_disc(files.get(EXE_NAME, b""))
     jobs = collect_jobs(files, lanczos4)
     print(f"{len(jobs)} Dateien")

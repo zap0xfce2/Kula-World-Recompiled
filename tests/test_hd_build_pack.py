@@ -8,7 +8,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-from hd.build_pack import cache_dir, check_disc, install, stage, write_progress
+from hd.build_pack import (
+    cache_dir,
+    check_disc,
+    check_raw_image,
+    image_of,
+    install,
+    stage,
+    write_progress,
+)
 
 
 def make_pack(root: Path, marker: str) -> Path:
@@ -51,6 +59,20 @@ class BuildPackTest(unittest.TestCase):
 
     def test_cache_dir_changes_with_upscaler(self) -> None:
         self.assertNotEqual(cache_dir(self.tmp, "lanczos"), cache_dir(self.tmp, "m60"))
+
+    def test_image_of_unquoted_cue(self) -> None:
+        cue = self.tmp / "game.cue"
+        cue.write_text("FILE game.bin BINARY\n  TRACK 01 MODE2/2352\n")
+        self.assertEqual(image_of(cue), self.tmp / "game.bin")
+
+    def test_image_of_plain_bin(self) -> None:
+        self.assertEqual(image_of(self.tmp / "game.bin"), self.tmp / "game.bin")
+
+    def test_rejects_2048_byte_iso(self) -> None:
+        iso = self.tmp / "game.iso"
+        iso.write_bytes(bytes(16 * 2048 + 1) + b"CD001" + bytes(4096))
+        with self.assertRaises(SystemExit):
+            check_raw_image(iso)
 
     def test_rejects_unknown_disc(self) -> None:
         with self.assertRaises(SystemExit):

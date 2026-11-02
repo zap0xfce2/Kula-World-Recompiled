@@ -9,6 +9,7 @@ counted but not compared, their palette hash covers only part of the palette.
 
 import argparse
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -36,8 +37,11 @@ def dump_key(name: str) -> TextureKey | None:
 
 def coverage(
     pack: set[TextureKey], dumped: set[TextureKey]
-) -> tuple[set[TextureKey], set[TextureKey]]:
-    return dumped & pack, dumped - pack
+) -> tuple[set[TextureKey], set[TextureKey], set[TextureKey]]:
+    """Covered, fallback (ST draw served by the plain file, STP drawn opaque) and missing."""
+    absent = dumped - pack
+    fallback = {k for k in absent if k.semi and replace(k, semi=False) in pack}
+    return dumped & pack, fallback, absent - fallback
 
 
 def png_names(folder: Path) -> list[str]:
@@ -53,12 +57,15 @@ def main() -> None:
     names = png_names(args.dumps)
     keys = [dump_key(n) for n in names]
     dumped = {k for k in keys if k}
-    covered, missing = coverage(pack, dumped)
+    covered, fallback, missing = coverage(pack, dumped)
     print(
         f"Pack: {len(pack)} Dateien, Dumps: {len(names)} Dateien, {len(dumped)} Texturen,"
         f" {keys.count(None)} ohne vollen Palettenbereich"
     )
-    print(f"Abgedeckt: {len(covered)} von {len(dumped)}")
+    print(
+        f"Abgedeckt: {len(covered)} von {len(dumped)},"
+        f" {len(fallback)} ST-Zeichnungen nutzen die Datei ohne ST"
+    )
     for key in sorted(missing, key=lambda k: (k.depth, k.source_hash)):
         print(
             f"fehlt: {'ST' if key.semi else ''}P{key.depth} {key.source_hash:016X} {key.palette_hash:016X} {key.width_words}x{key.height}"

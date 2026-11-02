@@ -61,8 +61,9 @@ class DecodeTest(unittest.TestCase):
     def test_no_st_variant_without_stp_bit(self) -> None:
         self.assertEqual(len(keys_for(pair_with_clut(0x7FFF))), 1)
 
-    def test_no_st_variant_for_tiles(self) -> None:
-        self.assertEqual(len(keys_for(pair_with_clut(0x8001, kind="tile"))), 1)
+    def test_st_variant_for_tiles(self) -> None:
+        # Fading, crumbling and glass-level cubes are drawn semi-transparent (decomp level_init.c).
+        self.assertEqual(len(keys_for(pair_with_clut(0x8001, kind="tile"))), 2)
 
     def test_no_keys_below_dump_threshold(self) -> None:
         self.assertEqual(keys_for(pair_with_clut(0x7FFF, kind="tile", texels=8)), [])

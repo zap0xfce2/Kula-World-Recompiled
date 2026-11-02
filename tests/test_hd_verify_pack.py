@@ -1,6 +1,7 @@
 """Tests for checking an offline pack against runtime dump names (names only)."""
 
 import sys
+from dataclasses import replace
 import unittest
 from pathlib import Path
 
@@ -23,13 +24,19 @@ class VerifyPackTest(unittest.TestCase):
         self.assertIsNone(dump_key(DUMP_SUBRECT.replace("P0-255", "P159-255")))
 
     def test_coverage_ignores_dump_rect(self) -> None:
-        covered, _ = coverage({FULL}, {dump_key(DUMP_SUBRECT)})
+        covered, _, _ = coverage({FULL}, {dump_key(DUMP_SUBRECT)})
         self.assertEqual(covered, {FULL})
 
     def test_coverage_reports_missing(self) -> None:
         other = TextureKey(4, True, 1, 2, 8, 32)
-        _, missing = coverage({FULL}, {FULL, other})
+        _, _, missing = coverage({FULL}, {FULL, other})
         self.assertEqual(missing, {other})
+
+    def test_coverage_counts_st_draw_without_st_file_as_fallback(self) -> None:
+        # The runtime uses the plain file for an ST draw when no ST file exists.
+        semi = replace(FULL, semi=True)
+        _, fallback, _ = coverage({FULL}, {semi})
+        self.assertEqual(fallback, {semi})
 
 
 if __name__ == "__main__":

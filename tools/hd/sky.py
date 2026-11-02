@@ -4,9 +4,12 @@ neighbouring strip (the cause of the sky lines, spike round 3)."""
 from PIL import Image
 
 from hd.assets import SkyQuad
-from hd.upscale import SCALE, Upscaler
+from hd.names import Rect
+from hd.upscale import SCALE, Upscaler, clear_cutout, fill_transparent
 
 USED_ROWS = 15  # row 16 of each band is never sampled
+BAND_ROWS = 16
+TEXELS_PER_WORD_8BPP = 2  # sub-rect offset and width must be whole words
 
 
 def segments(quads: list[SkyQuad]) -> list[tuple[int, int, int, int, int]]:
@@ -43,6 +46,7 @@ def build_sky(
     size = (atlas.width * SCALE, atlas.height * SCALE)
     out = atlas.resize(size, Image.Resampling.NEAREST)
     alpha = out.getchannel("A")
+    atlas = fill_transparent(atlas)
     for quad in quads:
         if quad.clut_y != clut_y:
             continue
@@ -54,4 +58,24 @@ def build_sky(
         )
         out.paste(upscale(atlas.crop(box)), (box[0] * SCALE, box[1] * SCALE))
     out.putalpha(alpha)
-    return out
+    return clear_cutout(out)
+
+
+def band_rects(quads: list[SkyQuad], clut_y: int) -> list[Rect]:
+    """Per band, the texel span of the quads drawn with clut_y."""
+    spans: dict[int, tuple[int, int, int]] = {}
+    for quad in quads:
+        if quad.clut_y != clut_y:
+            continue
+        x0, x1, y0 = spans.get(quad.band, (quad.atlas_x, quad.atlas_x, quad.atlas_y))
+        spans[quad.band] = (
+            min(x0, quad.atlas_x),
+            max(x1, quad.atlas_x + quad.stride),
+            y0,
+        )
+    rects = []
+    for x0, x1, y0 in spans.values():
+        x0 -= x0 % TEXELS_PER_WORD_8BPP
+        x1 += x1 % TEXELS_PER_WORD_8BPP
+        rects.append((x0, y0, x1 - x0, BAND_ROWS))
+    return rects

@@ -39,6 +39,16 @@ class NamesTest(unittest.TestCase):
         name = "texupload-P8-0000000000000001-0000000000000002-4x4-0-0-8x4-P3-255.png"
         self.assertIsNone(parse_name(name))
 
+    def test_format_name_sub_rect(self) -> None:
+        key = TextureKey(8, False, 1, 2, 384, 256)
+        self.assertTrue(
+            format_name(key, (32, 16, 64, 16)).endswith("-384x256-32-16-64x16-P0-255")
+        )
+
+    def test_parse_name_accepts_sub_rect(self) -> None:
+        key = TextureKey(8, False, 1, 2, 384, 256)
+        self.assertEqual(parse_name(format_name(key, (32, 16, 64, 16)) + ".png"), key)
+
     def test_hash_words_is_xxh3(self) -> None:
         self.assertEqual(hash_words(b""), 0x2D06800538D394C2)
 

@@ -16,24 +16,25 @@ import shutil
 import struct
 import sys
 from collections.abc import Callable
+from functools import lru_cache
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from PIL import Image  # noqa: E402
 
-from hd.assets import Pairing  # noqa: E402
+from hd.assets import Clut, Pairing  # noqa: E402
 from hd.classify import classify, upscale_file  # noqa: E402
 from hd.contour import check_classes  # noqa: E402
 from hd.decode import decode, keys_for  # noqa: E402
 from hd.ggi import read_sprites  # noqa: E402
-from hd.names import TextureKey, format_name  # noqa: E402
-from hd.sky import build_sky  # noqa: E402
+from hd.names import Rect, TextureKey, format_name  # noqa: E402
+from hd.sky import band_rects, build_sky  # noqa: E402
 from hd.tgi import read_bonus_sky, read_sky, read_tiles  # noqa: E402
-from hd.upscale import Upscaler, lanczos4  # noqa: E402
+from hd.upscale import SCALE, Upscaler, lanczos4  # noqa: E402
 from psxdisc import PVD_LBA, RAW_SECTOR, USER_DATA_OFFSET, Disc, parse_dir  # noqa: E402
 
-TOOL_VERSION = 2
+TOOL_VERSION = 5
 UPSCALER_NAME = "lanczos"
 EXE_NAME = "/SCES_010.00"
 EXE_SIZE = 604160
@@ -99,19 +100,29 @@ def pair_job(pair: Pairing, key: TextureKey, upscale: Upscaler) -> Job:
 
 
 def sky_jobs(tgi: bytes, upscale: Upscaler) -> list[Job]:
+    """One file per band and palette: whole-atlas files overflow the runtime's decode budget."""
     upload, cluts, quads = read_sky(tgi)
+
+    @lru_cache(maxsize=2)  # jobs run in order, one palette after the other
+    def sky(clut: Clut, semi: bool) -> Image.Image:
+        return build_sky(decode(upload, clut, semi), quads, clut.y, upscale)
+
     jobs: list[Job] = []
     for clut in cluts:
         for key in keys_for(Pairing(upload, clut)):
-            jobs.append(
-                (
-                    format_name(key),
-                    lambda c=clut, k=key: build_sky(
-                        decode(upload, c, k.semi), quads, c.y, upscale
-                    ),
+            for rect in band_rects(quads, clut.y):
+                jobs.append(
+                    (
+                        format_name(key, rect),
+                        lambda c=clut, k=key, r=rect: sky(c, k.semi).crop(scaled(r)),
+                    )
                 )
-            )
     return jobs
+
+
+def scaled(rect: Rect) -> tuple[int, int, int, int]:
+    x, y, width, height = rect
+    return x * SCALE, y * SCALE, (x + width) * SCALE, (y + height) * SCALE
 
 
 def collect_jobs(

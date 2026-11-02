@@ -9,7 +9,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 from hd.assets import SkyQuad
-from hd.sky import build_sky, segments
+from hd.sky import band_rects, build_sky, segments
 from hd.upscale import lanczos4
 
 ATLAS_SIZE = (768, 256)
@@ -42,6 +42,38 @@ class SkyTest(unittest.TestCase):
         atlas = two_colour_atlas(left=(0, 0, 255), right=(255, 255, 255), split_x=16)
         out = build_sky(atlas, [quad(0, 232, 0, 16)], 232, lanczos4)
         self.assertEqual(out.getpixel((63, 8))[:3], (0, 0, 255))
+
+    def test_build_sky_has_no_dark_fringe(self) -> None:
+        atlas = Image.new("RGBA", ATLAS_SIZE, (0, 0, 0, 0))
+        atlas.paste((255, 0, 0, 255), (4, 0, 12, 15))
+        out = build_sky(atlas, [quad(0, 232, 0, 16)], 232, lanczos4).crop(
+            (0, 0, 64, 60)
+        )
+        self.assertGreater(
+            min(r for r, _g, _b, a in out.get_flattened_data() if a), 200
+        )
+
+    def test_build_sky_cutout_is_exact_zero(self) -> None:
+        atlas = Image.new("RGBA", ATLAS_SIZE, (0, 0, 0, 0))
+        atlas.paste((255, 0, 0, 255), (4, 0, 12, 15))
+        out = build_sky(atlas, [quad(0, 232, 0, 16)], 232, lanczos4).crop(
+            (0, 0, 64, 60)
+        )
+        self.assertEqual(
+            {p for p in out.get_flattened_data() if p[3] == 0}, {(0, 0, 0, 0)}
+        )
+
+    def test_band_rects_cover_one_band_per_rect(self) -> None:
+        # One small file per band keeps a world's 24 sky palettes inside the runtime's 64 MiB decode budget.
+        quads = [quad(0, 232, 0, 3), quad(0, 232, 3, 3), SkyQuad(1, 232, 10, 16, 2)]
+        self.assertEqual(band_rects(quads, 232), [(0, 0, 6, 16), (10, 16, 2, 16)])
+
+    def test_band_rects_align_to_words(self) -> None:
+        # The runtime rejects P8 names whose offset or width is odd.
+        self.assertEqual(band_rects([quad(0, 232, 561, 191)], 232), [(560, 0, 192, 16)])
+
+    def test_band_rects_skip_other_cluts(self) -> None:
+        self.assertEqual(band_rects([quad(0, 233, 0, 3)], 232), [])
 
     def test_build_sky_keeps_size(self) -> None:
         self.assertEqual(build_sky(blank_atlas(), [], 232, lanczos4).size, (3072, 1024))

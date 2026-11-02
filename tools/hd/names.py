@@ -1,8 +1,8 @@
 """DuckStation-format texture names as the psxrecomp runtime looks them up.
 
 Format: duck_texture_format_name in psxrecomp/runtime/src/duckstation_texture_pack.cpp.
-Only full-upload rects and full palette ranges are produced: reduced ranges
-collide because the runtime hashes the first N palette entries, not min..max.
+Only full palette ranges are produced: reduced ranges collide because the
+runtime hashes the first N palette entries, not min..max.
 """
 
 import re
@@ -37,18 +37,22 @@ def texel_width(key: TextureKey) -> int:
     return key.width_words * TEXELS_PER_WORD[key.depth]
 
 
-def format_name(key: TextureKey) -> str:
-    """Name without extension, covering the whole upload."""
+Rect = tuple[int, int, int, int]  # x, y, width, height in texels of the upload
+
+
+def format_name(key: TextureKey, rect: Rect | None = None) -> str:
+    """Name without extension; without rect the file covers the whole upload."""
+    x, y, width, height = rect or (0, 0, texel_width(key), key.height)
     mode = ("ST" if key.semi else "") + f"P{key.depth}"
     return (
         f"texupload-{mode}-{key.source_hash:016X}-{key.palette_hash:016X}"
-        f"-{key.width_words}x{key.height}-0-0-{texel_width(key)}x{key.height}"
+        f"-{key.width_words}x{key.height}-{x}-{y}-{width}x{height}"
         f"-P0-{PALETTE_MAX[key.depth]}"
     )
 
 
 def parse_name(name: str) -> TextureKey | None:
-    """Key of a full-upload, full-range name, else None."""
+    """Key of a full-range name, whole upload or sub-rect, else None."""
     match = NAME_PATTERN.fullmatch(name)
     if not match:
         return None
@@ -60,4 +64,5 @@ def parse_name(name: str) -> TextureKey | None:
         width_words=int(match[5]),
         height=int(match[6]),
     )
-    return key if format_name(key) == name.removesuffix(".png") else None
+    rect = (int(match[7]), int(match[8]), int(match[9]), int(match[10]))
+    return key if format_name(key, rect) == name.removesuffix(".png") else None

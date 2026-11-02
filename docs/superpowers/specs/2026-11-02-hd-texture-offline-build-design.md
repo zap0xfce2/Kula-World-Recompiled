@@ -1,6 +1,6 @@
 # HD texture pack, offline build – design
 
-Status: draft 2026-11-02, user questions answered, waiting for the user's approval of the whole document. Spike findings: `CLAUDE.md`, section "HD-Texturen" (rounds 1–8).
+Status: approved 2026-11-02. Spike findings: `CLAUDE.md`, section "HD-Texturen" (rounds 1–8).
 
 ## Goal
 Players get sharper textures without anyone shipping game art. Like Hercules Recompiled, the launcher builds the HD pack in the background from the player's own disc. Until the pack is ready the game runs with the original textures ("erstmal orginal dann hd"). The look is "like the original, only sharper", and it has to work in every level, not only W1/L1.

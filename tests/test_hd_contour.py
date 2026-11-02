@@ -9,7 +9,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 from hd.contour import check_classes, hole_count, region_count, round_ui
-from hd.upscale import lanczos4
+from hd.upscale import fill_transparent, lanczos4
 
 WHITE = (255, 255, 255, 255)
 
@@ -45,6 +45,33 @@ def thin_t() -> Image.Image:
     return image
 
 
+DARK_STP = (8, 8, 8, 143)
+
+
+def white_blob_with_dark_stp_rim() -> Image.Image:
+    """Like the HUD fruits: an opaque body whose rim is dark STP (subtractive shadow)."""
+    image = Image.new("RGBA", (12, 12), (0, 0, 0, 0))
+    for y in range(1, 11):
+        for x in range(1, 12 - y):
+            image.putpixel((x, y), WHITE)
+        image.putpixel((12 - y, y), DARK_STP)
+    return image
+
+
+def dark_opaque_grown(image: Image.Image, out: Image.Image) -> int:
+    """Pixels rounding added outside the original that are opaque but dark."""
+    source = image.load()
+    pixels = out.load()
+    return sum(
+        1
+        for y in range(out.height)
+        for x in range(out.width)
+        if not source[x // 4, y // 4][3]
+        and pixels[x, y][3] == 255
+        and sum(pixels[x, y][:3]) < 60
+    )
+
+
 def lit(image: Image.Image) -> int:
     return sum(1 for a in image.getchannel("A").tobytes() if a)
 
@@ -59,6 +86,10 @@ class ContourTest(unittest.TestCase):
 
     def test_contour_radius_keeps_thin_stroke(self) -> None:
         self.assertEqual(region_count(round_ui(one_pixel_wide_letter_i(), lanczos4)), 2)
+
+    def test_grown_pixels_take_the_class_of_their_colour_source(self) -> None:
+        image = fill_transparent(white_blob_with_dark_stp_rim())
+        self.assertEqual(dark_opaque_grown(image, round_ui(image, lanczos4)), 0)
 
     def test_round_ui_alpha_classes_only(self) -> None:
         check_classes(round_ui(blob_with_stp_texels(), lanczos4))

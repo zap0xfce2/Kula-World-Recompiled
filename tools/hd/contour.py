@@ -5,13 +5,12 @@ from collections import deque
 
 from PIL import Image, ImageFilter
 
-from hd.upscale import SCALE, Upscaler, lanczos4
+from hd.upscale import SCALE, Upscaler, fill_transparent, lanczos4
 
 ALPHA_CLASSES = {0, 143, 255}
 RADII = (4, 2, 1.5)
 CUT = 128
 EDGE_PX = 4
-FILL_STEPS = 8
 
 
 def upscale_alpha_nearest(image: Image.Image) -> Image.Image:
@@ -112,16 +111,22 @@ def pick_mask(image: Image.Image) -> Image.Image:
     return nearest
 
 
+def nearest_class(image: Image.Image) -> Image.Image:
+    """4x alpha class of the visible texel fill_transparent takes the colour from.
+
+    Class and colour must come from the same texel: an opaque class with the
+    colour of a dark STP rim texel draws as a black dot (HUD fruits)."""
+    alpha = image.getchannel("A")
+    probe = fill_transparent(Image.merge("RGBA", (alpha, alpha, alpha, alpha)))
+    return probe.getchannel("R").resize(
+        (image.width * SCALE, image.height * SCALE), Image.Resampling.NEAREST
+    )
+
+
 def class_alpha(image: Image.Image, mask: Image.Image) -> Image.Image:
-    """Inside the mask: the class of a nearby visible texel; outside: cutout."""
-    nearest = upscale_alpha_nearest(image)
-    filled = nearest
-    for _ in range(FILL_STEPS):
-        filled = filled.filter(ImageFilter.MaxFilter(3))
+    """Inside the mask: the class of the nearest visible texel; outside: cutout."""
     # Composite masks must be strictly 0/255, else they blend the classes.
-    visible = nearest.point(lambda v: 255 if v else 0)
-    inside = Image.composite(nearest, filled, visible)
-    return Image.composite(inside, Image.new("L", mask.size, 0), mask)
+    return Image.composite(nearest_class(image), Image.new("L", mask.size, 0), mask)
 
 
 def round_ui(image: Image.Image, upscale: Upscaler) -> Image.Image:

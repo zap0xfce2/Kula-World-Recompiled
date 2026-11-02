@@ -41,6 +41,8 @@ EXE_SHA256 = "28c8f46d28f971038ccd68135de4d5dfc0f7a1c00285748aea98276a5d37bf75"
 GGI_NAME = "/HIRO/HIRO.GGI"
 CUE_FILE = re.compile(r'FILE\s+"?(.+?)"?\s+\w+$', re.IGNORECASE)
 ISO_MAGIC = b"CD001"
+ROOT_RECORD, ROOT_RECORD_SIZE = 156, 34  # root directory record in the PVD (ISO 9660)
+EXTENT_LBA, EXTENT_SIZE = 2, 10
 UNSUPPORTED_FORMAT = "Disc-Format nicht unterstützt: benötigt wird ein Raw-Image (BIN/CUE, 2352 Byte pro Sektor)."
 CONFIG_YAML = "ReducePaletteRange: false\n"
 PROGRESS_EVERY = 25
@@ -78,11 +80,9 @@ def check_raw_image(image: Path) -> None:
 def disc_files(image: Path) -> dict[str, bytes]:
     """The EXE, the GGI and every TGI of the disc."""
     disc = Disc(str(image))
-    root = disc.sector(PVD_LBA)[156 : 156 + 34]
-    root_lba, root_size = (
-        struct.unpack_from("<I", root, 2)[0],
-        struct.unpack_from("<I", root, 10)[0],
-    )
+    root = disc.sector(PVD_LBA)[ROOT_RECORD : ROOT_RECORD + ROOT_RECORD_SIZE]
+    root_lba = struct.unpack_from("<I", root, EXTENT_LBA)[0]
+    root_size = struct.unpack_from("<I", root, EXTENT_SIZE)[0]
     wanted = {}
     for path, lba, size, is_dir in parse_dir(disc, root_lba, root_size):
         if not is_dir and (path in (EXE_NAME, GGI_NAME) or path.endswith(".TGI")):

@@ -143,4 +143,4 @@ def check_classes(image: Image.Image) -> None:
         value for value, n in enumerate(histogram) if n and value not in ALPHA_CLASSES
     ]
     if stray:
-        raise ValueError(f"alpha outside 0/143/255: {stray[:5]}")
+        raise ValueError(f"Alpha außerhalb von 0/143/255: {stray[:5]}")

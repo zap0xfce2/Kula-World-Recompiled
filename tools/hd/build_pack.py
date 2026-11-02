@@ -34,7 +34,7 @@ from hd.tgi import read_bonus_sky, read_sky, read_tiles  # noqa: E402
 from hd.upscale import SCALE, Upscaler, lanczos4  # noqa: E402
 from psxdisc import PVD_LBA, RAW_SECTOR, USER_DATA_OFFSET, Disc, parse_dir  # noqa: E402
 
-TOOL_VERSION = 5
+TOOL_VERSION = 6
 UPSCALER_NAME = "lanczos"
 EXE_NAME = "/SCES_010.00"
 EXE_SIZE = 604160

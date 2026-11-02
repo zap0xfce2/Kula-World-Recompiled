@@ -59,7 +59,7 @@ def main() -> None:
     dumped = {k for k in keys if k}
     covered, fallback, missing = coverage(pack, dumped)
     print(
-        f"Pack: {len(pack)} Dateien, Dumps: {len(names)} Dateien, {len(dumped)} Texturen,"
+        f"Pack: {len(pack)} Texturen, Dumps: {len(names)} Dateien, {len(dumped)} Texturen,"
         f" {keys.count(None)} ohne vollen Palettenbereich"
     )
     print(

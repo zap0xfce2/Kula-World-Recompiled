@@ -114,5 +114,21 @@ tasks:
   lint:
     desc: ruff and black on project Python
     cmds:
-      - ruff check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tools/freeze_timer.py tests
-      - black --check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tools/freeze_timer.py tests
+      - ruff check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tools/freeze_timer.py tools/hd tests
+      - black --check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tools/freeze_timer.py tools/hd tests
+
+  hd:venv:
+    desc: Dev venv for the HD pack builder (Pillow, xxhash)
+    cmds:
+      - '{{.PYTHON}} -m venv .venv-hd'
+      - .venv-hd/bin/pip install -q -r tools/hd/requirements.txt
+
+  hd:build:
+    desc: Build the HD texture pack from the disc (Lanczos)
+    cmds:
+      - .venv-hd/bin/python -I tools/hd/build_pack.py {{.DISC}} hd-work --install build-dev/mods/texture-packs/SCES-01000
+
+  hd:verify:
+    desc: Compare the HD pack against runtime dumps, DUMPS=<dir>
+    cmds:
+      - .venv-hd/bin/python -I tools/hd/verify_pack.py build-dev/mods/texture-packs/SCES-01000 {{.DUMPS}}

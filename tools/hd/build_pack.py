@@ -32,7 +32,8 @@ from hd.tgi import read_bonus_sky, read_sky, read_tiles  # noqa: E402
 from hd.upscale import Upscaler, lanczos4  # noqa: E402
 from psxdisc import PVD_LBA, Disc, parse_dir  # noqa: E402
 
-TOOL_VERSION = 1
+TOOL_VERSION = 2
+UPSCALER_NAME = "lanczos"
 EXE_NAME = "/SCES_010.00"
 EXE_SIZE = 604160
 EXE_SHA256 = "28c8f46d28f971038ccd68135de4d5dfc0f7a1c00285748aea98276a5d37bf75"
@@ -110,6 +111,11 @@ def collect_jobs(
     return dict(jobs)
 
 
+def cache_dir(work: Path, upscaler: str) -> Path:
+    """Finished images per tool version and upscaler, so an update never reuses stale ones."""
+    return work / f"out-v{TOOL_VERSION}-{upscaler}"
+
+
 def write_progress(path: Path, step: str, done: int, total: int, state: str) -> None:
     data = {
         "step": step,
@@ -166,7 +172,7 @@ def stage(out: Path, staging: Path, names: list[str]) -> None:
         shutil.copy2(out / f"{name}.png", staging / "replacements" / f"{name}.png")
     (staging / "config.yaml").write_text(CONFIG_YAML)
     (staging / "hd-pack.json").write_text(
-        json.dumps({"tool": TOOL_VERSION, "upscaler": "lanczos"})
+        json.dumps({"tool": TOOL_VERSION, "upscaler": UPSCALER_NAME})
     )
 
 
@@ -181,9 +187,10 @@ def main() -> None:
     check_disc(files.get(EXE_NAME, b""))
     jobs = collect_jobs(files, lanczos4)
     print(f"{len(jobs)} Dateien")
-    render_all(jobs, args.work / "out", args.progress)
+    out = cache_dir(args.work, UPSCALER_NAME)
+    render_all(jobs, out, args.progress)
     staging = args.install.with_name(args.install.name + ".new")
-    stage(args.work / "out", staging, sorted(jobs))
+    stage(out, staging, sorted(jobs))
     install(staging, args.install)
     if args.progress:
         write_progress(args.progress, "done", len(jobs), len(jobs), "done")

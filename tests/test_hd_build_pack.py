@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
-from hd.build_pack import check_disc, install, stage, write_progress
+from hd.build_pack import cache_dir, check_disc, install, stage, write_progress
 
 
 def make_pack(root: Path, marker: str) -> Path:
@@ -48,6 +48,9 @@ class BuildPackTest(unittest.TestCase):
         stage(out, self.tmp / "staging", ["keep"])
         names = [p.name for p in (self.tmp / "staging" / "replacements").iterdir()]
         self.assertEqual(names, ["keep.png"])
+
+    def test_cache_dir_changes_with_upscaler(self) -> None:
+        self.assertNotEqual(cache_dir(self.tmp, "lanczos"), cache_dir(self.tmp, "m60"))
 
     def test_rejects_unknown_disc(self) -> None:
         with self.assertRaises(SystemExit):

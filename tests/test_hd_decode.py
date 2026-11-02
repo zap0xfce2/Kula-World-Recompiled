@@ -29,8 +29,11 @@ def clut_with(index: int, color: int) -> Clut:
     return Clut(0, 480, struct.pack("<16H", *colors))
 
 
-def pair_with_clut(color: int) -> Pairing:
-    return Pairing(p4_upload([1]), clut_with(1, color))
+def pair_with_clut(color: int, kind: str = "sprite", texels: int = 16) -> Pairing:
+    """A square P4 upload of the given edge length in texels."""
+    words = texels // 4
+    upload = Upload(0, 0, words, texels, 4, bytes(words * texels * 2), kind)
+    return Pairing(upload, clut_with(1, color))
 
 
 class DecodeTest(unittest.TestCase):
@@ -57,6 +60,12 @@ class DecodeTest(unittest.TestCase):
 
     def test_no_st_variant_without_stp_bit(self) -> None:
         self.assertEqual(len(keys_for(pair_with_clut(0x7FFF))), 1)
+
+    def test_no_st_variant_for_tiles(self) -> None:
+        self.assertEqual(len(keys_for(pair_with_clut(0x8001, kind="tile"))), 1)
+
+    def test_no_keys_below_dump_threshold(self) -> None:
+        self.assertEqual(keys_for(pair_with_clut(0x7FFF, kind="tile", texels=8)), [])
 
 
 if __name__ == "__main__":

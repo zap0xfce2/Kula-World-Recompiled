@@ -12,6 +12,8 @@ from hd.assets import Clut, Pairing, Upload
 from hd.names import TEXELS_PER_WORD, TextureKey, hash_words
 
 STP_BIT = 0x8000
+MIN_TEXELS = 16  # the runtime dumper's default threshold; smaller mipmaps gain nothing
+ST_KINDS = {"sprite"}  # runtime dumps show ST draws only for GGI sprites
 ALPHA_STP = 143
 ALPHA_OPAQUE = 255
 LOW_NIBBLE = bytes(b & 0x0F for b in range(256))
@@ -57,6 +59,9 @@ def needs_st(clut: Clut) -> bool:
 
 def keys_for(pair: Pairing) -> list[TextureKey]:
     upload = pair.upload
+    width = upload.width_words * TEXELS_PER_WORD[upload.depth]
+    if min(width, upload.height) < MIN_TEXELS:
+        return []
     base = TextureKey(
         upload.depth,
         False,
@@ -65,6 +70,6 @@ def keys_for(pair: Pairing) -> list[TextureKey]:
         upload.width_words,
         upload.height,
     )
-    if not needs_st(pair.clut):
+    if upload.kind not in ST_KINDS or not needs_st(pair.clut):
         return [base]
     return [base, replace(base, semi=True)]

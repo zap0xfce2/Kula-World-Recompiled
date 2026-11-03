@@ -72,7 +72,7 @@ MODEL_ZIP = (
     "IllustrationJaNai_V1_ModelsOnly.zip",
     "6f5496f5ded597474290403de73d7a46c3f8ed328261db2e6ff830a415a6f60b",
 )
-MODEL_MEMBER = "IllustrationJaNai/4x_IllustrationJaNai_V1_DAT2_190k.pth"
+MODEL_MEMBER = "4x_IllustrationJaNai_V1_DAT2_190k.pth"
 MODEL_SHA256 = "a82f3a2d8d1c676171b86a00048b7a624e3c62c87ec701012f106a171c309fbe"
 
 # share of the whole run; the build itself takes hours on a CPU
@@ -322,7 +322,7 @@ def phase_packages(
 
 
 def phase_model(data: Path, prog: Progress) -> Path:
-    out = data / "model" / Path(MODEL_MEMBER).name
+    out = data / "model" / MODEL_MEMBER
     if out.exists() and sha256(out) == MODEL_SHA256:
         return out
     prog.set("model")
@@ -334,10 +334,16 @@ def phase_model(data: Path, prog: Progress) -> Path:
         lambda f: prog.set("model", f),
     )
     out.parent.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(archive) as zf, zf.open(MODEL_MEMBER) as src, open(
-        out, "wb"
-    ) as f:
-        shutil.copyfileobj(src, f)
+    try:
+        with zipfile.ZipFile(archive) as zf, zf.open(MODEL_MEMBER) as src, open(
+            out, "wb"
+        ) as f:
+            shutil.copyfileobj(src, f)
+    except (
+        KeyError,
+        zipfile.BadZipFile,
+    ) as error:  # a re-packed zip must not cost the pack
+        raise Failed("download", f"{MODEL_MEMBER}: {error}") from error
     if sha256(out) != MODEL_SHA256:
         out.unlink()
         raise Failed("download", f"{MODEL_MEMBER}: checksum mismatch")

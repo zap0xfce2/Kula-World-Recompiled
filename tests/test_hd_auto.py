@@ -6,7 +6,9 @@ import shutil
 import sys
 import tempfile
 import unittest
+import zipfile
 from pathlib import Path
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
@@ -21,9 +23,14 @@ from hd.hd_auto import (
     single_instance,
     tool_version,
 )
+from hd import hd_auto
 from hd.build_pack import TOOL_VERSION
 
 WANT = {"tool": 7, "upscaler": "m60", "model_sha256": "ab" * 32}
+
+
+def sha256_hex(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
 
 
 def ignore(_fraction: float) -> None:
@@ -122,6 +129,32 @@ class AutoTest(unittest.TestCase):
 
     def test_model_failure_is_reported(self) -> None:
         self.assertEqual(run_phases(True, fallback_steps([])), "network")
+
+    def cached_model_zip(self, member: str, payload: bytes) -> Path:
+        """Places the archive where phase_model expects its verified download."""
+        archive = self.tmp / "downloads" / hd_auto.MODEL_ZIP[0].rsplit("/", 1)[1]
+        archive.parent.mkdir()
+        with zipfile.ZipFile(archive, "w") as zf:
+            zf.writestr(member, payload)
+        return archive
+
+    def run_phase_model(self, member: str, payload: bytes) -> Path:
+        archive = self.cached_model_zip(member, payload)
+        zip_entry = (hd_auto.MODEL_ZIP[0], sha256_hex(archive.read_bytes()))
+        with mock.patch.multiple(
+            hd_auto, MODEL_ZIP=zip_entry, MODEL_SHA256=sha256_hex(payload)
+        ):
+            return hd_auto.phase_model(self.tmp, Progress(self.tmp / "p.json"))
+
+    def test_model_is_taken_from_the_archive_root(self) -> None:
+        # Layout of the published zip (checked on the Mac): no folder inside.
+        out = self.run_phase_model("4x_IllustrationJaNai_V1_DAT2_190k.pth", b"weights")
+        self.assertEqual(out.read_bytes(), b"weights")
+
+    def test_model_missing_from_archive_falls_back(self) -> None:
+        with self.assertRaises(Failed) as ctx:
+            self.run_phase_model("other.pth", b"weights")
+        self.assertEqual(ctx.exception.code, "download")
 
 
 if __name__ == "__main__":

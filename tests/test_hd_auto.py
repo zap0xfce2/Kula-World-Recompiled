@@ -2,7 +2,9 @@
 
 import hashlib
 import json
+import os
 import shutil
+import signal
 import sys
 import tempfile
 import unittest
@@ -135,6 +137,30 @@ class AutoTest(unittest.TestCase):
         prog.set("build", 0.4)
         hd_auto.stopper(prog, lambda: None)()
         self.assertEqual(json.loads(prog.path.read_text())["state"], "stopped")
+
+    @unittest.skipIf(os.name == "nt", "POSIX signal masks")
+    def test_stop_signals_unblocked_for_children(self) -> None:
+        # Started from an SDL thread, the runner inherits SIGTERM blocked.
+        old = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM})
+        self.addCleanup(signal.pthread_sigmask, signal.SIG_SETMASK, old)
+        hd_auto.unblock_stop_signals()
+        self.assertNotIn(signal.SIGTERM, signal.pthread_sigmask(signal.SIG_BLOCK, []))
+
+    def test_cleanup_removes_source(self) -> None:
+        (self.tmp / "source").mkdir()
+        hd_auto.cleanup(self.tmp)
+        self.assertFalse((self.tmp / "source").exists())
+
+    def test_python_lock_has_macos(self) -> None:
+        self.assertEqual(
+            hd_auto.python_tarball("macos-aarch64")[1],
+            "8b0f1fa71eab7ca644e482c631807a1116fa848491051cd1c8d9429491de63a6",
+        )
+
+    def test_python_lock_unknown_platform_fails(self) -> None:
+        with self.assertRaises(Failed) as ctx:
+            hd_auto.python_tarball("linux-riscv64")
+        self.assertEqual(ctx.exception.code, "platform")
 
     def cached_model_zip(self, member: str, payload: bytes) -> Path:
         """Places the archive where phase_model expects its verified download."""

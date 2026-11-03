@@ -1,0 +1,5 @@
+# Portable CPython (python-build-standalone) per platform: key, URL, SHA-256.
+# Read by hd_auto.py and by the game plugin (mods/src/kula_hd_textures.c).
+linux-x86_64 https://github.com/astral-sh/python-build-standalone/releases/download/20260825/cpython-3.12.14%2B20260825-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz 7ce4a71285d913955a76053cc7605ea96da8ecada54dba9cf395245961816421
+windows-x86_64 https://github.com/astral-sh/python-build-standalone/releases/download/20260825/cpython-3.12.14%2B20260825-x86_64-pc-windows-msvc-install_only_stripped.tar.gz 8e6aad12ef6fc9685e67ce66253f8f72d6e8fa02cb7187e5850bd4db5ecd9e2a
+macos-aarch64 https://github.com/astral-sh/python-build-standalone/releases/download/20260825/cpython-3.12.14%2B20260825-aarch64-apple-darwin-install_only_stripped.tar.gz 8b0f1fa71eab7ca644e482c631807a1116fa848491051cd1c8d9429491de63a6

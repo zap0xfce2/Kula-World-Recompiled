@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Build the Kula World HD texture pack from the player's own disc.
 
-    python3 -I tools/hd/build_pack.py DISC.cue WORK_DIR --install PACK_DIR [--progress FILE]
-        [--model PTH [--device cpu|mps|cuda]]
+    python3 -I tools/hd/build_pack.py DISC.cue|SOURCE_DIR WORK_DIR --install PACK_DIR
+        [--progress FILE] [--model PTH [--device cpu|mps|cuda]]
 
-Reads only the disc image and writes below WORK_DIR; finished PNGs are kept
+SOURCE_DIR holds the files the game plugin extracted, under their disc paths.
+Reads only that input and writes below WORK_DIR; finished PNGs are kept
 there, so an interrupted run continues. The pack is swapped in as a whole.
 """
 
@@ -83,17 +84,43 @@ def check_raw_image(image: Path) -> None:
             raise SystemExit(UNSUPPORTED_FORMAT)
 
 
+def wanted(path: str) -> bool:
+    """The EXE, the GGI and every TGI: all the builder reads."""
+    return path in (EXE_NAME, GGI_NAME) or path.endswith(".TGI")
+
+
 def disc_files(image: Path) -> dict[str, bytes]:
-    """The EXE, the GGI and every TGI of the disc."""
     disc = Disc(str(image))
     root = disc.sector(PVD_LBA)[ROOT_RECORD : ROOT_RECORD + ROOT_RECORD_SIZE]
     root_lba = struct.unpack_from("<I", root, EXTENT_LBA)[0]
     root_size = struct.unpack_from("<I", root, EXTENT_SIZE)[0]
-    wanted = {}
-    for path, lba, size, is_dir in parse_dir(disc, root_lba, root_size):
-        if not is_dir and (path in (EXE_NAME, GGI_NAME) or path.endswith(".TGI")):
-            wanted[path] = disc.read(lba, size)
-    return wanted
+    return {
+        path: disc.read(lba, size)
+        for path, lba, size, is_dir in parse_dir(disc, root_lba, root_size)
+        if not is_dir and wanted(path)
+    }
+
+
+def source_files(folder: Path) -> dict[str, bytes]:
+    """The same files, extracted by the game plugin with their disc paths."""
+    files = {}
+    for file in folder.rglob("*"):
+        path = "/" + file.relative_to(folder).as_posix()
+        if file.is_file() and wanted(path):
+            files[path] = file.read_bytes()
+    return files
+
+
+def read_input(source: Path) -> dict[str, bytes]:
+    """A folder from the game plugin (works for every disc format), or a raw disc image."""
+    if source.is_dir():
+        return source_files(source)
+    image = image_of(source)
+    try:
+        check_raw_image(image)
+        return disc_files(image)
+    except (OSError, struct.error, IndexError) as error:
+        raise SystemExit(f"{UNSUPPORTED_FORMAT} ({error})") from error
 
 
 def upscaler_for(pair: Pairing, model: Upscaler) -> Upscaler:
@@ -255,12 +282,7 @@ def main() -> None:
     parser.add_argument("--model", type=Path, help="IllustrationJaNai .pth (M60 look)")
     parser.add_argument("--device", help="cpu, mps or cuda; default: the fastest found")
     args = parser.parse_args()
-    image = image_of(args.cue)
-    try:
-        check_raw_image(image)
-        files = disc_files(image)
-    except (OSError, struct.error, IndexError) as error:
-        raise SystemExit(f"{UNSUPPORTED_FORMAT} ({error})") from error
+    files = read_input(args.cue)
     check_disc(files.get(EXE_NAME, b""))
     upscale, name, model_sha256 = pick_upscaler(args)
     jobs = collect_jobs(files, upscale)

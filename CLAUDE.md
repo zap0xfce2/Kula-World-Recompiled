@@ -340,7 +340,23 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
            - Das System-Python 3.9.6 startet den Runner, ein aktuelles Pack ist nach 0,26 s erkannt.
            - Ein Marker ohne `model_sha256` (Packs vor `8601f6f`) gilt als veraltet und löst einen Neubau aus. Das ist so gewollt.
            - Das Gerät des Modells steht jetzt im Log („model device: …“).
-       - Offen: Teil 3 (Launcher-Opt-in, Lizenzanzeige). Die 84 Laufzeit-Paletten bräuchten Spiel-Logik.
+       - Teil 3 (2026-11-03, Plugin-Weg vom Nutzer freigegeben, Spec `docs/superpowers/specs/2026-11-03-hd-texture-launcher-design.md`, Plan `docs/superpowers/plans/2026-11-03-hd-texture-launcher.md`):
+         - Entscheidungen des Nutzers: zwei Stufen (HD an, Modell mit eigener Zustimmung), Python lädt unser eigener Code, Upstream-PRs nur nach Rückfrage. Kein Fortschritt im Launcher, der Bau startet mit dem Spiel.
+         - Befund: recomp-ui hat keinen Hintergrundjob, keinen HTTP-Client und keinen Prozessstart für Werkzeuge. Die Media-Preparer von psxrecomp blockieren PLAY und dürfen nichts nachladen.
+         - Paket `kula.hd-textures` (Feature `hd-textures`, Standard aus, Option `model` mit Lizenz und Größe im Label). Ein `[[requirement]]` schaltet `psx.enhancement.hd-textures` mit ein, ohne `state.toml` zu ändern. Ein gespeichertes `replacements = "false"` des Framework-Mods bleibt dabei aber wirksam.
+         - Plugin `mods/src/kula_hd_textures.c`, Logik `hd_textures_logic.c` (C-Test in `task test`). Beim ersten VBlank vergleicht es `hd-pack.json` mit dem, was der Runner jetzt bauen würde. `TOOL_VERSION` und `MODEL_SHA256` setzt CMake aus den Python-Quellen ein. Passt das Pack, gibt es nur den Counter `up_to_date`. Sonst liest das Plugin die 12 Quelldateien per `psx_mod_read_disc_file` nach `hd-auto/source/`. Ein abgekoppelter SDL-Thread holt bei fehlendem `hd-auto/python/.ok` Python (`curl`, SHA-256 aus `tools/hd/python.lock`, `tar`) und startet `tools/hd/hd_auto.py --disc hd-auto/source …` als SDL-Hintergrundprozess. Alles liegt neben der Exe (`SDL_GetBasePath()`), den Runner kopiert das CMake-Target `kula-hd-tools` bei jedem Build.
+         - Counter `kula.hd-textures.*`: `up_to_date`, `extract_failed`, `no_platform`, `download_failed`, `checksum_failed`, `unpack_failed`, `runner_started`, `runner_failed`. Fehler stehen zusätzlich als eine Zeile auf stderr. Der Worker-Thread übergibt sein Ergebnis per Atomic, weil die Counter nicht thread-sicher sind.
+         - Gotcha Signale: Ein aus einem SDL-Thread gestarteter Prozess erbt SIGTERM/SIGINT/SIGHUP blockiert. Der Runner hob die Blockade nicht auf, sein `killpg` erreichte den Bau nicht, und `build_pack` lief nach Spielende weiter. Behoben: `unblock_stop_signals()` vor dem ersten Kindprozess.
+         - Linux geprüft (musl, Retail-BIOS, `build-dev`):
+           - Feature aus: kein `hd-auto/`, Smoke ok.
+           - Aktuelles Pack: nur `up_to_date`.
+           - Erststart: 12 Dateien, byte-gleich mit der Disc (7.558.960 Byte).
+           - Unter musl meldet das Plugin `no_platform` und das Spiel läuft weiter.
+           - Mit einem Ersatz-Python (Wrapper auf `.venv-hd`, Paket-Stempel, `platform_key` nur in der gestagten Kopie gepatcht) startet der Runner aus dem Spiel.
+           - Spiel beenden setzt `stopped` und beendet alle Prozesse, der nächste Start setzt fort (24 % → fertig in 7:46 min).
+           - Ergebnis: 48.867 Dateien, Marker `lanczos`, Build-Dateien und `source` sind danach entfernt. Nächster Start: `up_to_date`, Demo mit Pack, `applied_draws` 1,93 Mio.
+           - Nicht unter Linux prüfbar: der echte Python-Download, Hash und `tar` (musl hat kein Portable-Python), das Modell, fps während des Baus, Windows.
+       - Offen: Mac-Abnahme von Teil 3. Die 84 Laufzeit-Paletten bräuchten Spiel-Logik. Risiko am Mac: Liegt die Exe in einem `.app`-Bundle, zeigt `SDL_GetBasePath()` auf `Resources/` und nicht auf den Exe-Ordner.
      - Gotchas: `tools/check_level_select.py` und `smoke_boot.py` nicht mit `python3 -I` starten (Import schlägt fehl). `{"cmd":"quit"}` meldet auf dem Mac „emu busy or frozen“, beendet die Runtime aber, die Dumps sind danach vollständig.
    - Eigener Ladebildschirm statt Piraterie-Hinweis (`HIRO\WARNING.TIM`, Idee 2026-10-15):
      - Der Hinweis ist der Ladebildschirm des Erststarts (`LoadWarningTim` → `LoadImage` 640x256), ohne feste Wartezeit.

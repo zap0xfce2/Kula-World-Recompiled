@@ -17,6 +17,7 @@ from hd.build_pack import (
     check_raw_image,
     image_of,
     install,
+    source_files,
     stage,
     upscaler_for,
     write_progress,
@@ -115,6 +116,15 @@ class BuildPackTest(unittest.TestCase):
         write_progress(self.tmp / "p.json", "upscale", 1, 4, "running")
         data = json.loads((self.tmp / "p.json").read_text())
         self.assertEqual(data["fraction"], 0.25)
+
+    def test_source_files_keys_match_disc_paths(self) -> None:
+        for name in ("SCES_010.00", "HIRO/HIRO.GGI", "HIRO/HIRO.TGI", "HIRO/HIRO.SFX"):
+            (self.tmp / name).parent.mkdir(exist_ok=True)
+            (self.tmp / name).write_bytes(b"x")
+        self.assertEqual(
+            sorted(source_files(self.tmp)),
+            ["/HIRO/HIRO.GGI", "/HIRO/HIRO.TGI", "/SCES_010.00"],
+        )
 
 
 if __name__ == "__main__":

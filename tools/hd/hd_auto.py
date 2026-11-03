@@ -52,21 +52,7 @@ BUILDER = HERE / "build_pack.py"
 LOCKS = HERE / "requirements"
 WIN = os.name == "nt"
 
-PBS = "https://github.com/astral-sh/python-build-standalone/releases/download/20260825/"
-PYTHON_TARBALLS = {
-    "linux-x86_64": (
-        "cpython-3.12.14%2B20260825-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
-        "7ce4a71285d913955a76053cc7605ea96da8ecada54dba9cf395245961816421",
-    ),
-    "windows-x86_64": (
-        "cpython-3.12.14%2B20260825-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
-        "8e6aad12ef6fc9685e67ce66253f8f72d6e8fa02cb7187e5850bd4db5ecd9e2a",
-    ),
-    "macos-aarch64": (
-        "cpython-3.12.14%2B20260825-aarch64-apple-darwin-install_only_stripped.tar.gz",
-        "8b0f1fa71eab7ca644e482c631807a1116fa848491051cd1c8d9429491de63a6",
-    ),
-}
+PYTHON_LOCK = HERE / "python.lock"  # shared with the game plugin
 MODEL_ZIP = (
     "https://github.com/the-database/MangaJaNai/releases/download/1.0.0/"
     "IllustrationJaNai_V1_ModelsOnly.zip",
@@ -225,6 +211,15 @@ def platform_key() -> str:
     )
 
 
+def python_tarball(key: str, lock: Path = PYTHON_LOCK) -> tuple[str, str]:
+    """URL and SHA-256 of the portable Python for a platform key."""
+    for line in lock.read_text(encoding="utf-8").splitlines():
+        fields = line.split()
+        if len(fields) == 3 and fields[0] == key:
+            return fields[1], fields[2]
+    raise Failed("platform", f"{key}: not in {lock.name}")
+
+
 def tool_version() -> int:
     match = TOOL_VERSION_LINE.search(BUILDER.read_text(encoding="utf-8"))
     if not match:
@@ -274,9 +269,9 @@ def phase_python(data: Path, prog: Progress) -> Path:
     if (root / ".ok").exists() and exe.exists():
         return exe
     prog.set("python")
-    name, digest = PYTHON_TARBALLS[platform_key()]
-    target = data / "downloads" / name.replace("%2B", "+")
-    tar = download(PBS + name, target, digest, lambda f: prog.set("python", 0.9 * f))
+    url, digest = python_tarball(platform_key())
+    target = data / "downloads" / url.rsplit("/", 1)[1].replace("%2B", "+")
+    tar = download(url, target, digest, lambda f: prog.set("python", 0.9 * f))
     shutil.rmtree(root, ignore_errors=True)
     root.mkdir(parents=True)
     with tarfile.open(tar) as archive:
@@ -590,7 +585,17 @@ def single_instance(data: Path) -> IO[str] | None:
     return handle
 
 
+def unblock_stop_signals() -> None:
+    """Started from an SDL thread, the runner inherits SIGTERM blocked, and so would
+    every child: stop_all's killpg would then leave the build running."""
+    if not WIN:
+        signal.pthread_sigmask(
+            signal.SIG_UNBLOCK, {signal.SIGTERM, signal.SIGINT, signal.SIGHUP}
+        )
+
+
 def detach(args: argparse.Namespace, prog: Progress) -> None:
+    unblock_stop_signals()
     tie_children()
     stop = stopper(prog)
     if not WIN:
@@ -643,7 +648,7 @@ def parse_args() -> argparse.Namespace:
 
 def cleanup(data: Path) -> None:
     """The model stays, so a later run does not download it again."""
-    for name in ("downloads", "python", "work"):
+    for name in ("downloads", "python", "source", "work"):
         shutil.rmtree(data / name, ignore_errors=True)
 
 

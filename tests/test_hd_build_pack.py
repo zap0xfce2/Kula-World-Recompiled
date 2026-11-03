@@ -8,6 +8,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
+from PIL import Image
+
+from hd.assets import Clut, Pairing, Upload
 from hd.build_pack import (
     cache_dir,
     check_disc,
@@ -15,8 +18,24 @@ from hd.build_pack import (
     image_of,
     install,
     stage,
+    upscaler_for,
     write_progress,
 )
+from hd.upscale import lanczos4
+
+MODEL_HASH = "ab" * 32
+
+
+def fake_model(image: Image.Image) -> Image.Image:
+    return lanczos4(image)
+
+
+def tile(depth: int, width_words: int, height: int) -> Pairing:
+    words = bytes(width_words * height * 2)
+    return Pairing(
+        Upload(0, 0, width_words, height, depth, words, "tile"),
+        Clut(0, 0, bytes(2 << depth)),
+    )
 
 
 def make_pack(root: Path, marker: str) -> Path:
@@ -53,9 +72,23 @@ class BuildPackTest(unittest.TestCase):
         out.mkdir()
         (out / "keep.png").write_text("x")
         (out / "stale.png").write_text("x")
-        stage(out, self.tmp / "staging", ["keep"])
+        stage(out, self.tmp / "staging", ["keep"], None)
         names = [p.name for p in (self.tmp / "staging" / "replacements").iterdir()]
         self.assertEqual(names, ["keep.png"])
+
+    def test_marker_records_model_hash(self) -> None:
+        out = self.tmp / "out"
+        out.mkdir()
+        (out / "keep.png").write_text("x")
+        stage(out, self.tmp / "staging", ["keep"], MODEL_HASH)
+        marker = json.loads((self.tmp / "staging" / "hd-pack.json").read_text())
+        self.assertEqual(marker["model_sha256"], MODEL_HASH)
+
+    def test_mipmaps_use_lanczos(self) -> None:
+        self.assertIs(upscaler_for(tile(4, 8, 32), fake_model), lanczos4)
+
+    def test_full_tiles_use_the_model(self) -> None:
+        self.assertIs(upscaler_for(tile(8, 32, 64), fake_model), fake_model)
 
     def test_cache_dir_changes_with_upscaler(self) -> None:
         self.assertNotEqual(cache_dir(self.tmp, "lanczos"), cache_dir(self.tmp, "m60"))

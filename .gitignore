@@ -126,3 +126,4 @@ starvation_dump.jsonl
 # HD pack builder: dev venv and local work dir (disc-derived data)
 /.venv-hd/
 /hd-work/
+/hd-auto/

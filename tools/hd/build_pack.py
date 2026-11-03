@@ -2,6 +2,7 @@
 """Build the Kula World HD texture pack from the player's own disc.
 
     python3 -I tools/hd/build_pack.py DISC.cue WORK_DIR --install PACK_DIR [--progress FILE]
+        [--model PTH [--device cpu|mps|cuda]]
 
 Reads only the disc image and writes below WORK_DIR; finished PNGs are kept
 there, so an interrupted run continues. The pack is swapped in as a whole.
@@ -35,7 +36,11 @@ from hd.upscale import SCALE, Upscaler, lanczos4  # noqa: E402
 from psxdisc import PVD_LBA, RAW_SECTOR, USER_DATA_OFFSET, Disc, parse_dir  # noqa: E402
 
 TOOL_VERSION = 7
-UPSCALER_NAME = "lanczos"
+LANCZOS_NAME = "lanczos"
+MODEL_NAME = "m60"
+MODEL_CACHE = "model"
+HASH_CHUNK = 1 << 20
+MIPMAP_DEPTH = 4  # tile mipmaps are P4; full tiles are P8
 EXE_NAME = "/SCES_010.00"
 EXE_SIZE = 604160
 EXE_SHA256 = "28c8f46d28f971038ccd68135de4d5dfc0f7a1c00285748aea98276a5d37bf75"
@@ -91,7 +96,16 @@ def disc_files(image: Path) -> dict[str, bytes]:
     return wanted
 
 
-def pair_job(pair: Pairing, key: TextureKey, upscale: Upscaler) -> Job:
+def upscaler_for(pair: Pairing, model: Upscaler) -> Upscaler:
+    """Mipmaps are drawn only far away, once per fog palette: three quarters of the model work for no visible gain."""
+    if pair.upload.kind == "tile" and pair.upload.depth == MIPMAP_DEPTH:
+        return lanczos4
+    return model
+
+
+def pair_job(pair: Pairing, key: TextureKey, model: Upscaler) -> Job:
+    upscale = upscaler_for(pair, model)
+
     def render() -> Image.Image:
         image = decode(pair.upload, pair.clut, key.semi)
         return upscale_file(image, classify(pair, image), upscale)
@@ -196,7 +210,15 @@ def install(staging: Path, target: Path) -> None:
     shutil.rmtree(old, ignore_errors=True)
 
 
-def stage(out: Path, staging: Path, names: list[str]) -> None:
+def sha256_of(path: Path) -> str:
+    digest = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(HASH_CHUNK), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def stage(out: Path, staging: Path, names: list[str], model_sha256: str | None) -> None:
     """Copy only this build's files; out may hold files of an older tool version."""
     shutil.rmtree(staging, ignore_errors=True)
     (staging / "replacements").mkdir(parents=True)
@@ -204,8 +226,24 @@ def stage(out: Path, staging: Path, names: list[str]) -> None:
         shutil.copy2(out / f"{name}.png", staging / "replacements" / f"{name}.png")
     (staging / "config.yaml").write_text(CONFIG_YAML)
     (staging / "hd-pack.json").write_text(
-        json.dumps({"tool": TOOL_VERSION, "upscaler": UPSCALER_NAME})
+        json.dumps(
+            {
+                "tool": TOOL_VERSION,
+                "upscaler": MODEL_NAME if model_sha256 else LANCZOS_NAME,
+                "model_sha256": model_sha256,
+            }
+        )
     )
+
+
+def pick_upscaler(args: argparse.Namespace) -> tuple[Upscaler, str, str | None]:
+    """M60 with a model, else the Lanczos fallback pack."""
+    if not args.model:
+        return lanczos4, LANCZOS_NAME, None
+    from hd.model import model_upscaler  # noqa: PLC0415 - needs torch
+
+    upscale = model_upscaler(args.model, args.work / MODEL_CACHE, args.device)
+    return upscale, MODEL_NAME, sha256_of(args.model)
 
 
 def main() -> None:
@@ -214,6 +252,8 @@ def main() -> None:
     parser.add_argument("work", type=Path)
     parser.add_argument("--install", type=Path, required=True)
     parser.add_argument("--progress", type=Path)
+    parser.add_argument("--model", type=Path, help="IllustrationJaNai .pth (M60 look)")
+    parser.add_argument("--device", help="cpu, mps or cuda; default: the fastest found")
     args = parser.parse_args()
     image = image_of(args.cue)
     try:
@@ -222,12 +262,13 @@ def main() -> None:
     except (OSError, struct.error, IndexError) as error:
         raise SystemExit(f"{UNSUPPORTED_FORMAT} ({error})") from error
     check_disc(files.get(EXE_NAME, b""))
-    jobs = collect_jobs(files, lanczos4)
+    upscale, name, model_sha256 = pick_upscaler(args)
+    jobs = collect_jobs(files, upscale)
     print(f"{len(jobs)} Dateien")
-    out = cache_dir(args.work, UPSCALER_NAME)
+    out = cache_dir(args.work, name)
     render_all(jobs, out, args.progress)
     staging = args.install.with_name(args.install.name + ".new")
-    stage(out, staging, sorted(jobs))
+    stage(out, staging, sorted(jobs), model_sha256)
     install(staging, args.install)
     if args.progress:
         write_progress(args.progress, "done", len(jobs), len(jobs), "done")

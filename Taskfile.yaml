@@ -128,6 +128,16 @@ tasks:
     cmds:
       - .venv-hd/bin/python -I tools/hd/build_pack.py {{.DISC}} hd-work --install build-dev/mods/texture-packs/SCES-01000
 
+  hd:auto:
+    desc: Background build like the launcher, args after -- (e.g. --with-model, --python PY)
+    cmds:
+      - '{{.PYTHON}} -I tools/hd/hd_auto.py --disc {{.DISC}} --pack build-dev/mods/texture-packs/SCES-01000 --data hd-auto {{.CLI_ARGS}}'
+
+  hd:lock:
+    desc: Re-pin the runner's packages with hashes per platform (needs uv)
+    cmds:
+      - '{{.PYTHON}} tools/hd/lock.py'
+
   hd:verify:
     desc: Compare the HD pack against runtime dumps, DUMPS=<dir>
     cmds:

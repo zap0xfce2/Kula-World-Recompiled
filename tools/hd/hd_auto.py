@@ -69,6 +69,10 @@ TOOL_VERSION_LINE = re.compile(r"^TOOL_VERSION = (\d+)$", re.MULTILINE)
 CHUNK = 1 << 20
 ETA_WARMUP, ETA_WINDOW, ETA_MIN_SPAN = 180, 900, 120  # seconds
 POLL_SECONDS = 3
+PARENT_POLL_SECONDS = 2
+# A runner of the previous game start stops within one parent poll plus its own stop.
+LOCK_WAIT_SECONDS = 3 * PARENT_POLL_SECONDS
+LOCK_POLL_SECONDS = 0.25
 PIP_RAMP_SECONDS = 600
 NO_WINDOW = 0x08000000 if WIN else 0  # CREATE_NO_WINDOW
 BELOW_NORMAL_PRIORITY = 0x4000
@@ -102,7 +106,7 @@ class Steps:
 class Progress:
     def __init__(self, path: Path) -> None:
         self.path = path
-        self.phase, self.part = "", 0.0
+        self.phase, self.part, self.state = "", 0.0, "running"
 
     def set(
         self,
@@ -112,7 +116,7 @@ class Progress:
         state: str = "running",
         error: str | None = None,
     ) -> None:
-        self.phase, self.part = phase, part
+        self.phase, self.part, self.state = phase, part, state
         names = [name for name, _ in PHASES]
         before = sum(w for _, w in PHASES[: names.index(phase)])
         total = sum(w for _, w in PHASES)
@@ -552,6 +556,8 @@ def stopper(prog: Progress, stop: Callable[[], None] = stop_all) -> Callable[...
     """Without the mark the launcher would read a dead build as still running."""
 
     def stopped(*_: object) -> None:
+        if prog.state == "done":  # the pack is installed; let cleanup finish
+            return
         prog.set(prog.phase or "python", prog.part, state="stopped")
         stop()
 
@@ -561,14 +567,14 @@ def stopper(prog: Progress, stop: Callable[[], None] = stop_all) -> Callable[...
 def watch_parent(pid: int, stop: Callable[[], None]) -> None:
     def loop() -> None:
         while parent_alive(pid):
-            time.sleep(2)
+            time.sleep(PARENT_POLL_SECONDS)
         log("launcher gone, stopping")
         stop()
 
     threading.Thread(target=loop, daemon=True).start()
 
 
-def single_instance(data: Path) -> IO[str] | None:
+def try_lock(data: Path) -> IO[str] | None:
     handle = open(data / "hd.lock", "a+")
     try:
         if WIN:
@@ -583,6 +589,16 @@ def single_instance(data: Path) -> IO[str] | None:
         handle.close()
         return None
     return handle
+
+
+def single_instance(data: Path, wait: float = 0.0) -> IO[str] | None:
+    """Waits a moment: after a quick game restart the old runner still holds the lock."""
+    deadline = time.monotonic() + wait
+    while True:
+        handle = try_lock(data)
+        if handle or time.monotonic() >= deadline:
+            return handle
+        time.sleep(LOCK_POLL_SECONDS)
 
 
 def unblock_stop_signals() -> None:
@@ -650,6 +666,7 @@ def cleanup(data: Path) -> None:
     """The model stays, so a later run does not download it again."""
     for name in ("downloads", "python", "source", "work"):
         shutil.rmtree(data / name, ignore_errors=True)
+    (data / "build.progress.json").unlink(missing_ok=True)
 
 
 def build_if_needed(
@@ -669,7 +686,7 @@ def main() -> int:
     args = parse_args()
     data = args.data.resolve()
     data.mkdir(parents=True, exist_ok=True)
-    lock = single_instance(data)
+    lock = single_instance(data, LOCK_WAIT_SECONDS)
     if lock is None:
         return 0  # already running
     logf = open(data / "hd-build.log", "a", buffering=1, encoding="utf-8")

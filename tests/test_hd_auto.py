@@ -7,6 +7,7 @@ import shutil
 import signal
 import sys
 import tempfile
+import threading
 import unittest
 import zipfile
 from pathlib import Path
@@ -145,6 +146,25 @@ class AutoTest(unittest.TestCase):
         self.addCleanup(signal.pthread_sigmask, signal.SIG_SETMASK, old)
         hd_auto.unblock_stop_signals()
         self.assertNotIn(signal.SIGTERM, signal.pthread_sigmask(signal.SIG_BLOCK, []))
+
+    def test_second_instance_waits_for_release(self) -> None:
+        # A quick game restart: the old runner notices only after its next poll.
+        first = single_instance(self.tmp)
+        threading.Timer(0.2, first.close).start()
+        second = single_instance(self.tmp, wait=2.0)
+        self.addCleanup(second.close)
+        self.assertIsNotNone(second)
+
+    def test_stop_after_done_lets_cleanup_finish(self) -> None:
+        prog = Progress(self.tmp / "p.json")
+        prog.set("build", 1.0, state="done")
+        hd_auto.stopper(prog, lambda: self.fail("stopped during cleanup"))()
+        self.assertEqual(json.loads(prog.path.read_text())["state"], "done")
+
+    def test_cleanup_removes_build_progress(self) -> None:
+        (self.tmp / "build.progress.json").write_text("{}")
+        hd_auto.cleanup(self.tmp)
+        self.assertFalse((self.tmp / "build.progress.json").exists())
 
     def test_cleanup_removes_source(self) -> None:
         (self.tmp / "source").mkdir()

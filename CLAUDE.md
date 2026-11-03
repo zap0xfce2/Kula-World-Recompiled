@@ -356,7 +356,17 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
            - Spiel beenden setzt `stopped` und beendet alle Prozesse, der nächste Start setzt fort (24 % → fertig in 7:46 min).
            - Ergebnis: 48.867 Dateien, Marker `lanczos`, Build-Dateien und `source` sind danach entfernt. Nächster Start: `up_to_date`, Demo mit Pack, `applied_draws` 1,93 Mio.
            - Nicht unter Linux prüfbar: der echte Python-Download, Hash und `tar` (musl hat kein Portable-Python), das Modell, fps während des Baus, Windows.
-       - Offen: Mac-Abnahme von Teil 3. Die 84 Laufzeit-Paletten bräuchten Spiel-Logik. Risiko am Mac: Liegt die Exe in einem `.app`-Bundle, zeigt `SDL_GetBasePath()` auf `Resources/` und nicht auf den Exe-Ordner.
+         - Mac-Abnahme (`144158e`, M1 Pro, alle 7 Schritte wie erwartet):
+           - Ohne `.app`-Bundle, `SDL_GetBasePath()` = `build-dev/`. Feature aus: Smoke 3603, kein `hd-auto/`.
+           - Lanczos: Python-Download, SHA-256 und `tar` rund 3 s, Pakete 3 s. W1 während des Baus 50,0 fps.
+           - Abbruch bei 41,8 %: nach 1,1 s alles beendet, Fortsetzen bis `done`. Folgestart: `up_to_date`, `applied_draws` 333.160, `composition_builds` 0.
+           - Modell an: Pakete 21 s, Modell 6 s, Bau 11:13 min auf `mps`, gesamt rund 11:40 min. W1 während des Baus 50,01 fps. Danach bleibt nur `hd-auto/model` (134 MB).
+           - Kaputter Hash: `checksum_failed`, kein `.ok`, kein Tarball, das Spiel läuft weiter. `hd-auto/source` bleibt dabei liegen (harmlos, der nächste Start schreibt es neu).
+         - Behoben nach der Mac-Abnahme (Linux-Tests, Mac-Nachprüfung offen):
+           - Schneller Neustart: Der alte Runner hielt `hd.lock` noch bis zu seinem nächsten Elternprozess-Poll (2 s). Der neue Runner gab sofort auf, es lief kein Bau, gemeldet wurde trotzdem `runner_started`. Jetzt wartet der neue bis `LOCK_WAIT_SECONDS` (6 s) auf den Lock.
+           - Spielende direkt nach `done`: `stop_all` brach das Aufräumen ab (646 MB `work/` blieben liegen) und überschrieb `done` mit `stopped`. Jetzt ignoriert der Stopper alles nach `done`, das Aufräumen dauert rund 9 s.
+           - `build.progress.json` überlebte das Aufräumen. Ein neuer Bau zeigte deshalb kurz 100 %.
+       - Offen: Die 84 Laufzeit-Paletten bräuchten Spiel-Logik. Windows ist ungetestet.
      - Gotchas: `tools/check_level_select.py` und `smoke_boot.py` nicht mit `python3 -I` starten (Import schlägt fehl). `{"cmd":"quit"}` meldet auf dem Mac „emu busy or frozen“, beendet die Runtime aber, die Dumps sind danach vollständig.
    - Eigener Ladebildschirm statt Piraterie-Hinweis (`HIRO\WARNING.TIM`, Idee 2026-10-15):
      - Der Hinweis ist der Ladebildschirm des Erststarts (`LoadWarningTim` → `LoadImage` 640x256), ohne feste Wartezeit.

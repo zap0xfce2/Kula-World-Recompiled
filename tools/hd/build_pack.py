@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from PIL import Image  # noqa: E402
 
-from hd.assets import Clut, Pairing  # noqa: E402
+from hd.assets import Pairing  # noqa: E402
 from hd.classify import classify, upscale_file  # noqa: E402
 from hd.contour import check_classes  # noqa: E402
 from hd.decode import decode, keys_for  # noqa: E402
@@ -34,7 +34,7 @@ from hd.tgi import read_bonus_sky, read_sky, read_tiles  # noqa: E402
 from hd.upscale import SCALE, Upscaler, lanczos4  # noqa: E402
 from psxdisc import PVD_LBA, RAW_SECTOR, USER_DATA_OFFSET, Disc, parse_dir  # noqa: E402
 
-TOOL_VERSION = 6
+TOOL_VERSION = 7
 UPSCALER_NAME = "lanczos"
 EXE_NAME = "/SCES_010.00"
 EXE_SIZE = 604160
@@ -99,14 +99,17 @@ def pair_job(pair: Pairing, key: TextureKey, upscale: Upscaler) -> Job:
     return format_name(key), render
 
 
-def sky_jobs(tgi: bytes, upscale: Upscaler) -> list[Job]:
-    """One file per band and palette: whole-atlas files overflow the runtime's decode budget."""
+@lru_cache(maxsize=1)  # jobs run sorted by name, one world's sky after the other
+def world_sky(tgi: bytes, upscale: Upscaler) -> dict[int, Image.Image]:
+    """The world's filtered sky, one 4x atlas per palette (keyed by CLUT row)."""
     upload, cluts, quads = read_sky(tgi)
+    # Sky is never drawn semi-transparent (decode.ST_KINDS), so plain decodes only.
+    return build_sky({c.y: decode(upload, c, False) for c in cluts}, quads, upscale)
 
-    @lru_cache(maxsize=2)  # jobs run in order, one palette after the other
-    def sky(clut: Clut, semi: bool) -> Image.Image:
-        return build_sky(decode(upload, clut, semi), quads, clut.y, upscale)
 
+def sky_jobs(tgi: bytes, upscale: Upscaler) -> list[Job]:
+    """One file per atlas row and palette: whole-atlas files overflow the runtime's decode budget."""
+    upload, cluts, quads = read_sky(tgi)
     jobs: list[Job] = []
     for clut in cluts:
         for key in keys_for(Pairing(upload, clut)):
@@ -114,7 +117,9 @@ def sky_jobs(tgi: bytes, upscale: Upscaler) -> list[Job]:
                 jobs.append(
                     (
                         format_name(key, rect),
-                        lambda c=clut, k=key, r=rect: sky(c, k.semi).crop(scaled(r)),
+                        lambda y=clut.y, r=rect: world_sky(tgi, upscale)[y].crop(
+                            scaled(r)
+                        ),
                     )
                 )
     return jobs

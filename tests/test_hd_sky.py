@@ -1,4 +1,4 @@
-"""Tests for sky segmentation and per-segment filtering (synthetic images only)."""
+"""Tests for the sky panorama and its band sub-rects (synthetic images only)."""
 
 import sys
 import unittest
@@ -9,10 +9,12 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 
 from hd.assets import SkyQuad
-from hd.sky import band_rects, build_sky, segments
+from hd.sky import band_rects, build_sky
 from hd.upscale import lanczos4
 
 ATLAS_SIZE = (768, 256)
+CLUT = 232
+BLUE, WHITE = (0, 0, 255), (255, 255, 255)
 
 
 def quad(band: int, clut_y: int, atlas_x: int, stride: int) -> SkyQuad:
@@ -29,43 +31,42 @@ def two_colour_atlas(left: tuple, right: tuple, split_x: int) -> Image.Image:
     return atlas
 
 
+def red_in_cutout() -> Image.Image:
+    atlas = Image.new("RGBA", ATLAS_SIZE, (0, 0, 0, 0))
+    atlas.paste((255, 0, 0, 255), (4, 0, 12, 15))
+    return atlas
+
+
+def sky(atlas: Image.Image, quads: list[SkyQuad]) -> Image.Image:
+    return build_sky({CLUT: atlas}, quads, lanczos4)[CLUT]
+
+
 class SkyTest(unittest.TestCase):
-    def test_segments_split_on_clut_change(self) -> None:
-        self.assertEqual(len(segments([quad(0, 232, 0, 1), quad(0, 233, 1, 1)])), 2)
+    def test_sky_filter_does_not_read_texels_outside_quads(self) -> None:
+        atlas = two_colour_atlas(left=BLUE, right=WHITE, split_x=16)
+        self.assertEqual(sky(atlas, [quad(0, CLUT, 0, 16)]).getpixel((63, 8))[:3], BLUE)
 
-    def test_segments_join_adjacent_quads(self) -> None:
-        self.assertEqual(
-            segments([quad(0, 232, 0, 3), quad(0, 232, 3, 3)]), [(232, 0, 6, 0, 15)]
-        )
-
-    def test_sky_quad_filter_does_not_read_outside_crop(self) -> None:
-        atlas = two_colour_atlas(left=(0, 0, 255), right=(255, 255, 255), split_x=16)
-        out = build_sky(atlas, [quad(0, 232, 0, 16)], 232, lanczos4)
-        self.assertEqual(out.getpixel((63, 8))[:3], (0, 0, 255))
-
-    def test_build_sky_filters_across_quads_of_one_segment(self) -> None:
+    def test_build_sky_filters_across_quads_of_one_band(self) -> None:
         # Quads are often one texel wide; filtered alone, each column only stretches.
-        atlas = two_colour_atlas(left=(0, 0, 255), right=(255, 255, 255), split_x=1)
-        quads = [quad(0, 232, 0, 1), quad(0, 232, 1, 1)]
-        out = build_sky(atlas, quads, 232, lanczos4)
+        atlas = two_colour_atlas(left=BLUE, right=WHITE, split_x=1)
+        out = sky(atlas, [quad(0, CLUT, 0, 1), quad(0, CLUT, 1, 1)])
         self.assertNotEqual(out.getpixel((3, 8)), out.getpixel((0, 8)))
 
+    def test_build_sky_filters_across_band_boundaries(self) -> None:
+        # Bands filtered on their own leave a visible seam where they meet (W2, Mac).
+        atlas = Image.new("RGBA", ATLAS_SIZE, WHITE + (255,))
+        atlas.paste(BLUE + (255,), (0, 0, 16, 16))
+        quads = [quad(0, CLUT, 0, 16), SkyQuad(1, CLUT, 0, 16, 16)]
+        self.assertNotEqual(sky(atlas, quads).getpixel((32, 59))[:3], BLUE)
+
     def test_build_sky_has_no_dark_fringe(self) -> None:
-        atlas = Image.new("RGBA", ATLAS_SIZE, (0, 0, 0, 0))
-        atlas.paste((255, 0, 0, 255), (4, 0, 12, 15))
-        out = build_sky(atlas, [quad(0, 232, 0, 16)], 232, lanczos4).crop(
-            (0, 0, 64, 60)
-        )
+        out = sky(red_in_cutout(), [quad(0, CLUT, 0, 16)]).crop((0, 0, 64, 60))
         self.assertGreater(
             min(r for r, _g, _b, a in out.get_flattened_data() if a), 200
         )
 
     def test_build_sky_cutout_is_exact_zero(self) -> None:
-        atlas = Image.new("RGBA", ATLAS_SIZE, (0, 0, 0, 0))
-        atlas.paste((255, 0, 0, 255), (4, 0, 12, 15))
-        out = build_sky(atlas, [quad(0, 232, 0, 16)], 232, lanczos4).crop(
-            (0, 0, 64, 60)
-        )
+        out = sky(red_in_cutout(), [quad(0, CLUT, 0, 16)]).crop((0, 0, 64, 60))
         self.assertEqual(
             {p for p in out.get_flattened_data() if p[3] == 0}, {(0, 0, 0, 0)}
         )
@@ -93,7 +94,7 @@ class SkyTest(unittest.TestCase):
         self.assertEqual(band_rects([quad(0, 233, 0, 3)], 232), [])
 
     def test_build_sky_keeps_size(self) -> None:
-        self.assertEqual(build_sky(blank_atlas(), [], 232, lanczos4).size, (3072, 1024))
+        self.assertEqual(sky(blank_atlas(), []).size, (3072, 1024))
 
 
 if __name__ == "__main__":

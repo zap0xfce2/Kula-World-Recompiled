@@ -73,11 +73,21 @@ class SkyTest(unittest.TestCase):
     def test_band_rects_cover_one_band_per_rect(self) -> None:
         # One small file per band keeps a world's 24 sky palettes inside the runtime's 64 MiB decode budget.
         quads = [quad(0, 232, 0, 3), quad(0, 232, 3, 3), SkyQuad(1, 232, 10, 16, 2)]
-        self.assertEqual(band_rects(quads, 232), [(0, 0, 6, 16), (10, 16, 2, 16)])
+        self.assertEqual(band_rects(quads, 232), [(0, 0, 8, 16), (10, 16, 4, 16)])
+
+    def test_band_rects_split_a_band_that_wraps_to_the_next_atlas_row(self) -> None:
+        # W2: a band runs from x 754 in row 32 on to x 0 in row 48.
+        quads = [SkyQuad(2, 239, 754, 32, 12), SkyQuad(2, 239, 0, 48, 12)]
+        self.assertEqual(band_rects(quads, 239), [(754, 32, 14, 16), (0, 48, 14, 16)])
 
     def test_band_rects_align_to_words(self) -> None:
         # The runtime rejects P8 names whose offset or width is odd.
-        self.assertEqual(band_rects([quad(0, 232, 561, 191)], 232), [(560, 0, 192, 16)])
+        self.assertEqual(band_rects([quad(0, 232, 561, 191)], 232), [(560, 0, 194, 16)])
+
+    def test_band_rects_include_the_texel_after_the_last_quad(self) -> None:
+        # A polygon's largest U is inclusive in the runtime's query; without it the
+        # draw is composed with native pixels (W2, Mac).
+        self.assertEqual(band_rects([quad(0, 232, 0, 4)], 232), [(0, 0, 6, 16)])
 
     def test_band_rects_skip_other_cluts(self) -> None:
         self.assertEqual(band_rects([quad(0, 233, 0, 3)], 232), [])

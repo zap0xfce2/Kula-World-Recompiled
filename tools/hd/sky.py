@@ -10,6 +10,7 @@ from hd.upscale import SCALE, Upscaler, clear_cutout, fill_transparent
 USED_ROWS = 15  # row 16 of each band is never sampled
 BAND_ROWS = 16
 TEXELS_PER_WORD_8BPP = 2  # sub-rect offset and width must be whole words
+INCLUSIVE_EDGE = 1
 
 
 def segments(quads: list[SkyQuad]) -> list[tuple[int, int, int, int, int]]:
@@ -59,19 +60,22 @@ def build_sky(
 
 
 def band_rects(quads: list[SkyQuad], clut_y: int) -> list[Rect]:
-    """Per band, the texel span of the quads drawn with clut_y."""
-    spans: dict[int, tuple[int, int, int]] = {}
+    """Per atlas row, the texel span of the quads drawn with clut_y.
+
+    Keyed by row, not band: a band can wrap into the next row, and a draw outside
+    every rect falls back to native pixels (blocky patches in the W2 sky)."""
+    spans: dict[int, tuple[int, int]] = {}
     for quad in quads:
         if quad.clut_y != clut_y:
             continue
-        x0, x1, y0 = spans.get(quad.band, (quad.atlas_x, quad.atlas_x, quad.atlas_y))
-        spans[quad.band] = (
+        x0, x1 = spans.get(quad.atlas_y, (quad.atlas_x, quad.atlas_x))
+        spans[quad.atlas_y] = (
             min(x0, quad.atlas_x),
             max(x1, quad.atlas_x + quad.stride),
-            y0,
         )
     rects = []
-    for x0, x1, y0 in spans.values():
+    for y0, (x0, x1) in spans.items():
+        x1 += INCLUSIVE_EDGE  # the runtime's query includes a polygon's largest U
         x0 -= x0 % TEXELS_PER_WORD_8BPP
         x1 += x1 % TEXELS_PER_WORD_8BPP
         rects.append((x0, y0, x1 - x0, BAND_ROWS))

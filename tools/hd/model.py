@@ -90,6 +90,7 @@ def load_model(path: Path, device: str | None = None) -> Upscaler:
         max(1, (os.cpu_count() or 2) - 1)
     )  # one core stays for the game
     target = pick_device(torch, device)
+    print(f"model device: {target}", flush=True)  # goes to the runner's log
     descriptor = spandrel.ModelLoader(target).load_from_file(path).eval()
     if descriptor.scale != SCALE:  # tiled() and mix() assume 4x
         raise ValueError(f"{path.name}: scale {descriptor.scale}, need {SCALE}")

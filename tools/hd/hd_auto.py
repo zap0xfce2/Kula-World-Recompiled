@@ -553,12 +553,22 @@ def parent_alive(pid: int) -> bool:
     return True
 
 
-def watch_parent(pid: int) -> None:
+def stopper(prog: Progress, stop: Callable[[], None] = stop_all) -> Callable[..., None]:
+    """Without the mark the launcher would read a dead build as still running."""
+
+    def stopped(*_: object) -> None:
+        prog.set(prog.phase or "python", prog.part, state="stopped")
+        stop()
+
+    return stopped
+
+
+def watch_parent(pid: int, stop: Callable[[], None]) -> None:
     def loop() -> None:
         while parent_alive(pid):
             time.sleep(2)
         log("launcher gone, stopping")
-        stop_all()
+        stop()
 
     threading.Thread(target=loop, daemon=True).start()
 
@@ -580,13 +590,14 @@ def single_instance(data: Path) -> IO[str] | None:
     return handle
 
 
-def detach(args: argparse.Namespace) -> None:
+def detach(args: argparse.Namespace, prog: Progress) -> None:
     tie_children()
+    stop = stopper(prog)
     if not WIN:
-        signal.signal(signal.SIGTERM, stop_all)
+        signal.signal(signal.SIGTERM, stop)
     lower_priority()
     if args.parent_pid:
-        watch_parent(args.parent_pid)
+        watch_parent(args.parent_pid, stop)
 
 
 def real_steps(
@@ -659,7 +670,7 @@ def main() -> int:
     logf = open(data / "hd-build.log", "a", buffering=1, encoding="utf-8")
     sys.stdout = sys.stderr = logf
     prog = Progress(data / "progress.json")
-    detach(args)
+    detach(args, prog)
     log(f"HD build: disc {args.disc}, pack {args.pack}, model {args.with_model}")
     try:
         error = build_if_needed(args, data, prog, logf)

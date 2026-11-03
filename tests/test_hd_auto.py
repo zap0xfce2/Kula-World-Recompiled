@@ -130,6 +130,12 @@ class AutoTest(unittest.TestCase):
     def test_model_failure_is_reported(self) -> None:
         self.assertEqual(run_phases(True, fallback_steps([])), "network")
 
+    def test_stop_marks_progress_stopped(self) -> None:
+        prog = Progress(self.tmp / "p.json")
+        prog.set("build", 0.4)
+        hd_auto.stopper(prog, lambda: None)()
+        self.assertEqual(json.loads(prog.path.read_text())["state"], "stopped")
+
     def cached_model_zip(self, member: str, payload: bytes) -> Path:
         """Places the archive where phase_model expects its verified download."""
         archive = self.tmp / "downloads" / hd_auto.MODEL_ZIP[0].rsplit("/", 1)[1]

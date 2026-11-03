@@ -362,10 +362,12 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
            - Abbruch bei 41,8 %: nach 1,1 s alles beendet, Fortsetzen bis `done`. Folgestart: `up_to_date`, `applied_draws` 333.160, `composition_builds` 0.
            - Modell an: Pakete 21 s, Modell 6 s, Bau 11:13 min auf `mps`, gesamt rund 11:40 min. W1 während des Baus 50,01 fps. Danach bleibt nur `hd-auto/model` (134 MB).
            - Kaputter Hash: `checksum_failed`, kein `.ok`, kein Tarball, das Spiel läuft weiter. `hd-auto/source` bleibt dabei liegen (harmlos, der nächste Start schreibt es neu).
-         - Behoben nach der Mac-Abnahme (Linux-Tests, Mac-Nachprüfung offen):
+         - Behoben nach der Mac-Abnahme (`3bc2ddb`, auf dem Mac nachgeprüft: Neustart 1 s nach Spielende übernimmt den Bau, Spielende 1 s nach `done` lässt `done` stehen und räumt vollständig auf, ein neuer Bau zeigt kein 100 % mehr):
            - Schneller Neustart: Der alte Runner hielt `hd.lock` noch bis zu seinem nächsten Elternprozess-Poll (2 s). Der neue Runner gab sofort auf, es lief kein Bau, gemeldet wurde trotzdem `runner_started`. Jetzt wartet der neue bis `LOCK_WAIT_SECONDS` (6 s) auf den Lock.
            - Spielende direkt nach `done`: `stop_all` brach das Aufräumen ab (646 MB `work/` blieben liegen) und überschrieb `done` mit `stopped`. Jetzt ignoriert der Stopper alles nach `done`, das Aufräumen dauert rund 9 s.
            - `build.progress.json` überlebte das Aufräumen. Ein neuer Bau zeigte deshalb kurz 100 %.
+           - Danach: Das Log schreibt „launcher gone“ und erst im Stopper „stopping“, damit nach `done` keine Abbruchzeile mehr steht.
+         - Gotcha für eine spätere Launcher-Anzeige: Bis der neue Runner schreibt, enthält `progress.json` noch das `done` des letzten Baus. Alt und neu sind nur am Feld `updated` zu unterscheiden.
        - Offen: Die 84 Laufzeit-Paletten bräuchten Spiel-Logik. Windows ist ungetestet.
      - Gotchas: `tools/check_level_select.py` und `smoke_boot.py` nicht mit `python3 -I` starten (Import schlägt fehl). `{"cmd":"quit"}` meldet auf dem Mac „emu busy or frozen“, beendet die Runtime aber, die Dumps sind danach vollständig.
    - Eigener Ladebildschirm statt Piraterie-Hinweis (`HIRO\WARNING.TIM`, Idee 2026-10-15):

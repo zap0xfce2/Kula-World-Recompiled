@@ -558,6 +558,7 @@ def stopper(prog: Progress, stop: Callable[[], None] = stop_all) -> Callable[...
     def stopped(*_: object) -> None:
         if prog.state == "done":  # the pack is installed; let cleanup finish
             return
+        log("stopping")
         prog.set(prog.phase or "python", prog.part, state="stopped")
         stop()
 
@@ -568,7 +569,7 @@ def watch_parent(pid: int, stop: Callable[[], None]) -> None:
     def loop() -> None:
         while parent_alive(pid):
             time.sleep(PARENT_POLL_SECONDS)
-        log("launcher gone, stopping")
+        log("launcher gone")
         stop()
 
     threading.Thread(target=loop, daemon=True).start()

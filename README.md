@@ -94,17 +94,16 @@ Done:
 - [x] Ending FMV plays
 - [x] Wobble fix: PGXP on by default
 - [x] Launcher: only memory card 1, own box art, brand mark and app icon
+- [x] Widescreen: sky reaches the wide corners
 - [x] HD textures, built in the background from the player's disc (Linux and macOS verified)
 
 Next:
-- [x] Widescreen: sky reaches the wide corners
-- [x] Widescreen up to 21:9
 - [ ] 60 fps (parked: psxrecomp's frame generation does not see Kula's flips yet; an NTSC-style patch would change the gameplay timing)
 - [ ] Own loading screen instead of the piracy warning shown during the first load
 - [ ] HD textures: test the background build on Windows
 - [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
 - [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)
-- [ ] Upstream PR: game brand mark overrides the console's in the launcher (recomp-ui)
+- [ ] Upstream PR: game brand mark overrides the console's in the launcher ([recomp-ui#114](https://github.com/RetroPortingToolKit/recomp-ui/pull/114), waiting for review)
 - [ ] Launcher colors per game (recomp-ui extension)
 - [ ] Controller test on macOS
 - [ ] Windows build

@@ -101,7 +101,6 @@ Done:
 
 Next:
 - [ ] 60 fps (parked: psxrecomp's frame generation does not see Kula's flips yet; an NTSC-style patch would change the gameplay timing)
-- [ ] Own loading screen instead of the piracy warning shown during the first load
 - [ ] HD textures: test the background build on Windows
 - [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
 - [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)

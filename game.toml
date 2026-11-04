@@ -39,7 +39,7 @@ strict = true
 # sky stretch (RenderNonSpecialBackground)
 mod_function_entry_funcs = ["0x000491a8", "0x0004c09c", "0x00017ae8", "0x0001d9b4", "0x0002aa7c",
                             "0x0002224c", "0x000621b0", "0x00043348", "0x00043f04", "0x00012918",
-                            "0x00020b30", "0x000563c4"]
+                            "0x00020b30", "0x000563c4", "0x000431b8"]
 
 [runtime]
 window_title = "Kula World Recompiled"

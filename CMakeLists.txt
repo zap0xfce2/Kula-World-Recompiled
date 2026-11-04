@@ -73,8 +73,36 @@ target_sources(psx-runtime PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/kula_level_select.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/level_select_logic.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/kula_widescreen.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/widescreen_logic.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/widescreen_logic.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/kula_hd_textures.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/hd_textures_logic.c")
 target_include_directories(psx-runtime PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/mods/src")
+
+# The HD plugin compares hd-pack.json with what the runner would build now;
+# both values come from the Python sources so they never drift apart.
+set(_KULA_HD_TOOLS "${CMAKE_CURRENT_SOURCE_DIR}/tools/hd")
+file(STRINGS "${_KULA_HD_TOOLS}/build_pack.py" _KULA_HD_TOOL_LINE REGEX "^TOOL_VERSION = [0-9]+$")
+file(STRINGS "${_KULA_HD_TOOLS}/hd_auto.py" _KULA_HD_MODEL_LINE REGEX "^MODEL_SHA256 = \"[0-9a-f]+\"$")
+string(REGEX REPLACE "^TOOL_VERSION = " "" KULA_HD_TOOL_VERSION "${_KULA_HD_TOOL_LINE}")
+string(REGEX REPLACE "^MODEL_SHA256 = \"([0-9a-f]+)\"$" "\\1" KULA_HD_MODEL_SHA256 "${_KULA_HD_MODEL_LINE}")
+if(NOT KULA_HD_TOOL_VERSION OR NOT KULA_HD_MODEL_SHA256)
+    message(FATAL_ERROR "TOOL_VERSION or MODEL_SHA256 not found in tools/hd")
+endif()
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${_KULA_HD_TOOLS}/build_pack.py" "${_KULA_HD_TOOLS}/hd_auto.py")
+set_source_files_properties("${CMAKE_CURRENT_SOURCE_DIR}/mods/src/kula_hd_textures.c"
+    PROPERTIES COMPILE_DEFINITIONS
+    "KULA_HD_TOOL_VERSION=${KULA_HD_TOOL_VERSION};KULA_HD_MODEL_SHA256=\"${KULA_HD_MODEL_SHA256}\"")
+
+# The runner and builder beside the exe, where the plugin starts them. A target
+# of its own, not POST_BUILD: a change to tools/hd alone does not relink.
+add_custom_target(kula-hd-tools ALL
+    COMMAND ${CMAKE_COMMAND} -E copy_directory "${_KULA_HD_TOOLS}" "$<TARGET_FILE_DIR:psx-runtime>/tools/hd"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/tools/psxdisc.py"
+        "$<TARGET_FILE_DIR:psx-runtime>/tools/psxdisc.py"
+    COMMAND ${CMAKE_COMMAND} -E rm -rf "$<TARGET_FILE_DIR:psx-runtime>/tools/hd/__pycache__"
+    COMMENT "Staging the HD texture runner"
+    VERBATIM)
 
 # Stage runtime configs next to the exe for direct build/ launches. Only copy
 # files that exist — never fail POST_BUILD when game_options.toml is absent.

@@ -108,11 +108,39 @@ tasks:
       - ./build-tests/test_level_select_logic
       - cc -std=c99 -Wall -Wextra -Werror -Imods/src -o build-tests/test_widescreen_logic tests/test_widescreen_logic.c mods/src/widescreen_logic.c
       - ./build-tests/test_widescreen_logic
+      - cc -std=c99 -Wall -Wextra -Werror -Imods/src -o build-tests/test_hd_textures_logic tests/test_hd_textures_logic.c mods/src/hd_textures_logic.c
+      - ./build-tests/test_hd_textures_logic
       - cc -std=c99 -Wall -Wextra -Werror -Ipsxrecomp/runtime/include -o build-tests/test_ws_feedback_rect psxrecomp/runtime/tests/test_ws_feedback_rect.c
       - ./build-tests/test_ws_feedback_rect
 
   lint:
     desc: ruff and black on project Python
     cmds:
-      - ruff check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tools/freeze_timer.py tests
-      - black --check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tools/freeze_timer.py tests
+      - ruff check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tools/freeze_timer.py tools/hd tests
+      - black --check tools/smoke_boot.py tools/check_level_select.py tools/find_ws_cull_sites.py tools/freeze_timer.py tools/hd tests
+
+  hd:venv:
+    desc: Dev venv for the HD pack builder (Pillow, xxhash)
+    cmds:
+      - '{{.PYTHON}} -m venv .venv-hd'
+      - .venv-hd/bin/pip install -q -r tools/hd/requirements.txt
+
+  hd:build:
+    desc: Build the HD texture pack from the disc (Lanczos)
+    cmds:
+      - .venv-hd/bin/python -I tools/hd/build_pack.py {{.DISC}} hd-work --install build-dev/mods/texture-packs/SCES-01000
+
+  hd:auto:
+    desc: Background build like the launcher, args after -- (e.g. --with-model, --python PY)
+    cmds:
+      - '{{.PYTHON}} -I tools/hd/hd_auto.py --disc {{.DISC}} --pack build-dev/mods/texture-packs/SCES-01000 --data hd-auto {{.CLI_ARGS}}'
+
+  hd:lock:
+    desc: Re-pin the runner's packages with hashes per platform (needs uv)
+    cmds:
+      - '{{.PYTHON}} tools/hd/lock.py'
+
+  hd:verify:
+    desc: Compare the HD pack against runtime dumps, DUMPS=<dir>
+    cmds:
+      - .venv-hd/bin/python -I tools/hd/verify_pack.py build-dev/mods/texture-packs/SCES-01000 {{.DUMPS}}

@@ -1,0 +1,4 @@
+-r requirements.txt
+torch==2.7.0
+spandrel==0.4.1
+numpy

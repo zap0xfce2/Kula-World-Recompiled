@@ -1,0 +1,36 @@
+format_version = 7
+id = "kula.hd-textures"
+version = "1.0.0"
+name = "HD Textures"
+author = "Kula World Recompiled"
+description = "Builds a 4x texture pack from your own disc in the background. No artwork is bundled."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "SCES-01000"
+
+[[feature]]
+id = "hd-textures"
+name = "HD Textures"
+description = "Builds a 4x texture pack from your own disc in the background while you play; it is used from the next start. The first build takes a few minutes, 10–20 minutes with the AI model. Downloads a portable Python (about 50 MB). OpenGL only."
+group = "Visual"
+default_enabled = false
+
+[[option]]
+feature = "hd-textures"
+id = "model"
+label = "AI model (CC BY-NC-SA 4.0, about 1.5 GB download)"
+description = "Sharper look with the IllustrationJaNai model, for non-commercial use only. Off: a Lanczos pack without the model."
+type = "boolean"
+default = "false"
+
+# Loads the finished pack without a second switch.
+[[requirement]]
+feature = "hd-textures"
+package = "psx.enhancement.hd-textures"
+requires_feature = "hd-textures"
+
+[[plugin]]
+feature = "hd-textures"
+id = "kula.hd-textures"

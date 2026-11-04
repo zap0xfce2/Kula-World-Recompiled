@@ -66,6 +66,7 @@ settings.toml
 *.gpr
 *.rep/
 *.lock
+!tools/hd/python.lock
 *.lock~
 
 # Editor / cache
@@ -122,3 +123,8 @@ starvation_dump.jsonl
 
 # Plan execution scratch (superpowers ledger)
 /.superpowers/
+
+# HD pack builder: dev venv and local work dir (disc-derived data)
+/.venv-hd/
+/hd-work/
+/hd-auto*/

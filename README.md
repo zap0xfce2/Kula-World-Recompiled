@@ -40,6 +40,7 @@ All mods are switchable in the launcher (recomp-ui).
 | Widescreen | on | Shows the world wider than 4:3 and follows the window up to 2.4:1 (21:9 ultrawide). The key and fruit HUD (with their pickup sparkles) move to the wide corners. The loading screen, high-score table and memory-card screens fill the side bands too, and the pill's motion trail covers the full width. The warning screen and FMVs stay 4:3. |
 | PGXP Precision | on | Stops the PS1 polygon wobble and texture warping (sub-pixel vertices, perspective-correct textures). The game defaults to 1080p internal resolution; the fix needs at least 2x. |
 | CD Speed | on, 2x | Shorter loading. |
+| HD Textures | off | Builds an HD texture pack from your own disc in the background while you play; it is used from the next start. Python is downloaded once (Linux glibc, macOS Apple Silicon, Windows). The optional AI model (CC BY-NC-SA 4.0, about 1.5 GB) needs its own switch; without it the pack is upscaled with Lanczos. No game data ships with the release. |
 
 ## Requirements
 
@@ -93,13 +94,16 @@ Done:
 - [x] Ending FMV plays
 - [x] Wobble fix: PGXP on by default
 - [x] Launcher: only memory card 1, own box art, brand mark and app icon
+- [x] HD textures, built in the background from the player's disc (Linux and macOS verified)
 
 Next:
 - [x] Widescreen: sky reaches the wide corners
 - [x] Widescreen up to 21:9
 - [ ] 60 fps (parked: psxrecomp's frame generation does not see Kula's flips yet; an NTSC-style patch would change the gameplay timing)
 - [ ] Own loading screen instead of the piracy warning shown during the first load
-- [ ] HD textures
+- [ ] HD textures: test the background build on Windows
+- [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
+- [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)
 - [ ] Upstream PR: game brand mark overrides the console's in the launcher (recomp-ui)
 - [ ] Launcher colors per game (recomp-ui extension)
 - [ ] Controller test on macOS

@@ -105,6 +105,7 @@ Next:
 - [ ] HD textures: test the background build on Windows
 - [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
 - [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)
+- [ ] Upstream PR: a game can hide memory card slot 2 in the launcher ([recomp-ui#110](https://github.com/RetroPortingToolKit/recomp-ui/pull/110), waiting for review)
 - [ ] Upstream PR: game brand mark overrides the console's in the launcher ([recomp-ui#114](https://github.com/RetroPortingToolKit/recomp-ui/pull/114), waiting for review)
 - [ ] Launcher colors per game (recomp-ui extension)
 - [ ] Controller test on macOS

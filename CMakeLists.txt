@@ -75,7 +75,9 @@ target_sources(psx-runtime PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/kula_widescreen.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/widescreen_logic.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/kula_hd_textures.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/hd_textures_logic.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/hd_textures_logic.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/kula_detail_distance.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mods/src/detail_distance_logic.c")
 target_include_directories(psx-runtime PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/mods/src")
 
 # The HD plugin compares hd-pack.json with what the runner would build now;

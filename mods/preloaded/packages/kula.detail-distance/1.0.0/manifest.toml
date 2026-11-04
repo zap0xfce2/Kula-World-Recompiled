@@ -1,0 +1,22 @@
+format_version = 7
+id = "kula.detail-distance"
+version = "1.0.0"
+name = "Detail Distance"
+author = "Kula World Recompiled"
+description = "Keeps far cubes sharp and far items detailed."
+resolver = "declarative"
+save_compatibility = "shared"
+
+[[target]]
+game_id = "SCES-01000"
+
+[[feature]]
+id = "detail-distance"
+name = "Detail Distance"
+description = "Far cubes keep their full texture and far coins and fruit keep their full model instead of a plain disc. The short blur while turning stays."
+group = "Graphics"
+default_enabled = true
+
+[[plugin]]
+feature = "detail-distance"
+id = "kula.detail-distance"

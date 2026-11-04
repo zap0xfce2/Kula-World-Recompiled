@@ -97,7 +97,7 @@ Done:
 - [x] Launcher: only memory card 1, own box art, brand mark and app icon
 - [x] Widescreen: sky reaches the wide corners
 - [x] HD textures, built in the background from the player's disc (Linux and macOS verified)
-- [x] Detail Distance: sharp far cubes and full item models (Linux verified; macOS check open)
+- [x] Detail Distance: sharp far cubes and full item models (Linux and macOS verified)
 
 Next:
 - [ ] 60 fps (parked: psxrecomp's frame generation does not see Kula's flips yet; an NTSC-style patch would change the gameplay timing)

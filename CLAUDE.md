@@ -370,7 +370,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
          - Gotcha für eine spätere Launcher-Anzeige: Bis der neue Runner schreibt, enthält `progress.json` noch das `done` des letzten Baus. Alt und neu sind nur am Feld `updated` zu unterscheiden.
        - Offen (auch in der README-Roadmap): Die 84 Laufzeit-Paletten bräuchten Spiel-Logik. Windows ist ungetestet. Fortschritt im Launcher fehlt.
      - Gotchas: `tools/check_level_select.py` und `smoke_boot.py` nicht mit `python3 -I` starten (Import schlägt fehl). `{"cmd":"quit"}` meldet auf dem Mac „emu busy or frozen“, beendet die Runtime aber, die Dumps sind danach vollständig.
-   - Detail-Distanz `kula.detail-distance` (2026-11-04, standardmäßig an, Branch `feat/detail-distance`):
+   - Detail-Distanz `kula.detail-distance` (in `main` seit 2026-11-04, standardmäßig an):
      - Das Spiel wählt Detailstufen über `tgi->lodDistance[7]` (TGI `+0x110`, in jeder Welt 90/70/40/20/80/60/40, Einheit OT-Schritte, ca. 8 pro Block): [0] Grenze von `MakeOtagDoublyLinked`, [1..3] Würfel-Texturbänder (voll 64x64 P8, dann 32/16/8-Mipmaps), [5]/[6] Item-Modelle (voll / einfach / gelbe Scheibe, `CreateItemDispList`). [4] ungeklärt.
      - Beim Drehen spielt `ProcessTurningMotionBlur` die `turningMotionBlurTable` (0x800D0430, 9x7) ab und setzt danach Phase 0 zurück; die Tabelle baut `InitTurningMotionBlur` bei jedem Welt-Laden aus der TGI. Direkt geschriebene Grenzen sind deshalb nach der ersten Drehung weg.
      - Mod: VBlank-Plugin baut die Tabelle aus 90/89/88/87/80/200/200 mit der Spiel-Formel neu (Unschärfe beim Drehen bleibt, Wunsch des Nutzers) und hält in Ruhe `lodDistance` auf Phase 0. Logik `detail_distance_logic.c`, C-Test in `task test`.

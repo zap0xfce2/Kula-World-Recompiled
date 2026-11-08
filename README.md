@@ -109,6 +109,7 @@ Next:
 - [ ] Controller test on macOS
 - [ ] Windows build
 - [ ] Release packaging
+- [ ] Listing on RecompStore / RecompLauncher (needs a GitHub release; optional `recomplauncher.json`)
 
 ## Known issues
 

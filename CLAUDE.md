@@ -418,6 +418,12 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - Entscheidung zu `generated/` (aktuell gitignored)
    - ~~README auf Projektstand bringen~~ (erledigt 2026-10-16, mit Screenshots unter `docs/images/`, Roadmap und KI-Hinweis)
    - erneuter Check der ganzen Historie auf Spieldaten, Secrets und persönliche Pfade
+   - RecompStore-Listing (später, recherchiert 2026-11-08):
+     - Der Store (recomplauncher.com, leitet auf recompstore.com um) hostet nichts und installiert direkt aus den GitHub-Releases. Hercules ist nur über Release-Zips gelistet, ohne `recomplauncher.json`.
+     - Voraussetzungen: Linux-Build auf glibc (der Alpine/musl-Build läuft dort nicht), macOS-arm64-Zip, Windows optional. System und CPU im Dateinamen (`…-Linux-x64.zip`). Keine Spieldaten und kein Original-Cover im Zip.
+     - Optional `recomplauncher.json` oben im Zip (SDK: `recompstore.com/sdk-files/guide.md`), Level 1 mit `start` und z. B. `--no-launcher --disc {game}`. Ob der `iso9660`-Check mit PS1-BIN/CUE funktioniert, ist unbekannt.
+     - Einreichen macht der Nutzer per Formular `recompstore.com/submit?platform=pc`. Pflicht ist ein Screenshot aus dem Spiel, „AI-assisted“ mit ja beantworten.
+     - Offene Entscheidungen: erstes Release ohne Windows, Release enthält den aus `generated/` kompilierten Code, mit oder ohne `recomplauncher.json`.
 10. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher das Vorgehen mit dezgeg abstimmen.
 
 ## macOS

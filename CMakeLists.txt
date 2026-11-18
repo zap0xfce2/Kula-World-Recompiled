@@ -59,6 +59,7 @@ psxrecomp_add_game_runtime(psx-runtime
     # Own launcher art, rendered from assets/launcher/*.svg (task launcher-art).
     LAUNCHER_BOXART "${KULA_BOXART}"
     LAUNCHER_BRAND "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/brand.tga"
+    LAUNCHER_THEME "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/theme.ini"
     APP_ICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/kula.ico"
     # Committed game C (psxrecomp_cli.py generate; git add generated). Release
     # CI configures with -DPSXRECOMP_REQUIRE_GAME_C=ON so a checkout without

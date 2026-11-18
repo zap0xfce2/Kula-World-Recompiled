@@ -63,9 +63,11 @@ task build      # release build
 task run        # start with the launcher
 ```
 
-The `recomp-ui` submodule points at a fork that carries the launcher assets fix
-[recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171) on top
-of upstream `master`; it switches back once that PR is merged.
+Both submodules point at forks on top of upstream `master`: `recomp-ui` carries
+the launcher assets fix
+[recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171) and
+per-game launcher colors, `psxrecomp` passes those colors on. They switch back
+once the changes are merged upstream.
 
 The launcher ships with its own box art. `task boxart` fetches the original
 PAL cover from [libretro-thumbnails](https://github.com/libretro-thumbnails/libretro-thumbnails)

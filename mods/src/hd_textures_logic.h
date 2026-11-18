@@ -18,3 +18,8 @@ int hd_python_lock_find(const char* lock_text, const char* platform, char* url,
 
 /* Key as in python.lock, or NULL when no portable Python exists for this build. */
 const char* hd_platform_key(void);
+
+/* Status line for the launcher (status_file) after a plugin counter, named
+ * without the "kula.hd-textures." prefix. 0 when the counter has no line
+ * (runner_started: the runner writes its own). */
+int hd_status_text(char* out, size_t out_size, const char* counter, int with_model);

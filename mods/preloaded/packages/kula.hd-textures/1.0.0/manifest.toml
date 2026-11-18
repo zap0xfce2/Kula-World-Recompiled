@@ -1,4 +1,4 @@
-format_version = 7
+format_version = 14
 id = "kula.hd-textures"
 version = "1.0.0"
 name = "HD Textures"
@@ -16,6 +16,8 @@ name = "HD Textures"
 description = "Builds a 4x texture pack from your own disc in the background while you play; it is used from the next start. The first build takes a few minutes, 10–20 minutes with the AI model. Downloads a portable Python (about 50 MB). OpenGL only."
 group = "Visual"
 default_enabled = false
+# Written by the plugin and tools/hd/hd_auto.py; shown under the mod in the launcher.
+status_file = "hd-auto/status.txt"
 
 [[option]]
 feature = "hd-textures"

@@ -386,6 +386,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
            - `build.progress.json` überlebte das Aufräumen. Ein neuer Bau zeigte deshalb kurz 100 %.
            - Danach: Das Log schreibt „launcher gone“ und erst im Stopper „stopping“, damit nach `done` keine Abbruchzeile mehr steht.
          - Gotcha für eine spätere Launcher-Anzeige: Bis der neue Runner schreibt, enthält `progress.json` noch das `done` des letzten Baus. Alt und neu sind nur am Feld `updated` zu unterscheiden.
+       - Statuszeile im Launcher (2026-11-18, Spec/Plan `docs/superpowers/*/2026-11-18-hd-build-status*`): Das Manifest nennt `status_file = "hd-auto/status.txt"` (psxrecomp-Erweiterung, `format_version` 14, Fork `feat/launcher-theme`). Der Launcher zeigt die erste Zeile unter „HD Textures“, nur bei eingeschaltetem Mod ohne Prüffehler. Der Runner schreibt sie bei jedem Fortschritt (`status_line`, z. B. „HD pack: 41 % built, continues while you play“), das Plugin bei `up_to_date` („HD pack active (…)“) und bei eigenen Fehlern („HD pack not built: …“).
        - Offen (auch in der README-Roadmap): Die 84 Laufzeit-Paletten bräuchten Spiel-Logik. Windows ist ungetestet. Fortschritt im Launcher fehlt.
      - Gotchas: `tools/check_level_select.py` und `smoke_boot.py` nicht mit `python3 -I` starten (Import schlägt fehl). `{"cmd":"quit"}` meldet auf dem Mac „emu busy or frozen“, beendet die Runtime aber, die Dumps sind danach vollständig.
    - Detail-Distanz `kula.detail-distance` (in `main` seit 2026-11-04, standardmäßig an):

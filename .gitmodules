@@ -4,5 +4,5 @@
 	branch = master
 [submodule "recomp-ui"]
 	path = recomp-ui
-	url = https://github.com/zap0xfce2/recomp-ui.git
-	branch = feat/game-brand-mark
+	url = https://github.com/RetroPortingToolKit/recomp-ui.git
+	branch = master

@@ -50,6 +50,8 @@ tasks:
       - magick -background none boxart.svg -depth 8 -compress RLE boxart.tga
       - magick -background none brand.svg -depth 8 -compress RLE brand.tga
       - magick -background none -density 96 icon.svg -resize 256x256 -gravity center -extent 256x256 -depth 8 -define icon:auto-resize=256,128,64,48,32,16 kula.ico
+      # psxrecomp stages psxrecomp.png from APP_ICON's folder as the SDL window icon (launcher and game)
+      - magick -background none -density 192 icon.svg -resize 512x512 -gravity center -extent 512x512 -depth 8 psxrecomp.png
 
   build:
     desc: Release build without debug server (build-release/)

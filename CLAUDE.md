@@ -30,7 +30,7 @@ Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `githu
   - Historie: Vom 2026-10-16 bis 2026-10-20 kam `psxrecomp` aus dem Fork (`sltu`-Bandform, dann Framebuffer-Feedback).
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
 - BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
-- 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Recompiled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D** (X11-Screenshots in `analysis/smoke-native/`). Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
+- 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Recompiled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D**. Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
   - Gemessen (`build-dev`, `tools/smoke_boot.py`): gleiche Demo-Abfolge und gleiche Endwerte wie psx-beetle, 0 Dispatch-Misses. Upstream gemeldet (#671) und in `SEGMENT_AWARE_CODE.md` §7 eingetragen (PR #695, gemergt).
 - **Abweichung von Upstream:** `generated/` bleibt dauerhaft gitignored (Upstream committet es). Entscheidung vom 2026-11-18: Der übersetzte Spielcode (951 MB C) kommt nie ins Repo, die README-Zusage „no recompiled game C“ bleibt. Releases enthalten nur das daraus kompilierte Binary.
 - `disc/kula-quest-jp/` enthält Kula Quest (Japan), nur als Referenz, nicht Teil des Builds.
@@ -143,7 +143,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 2. ~~`bios/SCPH1001.BIN` einbinden~~ (erledigt)
 3. ~~Recompiler bauen, BIOS und Spiel generieren, Runtime bauen~~ (erledigt, Befehle und Fallstricke unter Build-Gotchas)
 4. ~~KUSEG-Smoke-Test: Boot → Titel → Level, A/B gegen psx-beetle~~ (erledigt)
-   - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt (`analysis/play-native2/`).
+   - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt.
 5. Offene Punkte aus dem Smoke-Test:
    - ~~Ergebnis upstream melden~~ (erledigt 2026-10-15): RetroPortingToolKit/psxrecomp#671 (KUSEG) und #672 (6 Portabilitäts-Befunde). Quelle: `docs/upstream-report-kuseg.md`.
      - Zu #671 (2026-10-19): PR #695 trägt das Ergebnis in `docs/SEGMENT_AWARE_CODE.md` §7 ein. Neu gemessen auf Upstream `bce31aff` (Testbaum ohne Mods/Fork): 971 Funktionen, Kalt- gegen Warm-Cache (5 Shards: 4× `seg-kuseg`, 1× `seg-kseg1`) über 10.000 Frames in allen `frame_fingerprint`-Spalten identisch, `segment_native` 0 → 59.524, 0 Misses. Demo-Enden wie Beetle: 3603/9950 und 3017/6845. Gotchas: Upstream braucht das Untermodul `lib/retcomm-rbengine` (`git submodule update --init --recursive`), und mit aktiven Mods ohne Plugins startet die Runtime nicht (`mods/state.toml` abschalten). Captures schreibt `overlay_capture_dump`, nicht `kill -9`.

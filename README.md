@@ -107,6 +107,7 @@ Next:
 - [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
 - [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)
 - [ ] Framework update: psxrecomp and recomp-ui back to upstream `master`
+- [ ] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171)); until it is merged, recomp-ui is pinned to the fix on our fork
 - [ ] Launcher colors per game (recomp-ui extension)
 - [ ] Controller test on macOS
 - [ ] Windows build

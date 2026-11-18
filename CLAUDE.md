@@ -134,10 +134,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 
 ## Strategie (entschieden 2026-10-14)
 - **Jetzt: Recomp mit psxrecomp.** Das dezgeg-Decomp dient nur als Wissens- und Symbolquelle, es fließt kein Code daraus ein.
-- **Roadmap: nativer Port aus dem dezgeg-Decomp über psyz.** Voraussetzungen:
-  - die 27 ASM-Funktionen liegen als C vor
-  - psyz ist angebunden
-  - Abstimmung mit dezgeg (Zusammenarbeit statt Doppelarbeit). Er hat lokal einen hackigen PsyZ-Port: Menüs laufen, 3D fehlt, weil der Render-Kern in ASM steckt. Plan: ASM erst zeilenweise nach C übertragen. Liegt auf Eis, bis US/JP fertig sind (#1, 2026-10-16).
+- ~~Nativer Port aus dem dezgeg-Decomp über psyz~~: am 2026-11-18 vom Nutzer von der Roadmap gestrichen. dezgeg hat lokal einen eigenen PsyZ-Port (Menüs laufen, 3D fehlt, Render-Kern in ASM, #1, 2026-10-16).
 
 ## Nächste Schritte
 1. ~~Repo nach New Project Layout aufsetzen~~ (erledigt)
@@ -424,7 +421,6 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Optional `recomplauncher.json` oben im Zip (SDK: `recompstore.com/sdk-files/guide.md`), Level 1 mit `start` und z. B. `--no-launcher --disc {game}`. Ob der `iso9660`-Check mit PS1-BIN/CUE funktioniert, ist unbekannt.
      - Einreichen macht der Nutzer per Formular `recompstore.com/submit?platform=pc`. Pflicht ist ein Screenshot aus dem Spiel, „AI-assisted“ mit ja beantworten.
      - Offene Entscheidungen: erstes Release ohne Windows, mit oder ohne `recomplauncher.json`. Entschieden: Das Release enthält das aus `generated/` kompilierte Binary, `generated/` selbst nicht.
-10. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher das Vorgehen mit dezgeg abstimmen.
 
 ## macOS
 Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Der Mac klont das Repo per SSH.

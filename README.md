@@ -27,7 +27,7 @@ emulator.
 | Platform | State |
 |---|---|
 | Linux (x86-64, tested on Alpine/musl) | builds and runs; tested headless under Xvfb |
-| macOS (Apple Silicon, M1 Pro) | builds and runs at 50 fps; audio, memory card, launcher, keyboard verified |
+| macOS (Apple Silicon, M1 Pro) | builds and runs at 50 fps; audio, memory card, launcher, keyboard and gamepad verified |
 | Windows | not tested |
 
 ## Mods
@@ -101,6 +101,7 @@ Done:
 - [x] Detail Distance: sharp far cubes and full item models (Linux and macOS verified)
 - [x] Upstream PRs: a game can hide memory card slot 2 and use its own brand mark in the launcher ([recomp-ui#110](https://github.com/RetroPortingToolKit/recomp-ui/pull/110), [#114](https://github.com/RetroPortingToolKit/recomp-ui/pull/114))
 - [x] Framework update: psxrecomp and recomp-ui on current upstream `master`
+- [x] Controller test on macOS (Xbox One pad over Bluetooth)
 
 Next:
 - [ ] HD textures: test the background build on Windows
@@ -108,7 +109,6 @@ Next:
 - [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)
 - [ ] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171)); until it is merged, recomp-ui is pinned to the fix on our fork
 - [ ] Launcher colors per game (recomp-ui extension)
-- [ ] Controller test on macOS
 - [ ] Windows build
 - [ ] Release packaging
 - [ ] Listing on RecompStore / RecompLauncher (needs a GitHub release; optional `recomplauncher.json`)

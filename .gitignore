@@ -128,3 +128,6 @@ starvation_dump.jsonl
 /.venv-hd/
 /hd-work/
 /hd-auto*/
+
+# Local qDrover board
+/qdrover.json

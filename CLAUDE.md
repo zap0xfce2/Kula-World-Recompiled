@@ -427,17 +427,17 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Offene Entscheidungen: erstes Release ohne Windows, mit oder ohne `recomplauncher.json`. Entschieden: Das Release enthält das aus `generated/` kompilierte Binary, `generated/` selbst nicht.
 
 ## macOS
-Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Der Mac klont das Repo per SSH.
+Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Der Mac-Workspace ist seit 2026-11-18 eine Kopie des Linux-Workspace, `origin` per HTTPS.
 - Rolle des Macs: reine Teststation für alles, was unter Linux ohne Display/GPU nicht geht (echte fps, Audio, Launcher-UI, Sichtprüfungen).
   - Der Nutzer sitzt nur für Beobachtungen am Mac (Stoppuhr, Gehör, Eingaben). Alles Messbare automatisiert die Mac-Session über den Debug-Server.
 - Testablauf mit der Mac-Session (Claude Code über Remote Control, Name per `ListAgents`):
   - Linux pusht einen Branch und schickt per `SendMessage` den Branch-Namen plus Testauftrag.
-  - Der Mac holt den Branch (`git fetch && git checkout <branch>`), baut und testet. Er pusht nicht und committet nicht.
+  - Der Mac holt den Branch (`git fetch && git checkout <branch>`), baut und testet. Er pusht nicht und committet nicht, außer auf direkten Auftrag des Nutzers (dann vorher pullen).
   - Das Ergebnis kommt als Cross-Session-Nachricht zurück, die Doku pflegt nur Linux.
-  - Mac-Repo: `origin` per SSH, `.claude/settings.local.json` erlaubt lesende Git-Befehle plus fetch/checkout/switch/submodule update.
+  - Mac-Repo: `.claude/settings.local.json` erlaubt lesende Git-Befehle plus fetch/checkout/switch/submodule update.
   - ccache ist auf dem Mac aktiv, Folgebuilds dauern Sekunden.
   - Mods ohne Launcher reproduzierbar schalten: `<build>/mods/state.toml` (`[[package]] id`, `[[feature]] package_id/id/enabled`, Optionen unter `[feature.values]`). `--no-launcher` übernimmt die Datei.
-  - Tests laufen nur mit OpenBIOS. Der Mac hatte am 2026-11-18 durch einen kopierten Workspace wieder ein `bios/SCPH1001.BIN`.
+  - Tests laufen nur mit OpenBIOS. Der Mac hatte am 2026-11-18 durch einen kopierten Workspace wieder ein `bios/SCPH1001.BIN`, auf Wunsch des Nutzers samt `bios/beetle/`, `psxrecomp/bios/SCPH1001.BIN` und `psxrecomp/generated/SCPH1001_*` gelöscht.
   - Tests immer stumm: jeder Runtime-Start mit `SDL_AUDIO_DRIVER=dummy` (Freigabe vom 2026-10-19).
   - yabai vor Tests ohne Rückfrage stoppen (`yabai --stop-service`) und danach wieder starten (`yabai --start-service`), weil es `window_size` aushebelt (Freigabe vom 2026-10-19).
 - 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Memory Card unter Retail und OpenBIOS ok. Levelauswahl-Mod ok. Ending-FMV ok (2026-10-19). Offen: Controller.

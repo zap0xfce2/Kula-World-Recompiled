@@ -100,12 +100,12 @@ Done:
 - [x] HD textures, built in the background from the player's disc (Linux and macOS verified)
 - [x] Detail Distance: sharp far cubes and full item models (Linux and macOS verified)
 - [x] Upstream PRs: a game can hide memory card slot 2 and use its own brand mark in the launcher ([recomp-ui#110](https://github.com/RetroPortingToolKit/recomp-ui/pull/110), [#114](https://github.com/RetroPortingToolKit/recomp-ui/pull/114))
+- [x] Framework update: psxrecomp and recomp-ui on current upstream `master`
 
 Next:
 - [ ] HD textures: test the background build on Windows
 - [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
 - [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)
-- [ ] Framework update: psxrecomp and recomp-ui back to upstream `master`
 - [ ] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171)); until it is merged, recomp-ui is pinned to the fix on our fork
 - [ ] Launcher colors per game (recomp-ui extension)
 - [ ] Controller test on macOS

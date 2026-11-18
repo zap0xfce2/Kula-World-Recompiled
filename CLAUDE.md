@@ -446,6 +446,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. D
   - `runtime.cmake` sucht seit #693 `python3` vor `python`. Die `Taskfile.yaml` setzt `-DPSX_PYTHON` trotzdem explizit (auf dem Mac `PYTHON=python3.12`).
   - Das Default-`python3` ist 3.9, also überall `python3.12`.
   - Nach einer Workspace-Kopie von Linux: `build-*`, `.venv-hd`, Root-`hd-auto/` und Freeze-Dumps verwerfen, `compile_commands.json` als Symlink neu anlegen, `UV_PYTHON` in `.claude/settings.local.json` auf `/opt/homebrew/bin/python3.12` (Serena braucht 3.11+), Mac-Allowlist dort wiederherstellen.
+  - Ein veralteter `build-*/mods/bundled/` (z. B. aus einem kopierten Backup) fehlt im Katalog `psx.enhancement.internal-resolution`. Die Runtime fällt dann still auf 1x zurück (Log: „not in this build's mod catalog“, „internal resolution Native: 1x requested“), Launcher und `[[package]]`-Eintrag in `state.toml` helfen nicht. Abhilfe: `bundled/` und das Binary löschen, neu bauen (danach 17 Pakete). Nutzerdaten in `mods/` sind nur `texture-packs/` und `state.toml`.
   - `pgrep -x Kula_World_Reco` findet die Runtime auf dem Mac nicht (die 15-Zeichen-Kürzung gilt nur unter Linux). Dort `pgrep -f Kula_World_Recompiled` nehmen.
   - Bei `core.fileMode=false` im Submodul fehlen nach dem Checkout die Exec-Bits (`build_emitters.sh`: permission denied). Abhilfe: `chmod +x` für alle `100755`-Einträge aus `git ls-files -s`.
 - Der Launcher schreibt bei jedem Start `[controller] multitap_analog` in `game.toml`. Der Wert ist deshalb fest eingetragen, damit kein Diff entsteht.

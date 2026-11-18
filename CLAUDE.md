@@ -29,7 +29,7 @@ Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `githu
   - PGXP-Override an das neue Upstream-Manifest angeglichen (eigene Optionen Geometrie und Perspektive). Upstream hat die interne Auflösung in den eingebauten Mod `psx.enhancement.internal-resolution` verschoben; frische Profile bekommen 4x, das überstimmt unser `[video] internal_resolution = "1080p"` (Grundwert). Für PGXP reicht es, auf dem Mac prüfen.
   - Historie: Vom 2026-10-16 bis 2026-10-20 kam `psxrecomp` aus dem Fork (`sltu`-Bandform, dann Framebuffer-Feedback).
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
-- BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
+- BIOS: nur das mitgelieferte OpenBIOS (Entscheidung 2026-11-18). Das Sony-BIOS (`SCPH1001.BIN`, MD5 `924e392ed05558ffdb115408c263dccf`) samt generiertem `SCPH1001_*`-Backend ist unter Linux gelöscht. CMake linkt SCPH1001 nur, wenn dessen generierte Quellen da sind, ein Flag ist nicht nötig. `task run:dev` startet ohne `--bios`, `BIOS=<dump>` bleibt optional.
 - 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Recompiled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D**. Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
   - Gemessen (`build-dev`, `tools/smoke_boot.py`): gleiche Demo-Abfolge und gleiche Endwerte wie psx-beetle, 0 Dispatch-Misses. Upstream gemeldet (#671) und in `SEGMENT_AWARE_CODE.md` §7 eingetragen (PR #695, gemergt).
 - **Abweichung von Upstream:** `generated/` bleibt dauerhaft gitignored (Upstream committet es). Entscheidung vom 2026-11-18: Der übersetzte Spielcode (951 MB C) kommt nie ins Repo, die README-Zusage „no recompiled game C“ bleibt. Releases enthalten nur das daraus kompilierte Binary.
@@ -435,7 +435,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. D
   - Mac-Repo: `origin` per SSH, `.claude/settings.local.json` erlaubt lesende Git-Befehle plus fetch/checkout/switch/submodule update.
   - ccache ist auf dem Mac aktiv, Folgebuilds dauern Sekunden.
   - Mods ohne Launcher reproduzierbar schalten: `<build>/mods/state.toml` (`[[package]] id`, `[[feature]] package_id/id/enabled`, Optionen unter `[feature.values]`). `--no-launcher` übernimmt die Datei.
-  - Der Mac hat kein Sony-BIOS mehr und läuft nur mit OpenBIOS.
+  - Tests laufen nur mit OpenBIOS. Der Mac hatte am 2026-11-18 durch einen kopierten Workspace wieder ein `bios/SCPH1001.BIN`.
   - Tests immer stumm: jeder Runtime-Start mit `SDL_AUDIO_DRIVER=dummy` (Freigabe vom 2026-10-19).
   - yabai vor Tests ohne Rückfrage stoppen (`yabai --stop-service`) und danach wieder starten (`yabai --start-service`), weil es `window_size` aushebelt (Freigabe vom 2026-10-19).
 - 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Memory Card unter Retail und OpenBIOS ok. Levelauswahl-Mod ok. Ending-FMV ok (2026-10-19). Offen: Controller.
@@ -447,7 +447,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. D
 - Der Launcher schaltet BIOS-Call-HLE ein (`bios_backend=HLE`). Mit `--no-launcher` gilt der Default LLE. Für A/B gegen Beetle `PSX_BIOS_HLE=0` setzen.
 
 ## Build-Gotchas (Alpine/musl)
-Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task generate` läuft auch ohne Sony-BIOS. Dann regeneriert es nur OpenBIOS (Mac). `task all` erledigt Emitter, Generate und Dev-Build. Weitere Tasks (`boxart` und `launcher-art` siehe Launcher-Art):
+Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task generate` regeneriert ohne Sony-BIOS nur OpenBIOS. `task all` erledigt Emitter, Generate und Dev-Build. Weitere Tasks (`boxart` und `launcher-art` siehe Launcher-Art):
 - `run`, `run:dev`, `beetle`: Starten, headless mit `RUNNER="xvfb-run -a"`.
 - `smoke PORT=4380`, `test`, `lint`.
 - Auf dem Mac `PYTHON=python3.12`.
@@ -456,7 +456,7 @@ Der Ablauf als rohe Befehle (Begründung der Flags unten):
 ```sh
 ./psxrecomp/tools/ci/build_emitters.sh
 python3 psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root . \
-    --disc disc/SCES01000.CUE --bios bios/SCPH1001.BIN --no-toolchain-download
+    --disc disc/SCES01000.CUE --no-toolchain-download
 cmake -S . -B build-dev -G Ninja -DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON
 cmake --build build-dev
 ```
@@ -469,13 +469,13 @@ cmake --build build-dev
 - Seit #694 schreibt `generate --bios` den Emitter-Stempel selbst. Ein schon vorhandenes BIOS-Backend überspringt das CLI aber („already present — skipping bios regen“). Nach einem Framework-Update meldet CMake dann „BIOS … STALE“. Abhilfe: `task generate -- --force-bios`.
   - Gotcha: Upstream führt `psxrecomp/generated/OpenBIOS.emitter.sha` mit CRLF, `--force-bios` schreibt sie mit LF neu (gleicher Hash). Das Submodul ist danach „modified“ und blockiert den nächsten Checkout. Abhilfe: `git -C psxrecomp checkout -- generated/OpenBIOS.emitter.sha`.
 - musl hat keine `getcontext`/`makecontext`/`swapcontext`, die `psx_fiber.c` braucht. `sudo apk add libucontext-dev` genügt, seit #693 erkennt CMake das und linkt `libucontext` selbst.
-- Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --bios bios/SCPH1001.BIN --disc disc/SCES01000.CUE --debug-port 4370`.
+- Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --disc disc/SCES01000.CUE --debug-port 4370` (OpenBIOS).
 - Generate dauert ca. 2 min (seit dem Framework-Update 129 Shards, 8774 Funktionen, ~167 MB; vorher 569 Shards, ~950 MB). Der Runtime-Build dauert auf 8 Kernen ca. 7,5 min (vorher 23 min).
 - Gotcha Framework-Update: Generate löscht alte Shards nicht. Liegen welche ohne `psx_native_span.h` herum, bricht CMake mit „Regenerate game sources with native span support“ ab. Abhilfe: `rm -rf generated` und neu generieren.
 - `task test` braucht für die HD-Tests Pillow und xxhash: `task test PYTHON=.venv-hd/bin/python`.
 - Gotcha: `pkill -f Kula_World…` trifft auch die eigene Shell (der Befehl steht in deren Kommandozeile). Runtime per PID oder `pkill -x Kula_World_Reco` beenden.
 - Serena mit C (`clangd`): `sudo apk add clang-extra-tools`. Dazu `.claude/settings.local.json` mit `env.UV_PYTHON=/usr/bin/python3` (lokal, über `.git/info/exclude` ignoriert), danach `/mcp` reconnect. Unter uvs statischem musl-Python liefert `platform.libc_ver()` `('libc', '')`, Serena meldet dann „Unknown platform“. `compile_commands.json` im Root ist ein Symlink auf `build-dev/` (`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`).
-- Oracle: `psxrecomp/beetle-psx` (im Submodule gitignored) auf `5759277b` plus `docs/beetle_*.patch`, siehe `psxrecomp/docs/beetle-linux.md`.
+- Oracle: `psxrecomp/beetle-psx` (im Submodule gitignored) auf `5759277b` plus `docs/beetle_*.patch`, siehe `psxrecomp/docs/beetle-linux.md`. `task beetle` braucht `BIOS=<dump>`; seit das Sony-BIOS weg ist, ist ein Beetle-A/B nur mit eigenem Dump möglich (ob Beetle OpenBIOS bootet, ist ungeprüft).
 
 ## Smoke-Test
 - `tools/smoke_boot.py --port 4370|4380` liest `gameState`, `isDemoMode`, `levelTimeLeft` usw. (Adressen aus dem Decomp) und speichert Screenshots nach `analysis/smoke/`.

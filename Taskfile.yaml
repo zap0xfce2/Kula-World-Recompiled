@@ -5,7 +5,8 @@ silent: true
 vars:
   PYTHON: '{{.PYTHON | default "python3"}}'
   DISC: disc/SCES01000.CUE
-  BIOS: bios/SCPH1001.BIN
+  # Optional retail BIOS dump; without it the runtime boots the bundled OpenBIOS
+  BIOS: '{{.BIOS | default ""}}'
   DEBUG_PORT: 4370
   BEETLE_PORT: 4380
   # Prefix for headless runs, e.g. RUNNER="xvfb-run -a"
@@ -26,7 +27,7 @@ tasks:
     vars:
       # Without a retail dump only the bundled OpenBIOS is regenerated
       BIOS_ARG:
-        sh: '[ -f {{.BIOS}} ] && echo "--bios {{.BIOS}}" || true'
+        sh: '[ -n "{{.BIOS}}" ] && [ -f "{{.BIOS}}" ] && echo "--bios {{.BIOS}}" || true'
     cmds:
       # Without --no-toolchain-download the CLI fetches a glibc toolchain and edits shell rc files.
       # After a framework update: task generate -- --force-bios (an existing BIOS backend is kept otherwise).
@@ -79,14 +80,16 @@ tasks:
     cmds:
       - >-
         {{.RUNNER}} ./build-dev/Kula_World_Recompiled --no-launcher
-        --bios {{.BIOS}} --disc {{.DISC}} --debug-port {{.DEBUG_PORT}}
+        {{if .BIOS}}--bios {{.BIOS}} {{end}}--disc {{.DISC}} --debug-port {{.DEBUG_PORT}}
 
   beetle:
-    desc: Start the psx-beetle oracle, debug server on BEETLE_PORT
+    desc: Start the psx-beetle oracle, debug server on BEETLE_PORT (BIOS=<dump> required)
+    requires:
+      vars: [BIOS]
     cmds:
       - >-
         SDL_RENDER_DRIVER=software {{.RUNNER}}
-        ./psxrecomp/runtime/build-beetle/psx-beetle bios/beetle/SCPH1001.BIN
+        ./psxrecomp/runtime/build-beetle/psx-beetle {{.BIOS}}
         --disc {{.DISC}} --port {{.BEETLE_PORT}}
 
   smoke:

@@ -7,8 +7,8 @@
 /out/
 /.happypath/
 
-# Deviation from upstream: generated/ stays ignored until the release decision
-# (legal review of committing translated game code), see CLAUDE.md.
+# Deviation from upstream: generated/ (translated game code) is never committed;
+# releases ship only the compiled binary (decided 2026-11-18, see CLAUDE.md).
 /generated/
 # psxrecomp_cli.py work areas (overlay toolchain download, static overlay
 # shard evidence -- the latter holds bytes read from the disc).

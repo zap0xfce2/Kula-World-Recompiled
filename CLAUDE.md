@@ -19,7 +19,7 @@ Vorlage für Projektstruktur, Mods und Launcher: [hercules-recompiled](https://g
 ## Rechtliches – harte Regel
 **Niemals Spieldaten committen**: kein BIOS, keine `.bin`/`.cue`, keine `SCES_010.00`,
 keine extrahierten Assets und keine Disassembly mit Original-Bytes.
-`disc/`, `bios/`, `generated/` (bis zur Release-Entscheidung) gehören in `.gitignore`.
+`disc/`, `bios/` und `generated/` gehören in `.gitignore`.
 
 ## Stand (Grundlage 2026-10-15, laufend ergänzt bis 2026-10-24)
 Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, seit 2026-10-16 öffentlich). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
@@ -30,7 +30,7 @@ Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `githu
 - BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
 - 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Recompiled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D** (X11-Screenshots in `analysis/smoke-native/`). Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
   - Gemessen (`build-dev`, `tools/smoke_boot.py`): gleiche Demo-Abfolge und gleiche Endwerte wie psx-beetle, 0 Dispatch-Misses. Upstream gemeldet (#671) und in `SEGMENT_AWARE_CODE.md` §7 eingetragen (PR #695, gemergt).
-- **Abweichung von Upstream:** `generated/` ist bewusst gitignored (Upstream committet es), bis die Release-Entscheidung gefallen ist.
+- **Abweichung von Upstream:** `generated/` bleibt dauerhaft gitignored (Upstream committet es). Entscheidung vom 2026-11-18: Der übersetzte Spielcode (951 MB C) kommt nie ins Repo, die README-Zusage „no recompiled game C“ bleibt. Releases enthalten nur das daraus kompilierte Binary.
 - `disc/kula-quest-jp/` enthält Kula Quest (Japan), nur als Referenz, nicht Teil des Builds.
 
 ### Disc
@@ -415,7 +415,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - `kula_widescreen.c` hat dasselbe Guard-Muster (`g_calling_original`) ohne diese Absicherung. Relevant erst, wenn Frame-Generierung (Render-Pass) für Kula aktiv wird.
 9. Veröffentlichung (Repo auf public stellen). Vorher:
    - ~~Repo öffentlich schalten~~ (erledigt 2026-10-16, https://github.com/zap0xfce2/Kula-World-Recompiled)
-   - Entscheidung zu `generated/` (aktuell gitignored)
+   - ~~Entscheidung zu `generated/`~~ (erledigt 2026-11-18): bleibt gitignored, Releases liefern nur das kompilierte Binary
    - ~~README auf Projektstand bringen~~ (erledigt 2026-10-16, mit Screenshots unter `docs/images/`, Roadmap und KI-Hinweis)
    - erneuter Check der ganzen Historie auf Spieldaten, Secrets und persönliche Pfade
    - RecompStore-Listing (später, recherchiert 2026-11-08):
@@ -423,7 +423,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Voraussetzungen: Linux-Build auf glibc (der Alpine/musl-Build läuft dort nicht), macOS-arm64-Zip, Windows optional. System und CPU im Dateinamen (`…-Linux-x64.zip`). Keine Spieldaten und kein Original-Cover im Zip.
      - Optional `recomplauncher.json` oben im Zip (SDK: `recompstore.com/sdk-files/guide.md`), Level 1 mit `start` und z. B. `--no-launcher --disc {game}`. Ob der `iso9660`-Check mit PS1-BIN/CUE funktioniert, ist unbekannt.
      - Einreichen macht der Nutzer per Formular `recompstore.com/submit?platform=pc`. Pflicht ist ein Screenshot aus dem Spiel, „AI-assisted“ mit ja beantworten.
-     - Offene Entscheidungen: erstes Release ohne Windows, Release enthält den aus `generated/` kompilierten Code, mit oder ohne `recomplauncher.json`.
+     - Offene Entscheidungen: erstes Release ohne Windows, mit oder ohne `recomplauncher.json`. Entschieden: Das Release enthält das aus `generated/` kompilierte Binary, `generated/` selbst nicht.
 10. Roadmap: nativer Port über das Decomp (siehe Strategie). Vorher das Vorgehen mit dezgeg abstimmen.
 
 ## macOS

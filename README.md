@@ -107,6 +107,7 @@ Done:
 - [x] Launcher colors per game: sandstone and sky
 
 Next:
+- [ ] Help [#1](https://github.com/zap0xfce2/Kula-World-Recompiled/issues/1): on Manjaro (glibc) the launcher's Generate & Rebuild fails with "Toolchain ensure succeeded but bin/ is not usable for emitters"
 - [ ] Upstream PRs: per-game launcher colors ([recomp-ui#173](https://github.com/RetroPortingToolKit/recomp-ui/pull/173), [psxrecomp#975](https://github.com/RetroPortingToolKit/psxrecomp/pull/975)); until merged, both submodules are pinned to our forks
 - [ ] HD textures: test the background build on Windows
 - [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original

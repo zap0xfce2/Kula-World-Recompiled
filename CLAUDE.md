@@ -14,6 +14,7 @@ Vorlage für Projektstruktur, Mods und Launcher: [hercules-recompiled](https://g
   - Vor jedem Commit `git status` prüfen und sicherstellen, dass keine Spieldaten und keine Secrets dabei sind.
 - Tests laufen standardmäßig unter Linux (Xvfb + Debug-Server). Der Mac macht nur die Endabnahme und was unter Linux nicht geht (echte GPU-fps, Ton, Launcher, Fenster per Maus). Freigabe vom 2026-10-15.
 - Ghidra und PSX-Plugins dürfen installiert und genutzt werden, wenn es hilft (Freigabe vom 2026-10-15).
+- Nach jeder Änderung der README-Roadmap (Punkt neu, erledigt, gestrichen) das lokale qDrover-Board mit dem Skill `qdrover-roadmap` abgleichen (Wunsch des Nutzers, 2026-11-18).
 - Spekuliere nicht über Hardware-Verhalten. Verifiziere gegen den Oracle-Emulator (Beetle) oder sag "unbekannt".
 
 ## Rechtliches – harte Regel

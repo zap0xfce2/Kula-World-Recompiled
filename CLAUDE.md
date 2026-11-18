@@ -23,12 +23,16 @@ keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 
 ## Stand (Grundlage 2026-10-15, laufend ergänzt bis 2026-10-24)
 Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, seit 2026-10-16 öffentlich). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
-- Submodule: Basis ist Upstream-`master` von RetroPortingToolKit. `psxrecomp` steht seit 2026-10-24 auf `31df2e1e` (inkl. #704). `recomp-ui` steht noch auf dem Fork-Branch `feat/game-brand-mark` (`2f31548`, Remote `fork` im Submodul), obwohl recomp-ui#110 und #114 am 2026-11-08 gemergt sind (Merge `08337f4`).
-  - Zurück auf Upstream geht nur zusammen mit einem psxrecomp-Update: Upstream-recomp-ui hat seit `20ae77b` (2026-10-24) `dynamic_resolution`/`dynamic_resolution_min`/`has_dynamic_resolution` aus den Launcher-Structs entfernt, `psxrecomp` `31df2e1e` greift in `runtime/src/main.cpp` ungeschützt darauf zu (Build-Fehler, geprüft 2026-11-18). Upstream-psxrecomp (879 Commits weiter) liest die Felder nur noch hinter `RECOMP_LAUNCHER_HAS_*`-Guards. Ein Bump einzeln geht also nicht, nur beide zusammen.
+- Submodule: Basis ist Upstream-`master` von RetroPortingToolKit. `main` pinnt `psxrecomp` `31df2e1e` (2026-10-24) und `recomp-ui` auf dem Fork-Branch `feat/game-brand-mark` (`2f31548`), obwohl recomp-ui#110 und #114 am 2026-11-08 gemergt sind (Merge `08337f4`).
+  - Framework-Update auf Branch `chore/framework-update` (2026-11-18): `psxrecomp` `da9be047`, `recomp-ui` auf dem Fork-Branch `fix/launcher-assets-dir-exe-dir` (`b54c7eb` = Upstream `ab72f8d` plus recomp-ui#171, siehe unten). Nach dem Merge von #171 `.gitmodules` auf Upstream-`master` zurückstellen. Beide nur zusammen: Upstream-recomp-ui hat seit `20ae77b` die `dynamic_resolution`-Felder aus den Launcher-Structs entfernt, `31df2e1e` greift ungeschützt darauf zu (Build-Fehler), neues psxrecomp nur hinter `RECOMP_LAUNCHER_HAS_*`-Guards.
+  - Linux geprüft: 121 Python- und 5 C-Tests grün, Smoke `demo_gameplay_reached` mit 3603 (Demo 1) und 3017 (Demo 2), 0 Dispatch-Misses, Widescreen `hud.hit` steigt (`x_margin` 54, `present_native_43` 0), PGXP `tri_mixed` 0, Levelauswahl W3/L5 ok, HD-Pack `up_to_date` mit `applied_draws` > 0.
+  - Mac-Abnahme (2026-11-18, OpenBIOS): Smoke 3603/3017, 0 Misses, 50 fps, Widescreen 16:9 und 21:9 ohne Himmelsecken, Detail-Distanz Demo 2 sauber, HD-Lanczos-Pack `up_to_date`, m60-Pack neu gebaut (11:12 min, davon Bau 10:46 auf MPS, 50 fps während des Baus, 48.867 Dateien, 848 MB; danach W1/L1 `up_to_date`, `applied_draws` 1,39 Mio., `composition_builds`/`decode_evictions`/`gl_evictions` 0, `scene_gpu` 8,7 ms), Launcher-Spielstart mit Levelauswahl, Ton und Memory Card ok, nur Karte 1. Nutzer zum Launcher mit Fix: „top passt alles“.
+  - Launcher-Bug im neuen Stand: Box-Art, Logo, Pad-Bild und Lato-Schrift fehlten („Could not load font file!“). psxrecomp übergibt als `assets_dir` den Exe-Ordner (`main.cpp` an zwei Stellen, `exe_dir_from_argv()`), recomp-ui wertet den Wert seit `ce7fd72` (2026-11-07) als `assets/`-Ordner aus und sucht `build-dev/img/…`. Fix in `asset()` (`launcher_imgui.cpp`): Heißt der Ordner nicht `assets`, wird der relative Pfad an ihn angehängt. Upstream-PR RetroPortingToolKit/recomp-ui#171 (2026-11-18, Freigabe des Nutzers), offen.
+  - PGXP-Override an das neue Upstream-Manifest angeglichen (eigene Optionen Geometrie und Perspektive). Upstream hat die interne Auflösung in den eingebauten Mod `psx.enhancement.internal-resolution` verschoben; frische Profile bekommen 4x, das überstimmt unser `[video] internal_resolution = "1080p"` (Grundwert, gilt nur bei „Game default“). Entscheidung des Nutzers (2026-11-18): 4x bleibt, die Auflösung ist eine Launcher-Einstellung. Ein eigenes Override des Mods verbietet Upstream ohnehin (CMake-Fehler „Internal Resolution is framework-owned“). Für PGXP reichen 4x.
   - Historie: Vom 2026-10-16 bis 2026-10-20 kam `psxrecomp` aus dem Fork (`sltu`-Bandform, dann Framebuffer-Feedback).
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
-- BIOS liegt als `bios/SCPH1001.BIN` vor (MD5 `924e392ed05558ffdb115408c263dccf`, verifiziert)
-- 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Recompiled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D** (X11-Screenshots in `analysis/smoke-native/`). Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
+- BIOS: nur das mitgelieferte OpenBIOS (Entscheidung 2026-11-18). Das Sony-BIOS (`SCPH1001.BIN`, MD5 `924e392ed05558ffdb115408c263dccf`) samt generiertem `SCPH1001_*`-Backend ist unter Linux gelöscht. CMake linkt SCPH1001 nur, wenn dessen generierte Quellen da sind, ein Flag ist nicht nötig. `task run:dev` startet ohne `--bios`, `BIOS=<dump>` bleibt optional.
+- 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Recompiled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D**. Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
   - Gemessen (`build-dev`, `tools/smoke_boot.py`): gleiche Demo-Abfolge und gleiche Endwerte wie psx-beetle, 0 Dispatch-Misses. Upstream gemeldet (#671) und in `SEGMENT_AWARE_CODE.md` §7 eingetragen (PR #695, gemergt).
 - **Abweichung von Upstream:** `generated/` bleibt dauerhaft gitignored (Upstream committet es). Entscheidung vom 2026-11-18: Der übersetzte Spielcode (951 MB C) kommt nie ins Repo, die README-Zusage „no recompiled game C“ bleibt. Releases enthalten nur das daraus kompilierte Binary.
 - `disc/kula-quest-jp/` enthält Kula Quest (Japan), nur als Referenz, nicht Teil des Builds.
@@ -141,7 +145,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
 2. ~~`bios/SCPH1001.BIN` einbinden~~ (erledigt)
 3. ~~Recompiler bauen, BIOS und Spiel generieren, Runtime bauen~~ (erledigt, Befehle und Fallstricke unter Build-Gotchas)
 4. ~~KUSEG-Smoke-Test: Boot → Titel → Level, A/B gegen psx-beetle~~ (erledigt)
-   - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt (`analysis/play-native2/`).
+   - Interaktiv verifiziert: Spielstart per Eingabe, Timer läuft, Kugel rollt.
 5. Offene Punkte aus dem Smoke-Test:
    - ~~Ergebnis upstream melden~~ (erledigt 2026-10-15): RetroPortingToolKit/psxrecomp#671 (KUSEG) und #672 (6 Portabilitäts-Befunde). Quelle: `docs/upstream-report-kuseg.md`.
      - Zu #671 (2026-10-19): PR #695 trägt das Ergebnis in `docs/SEGMENT_AWARE_CODE.md` §7 ein. Neu gemessen auf Upstream `bce31aff` (Testbaum ohne Mods/Fork): 971 Funktionen, Kalt- gegen Warm-Cache (5 Shards: 4× `seg-kuseg`, 1× `seg-kseg1`) über 10.000 Frames in allen `frame_fingerprint`-Spalten identisch, `segment_native` 0 → 59.524, 0 Misses. Demo-Enden wie Beetle: 3603/9950 und 3017/6845. Gotchas: Upstream braucht das Untermodul `lib/retcomm-rbengine` (`git submodule update --init --recursive`), und mit aktiven Mods ohne Plugins startet die Runtime nicht (`mods/state.toml` abschalten). Captures schreibt `overlay_capture_dump`, nicht `kill -9`.
@@ -263,11 +267,11 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - Launcher-Farben pro Spiel (Plan, offen): Theme-Farben als recomp-ui-Erweiterung (Upstream-PR), Kula-Palette aus dem Spiel.
    - Wobble-Fix über PGXP (2026-10-20, in `main`):
      - Framework-Feature G1 (`psxrecomp/docs/ENHANCEMENTS.md`), Vorlage Ridge Racer Type 4 (G1.11/G1.12): `PGXP` in `psxrecomp_add_game_runtime` (Hook-Build, `generated/` unverändert), Override `mods/preloaded/packages/psx.enhancement.pgxp` mit `default_enabled = true`, `[video] pgxp_mod_only = true`.
-     - `[video] internal_resolution = "1080p"` als Spiel-Vorgabe: Die Geometriekorrektur braucht ≥ 2x, nativ rundet sie zurück aufs Pixel. Der Spieler kann es im Launcher ändern.
+     - `[video] internal_resolution = "1080p"` als Grundwert (seit dem Framework-Update nur bei „Game default“, frische Profile starten mit 4x): Die Geometriekorrektur braucht ≥ 2x, nativ rundet sie zurück aufs Pixel. Der Spieler kann es im Launcher ändern.
      - Spike: Linux-Demo 81.699 Dreiecke präzise / 0 gemischt / 442 nativ in 5 s. Mac live: Wackeln und Textur-Schwimmen sind weg, keine Risse, Widescreen inkl. Pille gleich, 50 fps an und aus bei 1080p.
      - Befund (2026-10-20, niedrige Priorität): Unter Linux/Xvfb (llvmpipe) fehlt mit PGXP in W1/L1 oben links ein Himmelskeil (schwarz, ~30 % der Ecke), bei 1x, 2x und 1080p, im echten Fenster (X11-Capture) wie im Debug-Screenshot. Ohne PGXP sauber. Am Mac (Apple-GPU, 1080p, 16:9 und 2:1, live umgeschaltet) nicht reproduzierbar. Hypothese: PGXP liefert für weit links liegende Himmelsecken unbeschnittene Koordinaten (statt der auf −1024 gekappten GTE-Werte), und llvmpipe verwirft bzw. beschneidet solche Riesendreiecke anders. Spur im Code: `gpu_triangle_rejected` (Rettung zu großer Breitbild-Dreiecke) in `psxrecomp/runtime/src/gpu.c`. Bestätigung nur auf echter GPU unter Linux/Windows möglich.
        - Nachtest 2026-10-24 auf `psxrecomp` `31df2e1e`, inklusive `67200909` „PGXP: keep full depth and unclamped XY for far geometry“: Die Keile bleiben. Live umgeschaltet in derselben Szene: PGXP an 618 dunkle Pixel oben links (X11-Capture), aus 0. Im Widescreen-Repro bei 2:1 tritt er je nach Blick auch oben rechts auf (an: 210 rechts / 50 links, aus: 0/0). `tri_mixed` = 0. Mac (Apple-GPU) am selben Tag: keine Keile, weder in W1/L1 bei 16:9 noch bei 2:1, noch über 173 Bilder des Floor-Repros. Das spricht für einen llvmpipe-Effekt.
-     - Gotcha Linux-Tests: Unter Xvfb (llvmpipe) schafft 1080p (5x) nur ~11 fps, der Smoke-Test erreicht die Demo dann nicht. Headless-Läufe deshalb mit `PSX_INTERNAL_RESOLUTION=native` starten. PGXP ist rein visuell: Demo 1 endet weiter mit 3603/9950 (der Hook-Build läuft hier ~10 % langsamer, Smoke-Fenster ggf. mit `--duration` verlängern).
+     - Gotcha Linux-Tests: Unter Xvfb (llvmpipe) schafft 1080p (5x) nur ~11 fps, der Smoke-Test erreicht die Demo dann nicht. Headless-Läufe deshalb mit `PSX_INTERNAL_RESOLUTION=native PSX_DYNRES=0` starten. Seit dem Framework-Update meldet das Log trotzdem „dynamic resolution on: 3x..5x“; ein Lauf brach beim Spielstart per `starvation_watchdog` ab (6 s ohne Gast-Fortschritt, keine PC-Samples), der zweite lief sauber. Vermutlich llvmpipe, nicht weiter verfolgt. PGXP ist rein visuell: Demo 1 endet weiter mit 3603/9950 (der Hook-Build läuft hier ~10 % langsamer, Smoke-Fenster ggf. mit `--duration` verlängern).
      - Prüfen: `{"cmd":"geom_correction"}` (`pgxp.tri_mixed` = Riss-Risiko, muss klein bleiben), live umschalten mit `{"cmd":"pgxp","geometry":0|1,"texture":0|1}`. Standbilder zeigen nur ~1 % Unterschied; der Effekt ist in Bewegung sichtbar. Same-Frame-A/B: zwei Demo-Läufe, `screenshot_hires` bei festen Frames (die Demo ist deterministisch), der normale `screenshot` ist für die Korrektur blind.
    - HD-Texturen (Spike 2026-10-30, Runden 1–8, meist W1/L1, Runde 5 alle Welten mit Level 1, nichts im Repo außer dieser Doku; Stand der Optik siehe Runde 8). Ziel laut Nutzer: Der Launcher baut das Pack im Hintergrund aus der Disc des Spielers, Vorbild Hercules (`port/hd/hd_auto.py`, `decomp/tools/hd_pack_build.py`). Kein Vorab-Pack im Release (harte Regel). Design-Entwurf: `docs/superpowers/specs/2026-11-02-hd-texture-offline-build-design.md` (Opt-in im Launcher, ohne Modell Lanczos-Pack, aktiv ab nächstem Start, Hash-/Koordinaten-Tabelle im Repo erlaubt; Freigabe des ganzen Dokuments steht aus).
      - Technik: Framework-Mod `psx.enhancement.hd-textures` ist schon gebündelt, kein eigenes Manifest nötig. Dump und Ersetzen über `<build>/mods/state.toml` (`[feature.values]`, Werte in Anführungszeichen: `dump = "true"`, `replacements = "false"`), Pack unter `<build>/mods/texture-packs/SCES-01000`.
@@ -423,17 +427,17 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Offene Entscheidungen: erstes Release ohne Windows, mit oder ohne `recomplauncher.json`. Entschieden: Das Release enthält das aus `generated/` kompilierte Binary, `generated/` selbst nicht.
 
 ## macOS
-Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Der Mac klont das Repo per SSH.
+Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Der Mac-Workspace ist seit 2026-11-18 eine Kopie des Linux-Workspace, `origin` per HTTPS.
 - Rolle des Macs: reine Teststation für alles, was unter Linux ohne Display/GPU nicht geht (echte fps, Audio, Launcher-UI, Sichtprüfungen).
   - Der Nutzer sitzt nur für Beobachtungen am Mac (Stoppuhr, Gehör, Eingaben). Alles Messbare automatisiert die Mac-Session über den Debug-Server.
 - Testablauf mit der Mac-Session (Claude Code über Remote Control, Name per `ListAgents`):
   - Linux pusht einen Branch und schickt per `SendMessage` den Branch-Namen plus Testauftrag.
-  - Der Mac holt den Branch (`git fetch && git checkout <branch>`), baut und testet. Er pusht nicht und committet nicht.
+  - Der Mac holt den Branch (`git fetch && git checkout <branch>`), baut und testet. Er pusht nicht und committet nicht, außer auf direkten Auftrag des Nutzers (dann vorher pullen).
   - Das Ergebnis kommt als Cross-Session-Nachricht zurück, die Doku pflegt nur Linux.
-  - Mac-Repo: `origin` per SSH, `.claude/settings.local.json` erlaubt lesende Git-Befehle plus fetch/checkout/switch/submodule update.
+  - Mac-Repo: `.claude/settings.local.json` erlaubt lesende Git-Befehle plus fetch/checkout/switch/submodule update.
   - ccache ist auf dem Mac aktiv, Folgebuilds dauern Sekunden.
   - Mods ohne Launcher reproduzierbar schalten: `<build>/mods/state.toml` (`[[package]] id`, `[[feature]] package_id/id/enabled`, Optionen unter `[feature.values]`). `--no-launcher` übernimmt die Datei.
-  - Der Mac hat kein Sony-BIOS mehr und läuft nur mit OpenBIOS.
+  - Tests laufen nur mit OpenBIOS. Der Mac hatte am 2026-11-18 durch einen kopierten Workspace wieder ein `bios/SCPH1001.BIN`, auf Wunsch des Nutzers samt `bios/beetle/`, `psxrecomp/bios/SCPH1001.BIN` und `psxrecomp/generated/SCPH1001_*` gelöscht.
   - Tests immer stumm: jeder Runtime-Start mit `SDL_AUDIO_DRIVER=dummy` (Freigabe vom 2026-10-19).
   - yabai vor Tests ohne Rückfrage stoppen (`yabai --stop-service`) und danach wieder starten (`yabai --start-service`), weil es `window_size` aushebelt (Freigabe vom 2026-10-19).
 - 2026-10-15 auf M1 Pro verifiziert: Build in 2:35 min, Launcher, Boot bis Demo, 49,5 fps, XA und SFX ok. Memory Card unter Retail und OpenBIOS ok. Levelauswahl-Mod ok. Ending-FMV ok (2026-10-19). Offen: Controller.
@@ -441,11 +445,15 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. D
   - Ein verwaister `CommandLineTools/usr/include/c++/v1` überdeckt die SDK-Header (`'string' file not found`).
   - `runtime.cmake` sucht seit #693 `python3` vor `python`. Die `Taskfile.yaml` setzt `-DPSX_PYTHON` trotzdem explizit (auf dem Mac `PYTHON=python3.12`).
   - Das Default-`python3` ist 3.9, also überall `python3.12`.
+  - Nach einer Workspace-Kopie von Linux: `build-*`, `.venv-hd`, Root-`hd-auto/` und Freeze-Dumps verwerfen, `compile_commands.json` als Symlink neu anlegen, `UV_PYTHON` in `.claude/settings.local.json` auf `/opt/homebrew/bin/python3.12` (Serena braucht 3.11+), Mac-Allowlist dort wiederherstellen.
+  - Ein veralteter `build-*/mods/bundled/` (z. B. aus einem kopierten Backup) fehlt im Katalog `psx.enhancement.internal-resolution`. Die Runtime fällt dann still auf 1x zurück (Log: „not in this build's mod catalog“, „internal resolution Native: 1x requested“), Launcher und `[[package]]`-Eintrag in `state.toml` helfen nicht. Abhilfe: `bundled/` und das Binary löschen, neu bauen (danach 17 Pakete). Nutzerdaten in `mods/` sind nur `texture-packs/` und `state.toml`.
+  - `pgrep -x Kula_World_Reco` findet die Runtime auf dem Mac nicht (die 15-Zeichen-Kürzung gilt nur unter Linux). Dort `pgrep -f Kula_World_Recompiled` nehmen.
+  - Bei `core.fileMode=false` im Submodul fehlen nach dem Checkout die Exec-Bits (`build_emitters.sh`: permission denied). Abhilfe: `chmod +x` für alle `100755`-Einträge aus `git ls-files -s`.
 - Der Launcher schreibt bei jedem Start `[controller] multitap_analog` in `game.toml`. Der Wert ist deshalb fest eingetragen, damit kein Diff entsteht.
 - Der Launcher schaltet BIOS-Call-HLE ein (`bios_backend=HLE`). Mit `--no-launcher` gilt der Default LLE. Für A/B gegen Beetle `PSX_BIOS_HLE=0` setzen.
 
 ## Build-Gotchas (Alpine/musl)
-Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task generate` läuft auch ohne Sony-BIOS. Dann regeneriert es nur OpenBIOS (Mac). `task all` erledigt Emitter, Generate und Dev-Build. Weitere Tasks (`boxart` und `launcher-art` siehe Launcher-Art):
+Bevorzugt über die `Taskfile.yaml` (go-task, `task --list`). `task generate` regeneriert ohne Sony-BIOS nur OpenBIOS. `task all` erledigt Emitter, Generate und Dev-Build. Weitere Tasks (`boxart` und `launcher-art` siehe Launcher-Art):
 - `run`, `run:dev`, `beetle`: Starten, headless mit `RUNNER="xvfb-run -a"`.
 - `smoke PORT=4380`, `test`, `lint`.
 - Auf dem Mac `PYTHON=python3.12`.
@@ -454,7 +462,7 @@ Der Ablauf als rohe Befehle (Begründung der Flags unten):
 ```sh
 ./psxrecomp/tools/ci/build_emitters.sh
 python3 psxrecomp/psxrecomp_cli.py generate --config game.toml --project-root . \
-    --disc disc/SCES01000.CUE --bios bios/SCPH1001.BIN --no-toolchain-download
+    --disc disc/SCES01000.CUE --no-toolchain-download
 cmake -S . -B build-dev -G Ninja -DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON
 cmake --build build-dev
 ```
@@ -467,10 +475,13 @@ cmake --build build-dev
 - Seit #694 schreibt `generate --bios` den Emitter-Stempel selbst. Ein schon vorhandenes BIOS-Backend überspringt das CLI aber („already present — skipping bios regen“). Nach einem Framework-Update meldet CMake dann „BIOS … STALE“. Abhilfe: `task generate -- --force-bios`.
   - Gotcha: Upstream führt `psxrecomp/generated/OpenBIOS.emitter.sha` mit CRLF, `--force-bios` schreibt sie mit LF neu (gleicher Hash). Das Submodul ist danach „modified“ und blockiert den nächsten Checkout. Abhilfe: `git -C psxrecomp checkout -- generated/OpenBIOS.emitter.sha`.
 - musl hat keine `getcontext`/`makecontext`/`swapcontext`, die `psx_fiber.c` braucht. `sudo apk add libucontext-dev` genügt, seit #693 erkennt CMake das und linkt `libucontext` selbst.
-- Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --bios bios/SCPH1001.BIN --disc disc/SCES01000.CUE --debug-port 4370`.
-- Generate dauert ca. 2 min (569 Shards, 31 Mio. Zeilen C, ~950 MB). Der Runtime-Build dauert auf 8 Kernen ca. 23 min.
+- Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --disc disc/SCES01000.CUE --debug-port 4370` (OpenBIOS).
+- Generate dauert ca. 2 min (seit dem Framework-Update 129 Shards, 8774 Funktionen, ~167 MB; vorher 569 Shards, ~950 MB). Der Runtime-Build dauert auf 8 Kernen ca. 7,5 min (vorher 23 min).
+- Gotcha Framework-Update: Generate löscht alte Shards nicht. Liegen welche ohne `psx_native_span.h` herum, bricht CMake mit „Regenerate game sources with native span support“ ab. Abhilfe: `rm -rf generated` und neu generieren.
+- `task test` braucht für die HD-Tests Pillow und xxhash: `task test PYTHON=.venv-hd/bin/python`.
+- Gotcha: `pkill -f Kula_World…` trifft auch die eigene Shell (der Befehl steht in deren Kommandozeile). Runtime per PID oder `pkill -x Kula_World_Reco` beenden.
 - Serena mit C (`clangd`): `sudo apk add clang-extra-tools`. Dazu `.claude/settings.local.json` mit `env.UV_PYTHON=/usr/bin/python3` (lokal, über `.git/info/exclude` ignoriert), danach `/mcp` reconnect. Unter uvs statischem musl-Python liefert `platform.libc_ver()` `('libc', '')`, Serena meldet dann „Unknown platform“. `compile_commands.json` im Root ist ein Symlink auf `build-dev/` (`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`).
-- Oracle: `psxrecomp/beetle-psx` (im Submodule gitignored) auf `5759277b` plus `docs/beetle_*.patch`, siehe `psxrecomp/docs/beetle-linux.md`.
+- Oracle: `psxrecomp/beetle-psx` (im Submodule gitignored) auf `5759277b` plus `docs/beetle_*.patch`, siehe `psxrecomp/docs/beetle-linux.md`. `task beetle` braucht `BIOS=<dump>`; seit das Sony-BIOS weg ist, ist ein Beetle-A/B nur mit eigenem Dump möglich (ob Beetle OpenBIOS bootet, ist ungeprüft).
 
 ## Smoke-Test
 - `tools/smoke_boot.py --port 4370|4380` liest `gameState`, `isDemoMode`, `levelTimeLeft` usw. (Adressen aus dem Decomp) und speichert Screenshots nach `analysis/smoke/`.

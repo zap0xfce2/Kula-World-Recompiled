@@ -1,7 +1,7 @@
 format_version = 5
 id = "psx.enhancement.pgxp"
 version = "1.0.0"
-name = "PGXP Precision (geometry + textures)"
+name = "PGXP Precision"
 author = "psxrecomp"
 description = "Sub-pixel vertex precision and perspective-correct texturing (the PGXP technique): the runtime shadows the GTE's full-precision projections and follows them to the GPU, so 3D polygons stop wobbling between whole pixels and large floor/wall textures stop warping. Visual-only unless its precise culling option is on: the game's own math, culling and readback see exactly what real hardware produces."
 resolver = "declarative"
@@ -18,7 +18,7 @@ game_id = "*"
 [[feature]]
 id = "pgxp"
 name = "PGXP Precision"
-description = "Enabled by default for Kula World. Corrections are validated per vertex against the exact packet words the game drew with and clamped to half a pixel, so 2D sprites and UI are never touched and a vertex the tracker cannot prove simply draws the faithful way. Most effective on a build compiled with the PGXP hook variant; on other builds coverage is reduced but never harmful. Needs supersampling >= 2 to be visible."
+description = "Enabled by default for Kula World. Corrections are validated per vertex against the exact packet words the game drew with and clamped to half a pixel, so 2D sprites and UI are never touched and a vertex the tracker cannot prove simply draws the faithful way. Most effective on a build compiled with the PGXP hook variant; on other builds coverage is reduced but never harmful. Needs an internal resolution of 2x or more (720p and up) to be visible: set one with the Internal Resolution mod if the game does not."
 group = "Visual"
 default_enabled = true
 
@@ -39,6 +39,24 @@ description = "Also decide which faces the game culls from the same full-precisi
 group = "Visual"
 type = "boolean"
 default = "false"
+
+[[option]]
+feature = "pgxp"
+id = "geometry"
+label = "Geometry correction"
+description = "Use subpixel vertex positions to reduce polygon wobble."
+group = "Visual"
+type = "boolean"
+default = "true"
+
+[[option]]
+feature = "pgxp"
+id = "perspective"
+label = "Perspective textures"
+description = "Correct texture perspective to reduce warping, independently of geometry correction."
+group = "Visual"
+type = "boolean"
+default = "true"
 
 [[plugin]]
 feature = "pgxp"

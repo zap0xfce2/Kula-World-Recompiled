@@ -38,7 +38,7 @@ All mods are switchable in the launcher (recomp-ui).
 |---|---|---|
 | Level Select | on | "Arcade" opens START / WORLD / LEVEL. Starting anywhere but world 1, level 1 counts as cheated: no save points, no high-score entry. |
 | Widescreen | on | Shows the world wider than 4:3 and follows the window up to 2.4:1 (21:9 ultrawide). The key and fruit HUD (with their pickup sparkles) move to the wide corners. The loading screen, high-score table and memory-card screens fill the side bands too, and the pill's motion trail covers the full width. The warning screen and FMVs stay 4:3. |
-| PGXP Precision | on | Stops the PS1 polygon wobble and texture warping (sub-pixel vertices, perspective-correct textures). The game defaults to 1080p internal resolution; the fix needs at least 2x. |
+| PGXP Precision | on | Stops the PS1 polygon wobble and texture warping (sub-pixel vertices, perspective-correct textures). The launcher's internal resolution defaults to 4x; the fix needs at least 2x. |
 | CD Speed | on, 2x | Shorter loading. |
 | Detail Distance | on | Far cubes keep their full texture and far coins and fruit keep their full model instead of a plain disc. The short blur while turning stays. |
 | HD Textures | off | Builds an HD texture pack from your own disc in the background while you play; it is used from the next start. Python is downloaded once (Linux glibc, macOS Apple Silicon, Windows). The optional AI model (CC BY-NC-SA 4.0, about 1.5 GB) needs its own switch; without it the pack is upscaled with Lanczos. No game data ships with the release. |
@@ -63,10 +63,9 @@ task build      # release build
 task run        # start with the launcher
 ```
 
-The `recomp-ui` submodule still points at a fork that carries
-[recomp-ui#110](https://github.com/RetroPortingToolKit/recomp-ui/pull/110) and
-[#114](https://github.com/RetroPortingToolKit/recomp-ui/pull/114). Both are merged
-upstream; the switch back waits for the next framework update.
+The `recomp-ui` submodule points at a fork that carries the launcher assets fix
+[recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171) on top
+of upstream `master`; it switches back once that PR is merged.
 
 The launcher ships with its own box art. `task boxart` fetches the original
 PAL cover from [libretro-thumbnails](https://github.com/libretro-thumbnails/libretro-thumbnails)
@@ -107,6 +106,7 @@ Next:
 - [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
 - [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)
 - [ ] Framework update: psxrecomp and recomp-ui back to upstream `master`
+- [ ] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171)); until it is merged, recomp-ui is pinned to the fix on our fork
 - [ ] Launcher colors per game (recomp-ui extension)
 - [ ] Controller test on macOS
 - [ ] Windows build

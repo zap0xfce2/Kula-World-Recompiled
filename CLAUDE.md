@@ -9,7 +9,7 @@ Vorlage für Projektstruktur, Mods und Launcher: [hercules-recompiled](https://g
 - Der Nutzer ist Softwareentwickler, IT-Experte und DevOps Engineer. Erkläre keine Grundlagen.
 - Code nicht ausführlich erklären, sondern nach Clean-Code-Prinzip kommentieren.
 - Default-Plattform ist Linux. Editor-Anweisungen immer mit `vi`, nie `nano`.
-- Git: Das Repo ist seit 2026-10-16 öffentlich. Die frühere Freigabe „ohne Rückfrage committen und pushen“ galt nur, solange es privat war; Commits und Pushes jetzt nur nach Rückfrage.
+- Git: Das Repo ist seit 2026-10-16 öffentlich. Commits und Pushes sind ohne Rückfrage erlaubt (Freigabe vom 2026-11-18).
   - Weiterhin nur mit Freigabe: Force-Push, Historie umschreiben, Sichtbarkeit ändern, Issues/PRs in fremden Repos.
   - Vor jedem Commit `git status` prüfen und sicherstellen, dass keine Spieldaten und keine Secrets dabei sind.
 - Tests laufen standardmäßig unter Linux (Xvfb + Debug-Server). Der Mac macht nur die Endabnahme und was unter Linux nicht geht (echte GPU-fps, Ton, Launcher, Fenster per Maus). Freigabe vom 2026-10-15.
@@ -417,7 +417,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - ~~Repo öffentlich schalten~~ (erledigt 2026-10-16, https://github.com/zap0xfce2/Kula-World-Recompiled)
    - ~~Entscheidung zu `generated/`~~ (erledigt 2026-11-18): bleibt gitignored, Releases liefern nur das kompilierte Binary
    - ~~README auf Projektstand bringen~~ (erledigt 2026-10-16, mit Screenshots unter `docs/images/`, Roadmap und KI-Hinweis)
-   - erneuter Check der ganzen Historie auf Spieldaten, Secrets und persönliche Pfade
+   - ~~erneuter Check der ganzen Historie auf Spieldaten, Secrets und persönliche Pfade~~ (erledigt 2026-11-18, 161 Commits, alle Branches): sauber. Binärdateien nur eigene Launcher-Grafiken, Upstream-Scaffold-Bilder und 4 Spiel-Screenshots in `docs/images/`. 30 Commits tragen Claude-Attribution, bleiben so (Entscheidung des Nutzers, kein Umschreiben der öffentlichen Historie).
    - RecompStore-Listing (später, recherchiert 2026-11-08):
      - Der Store (recomplauncher.com, leitet auf recompstore.com um) hostet nichts und installiert direkt aus den GitHub-Releases. Hercules ist nur über Release-Zips gelistet, ohne `recomplauncher.json`.
      - Voraussetzungen: Linux-Build auf glibc (der Alpine/musl-Build läuft dort nicht), macOS-arm64-Zip, Windows optional. System und CPU im Dateinamen (`…-Linux-x64.zip`). Keine Spieldaten und kein Original-Cover im Zip.

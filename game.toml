@@ -56,6 +56,9 @@ internal_resolution = "1080p"
 
 [controller]
 default_mode = "digital"
+# 40 %: the stick folds onto the D-pad per axis, so at 10 % a slightly diagonal
+# forward push also fires LEFT/RIGHT and Kula turns instead of rolling on
+deadzone = 13107
 # Persisted by the recomp-ui launcher on every start; kept here so launches leave no diff
 multitap_analog = true
 

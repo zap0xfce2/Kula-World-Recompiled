@@ -63,10 +63,9 @@ task build      # release build
 task run        # start with the launcher
 ```
 
-The `recomp-ui` submodule still points at a fork that carries
-[recomp-ui#110](https://github.com/RetroPortingToolKit/recomp-ui/pull/110) and
-[#114](https://github.com/RetroPortingToolKit/recomp-ui/pull/114). Both are merged
-upstream; the switch back waits for the next framework update.
+The `recomp-ui` submodule points at a fork that carries the launcher assets fix
+[recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171) on top
+of upstream `master`; it switches back once that PR is merged.
 
 The launcher ships with its own box art. `task boxart` fetches the original
 PAL cover from [libretro-thumbnails](https://github.com/libretro-thumbnails/libretro-thumbnails)

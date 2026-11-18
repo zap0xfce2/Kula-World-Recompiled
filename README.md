@@ -82,40 +82,40 @@ in `generated/` is not committed.
 ## Roadmap
 
 Done:
-- [x] Disc and EXE analysis; the EXE runs from KUSEG, which upstream had never tested
-- [x] Recompilation boots BIOS → title → menu → 3D level, with 0 dispatch misses
-- [x] A/B against psx-beetle: identical attract demo and timer values
-- [x] macOS build verified (50 fps, audio, memory card, launcher)
-- [x] OpenBIOS: plays without a retail BIOS, including memory card saves
-- [x] Level Select mod
-- [x] Widescreen mod up to 2.4:1 (21:9), HUD in the corners, edge culling widened on both sides
-- [x] CD Speed default (2x)
-- [x] Upstream reports: KUSEG result and portability findings for musl/macOS
-- [x] Upstream PR: widescreen band form for register compares ([psxrecomp#676](https://github.com/RetroPortingToolKit/psxrecomp/pull/676))
-- [x] Widescreen: filled side bands on still screens, HUD sparkles in the corners, pill trail at full width
-- [x] Upstream PR: framebuffer-feedback sprites in the bands ([psxrecomp#692](https://github.com/RetroPortingToolKit/psxrecomp/pull/692))
-- [x] Upstream PRs for the musl/macOS findings ([#693](https://github.com/RetroPortingToolKit/psxrecomp/pull/693), [#694](https://github.com/RetroPortingToolKit/psxrecomp/pull/694))
-- [x] Ending FMV plays
-- [x] Wobble fix: PGXP on by default
-- [x] Launcher: only memory card 1, own box art, brand mark and app icon
-- [x] Widescreen: sky reaches the wide corners
-- [x] HD textures, built in the background from the player's disc (Linux and macOS verified)
-- [x] Detail Distance: sharp far cubes and full item models (Linux and macOS verified)
-- [x] Upstream PRs: a game can hide memory card slot 2 and use its own brand mark in the launcher ([recomp-ui#110](https://github.com/RetroPortingToolKit/recomp-ui/pull/110), [#114](https://github.com/RetroPortingToolKit/recomp-ui/pull/114))
-- [x] Framework update: psxrecomp and recomp-ui on current upstream `master`
-- [x] Controller test on macOS (Xbox One pad over Bluetooth)
-- [x] Launcher colors per game: sandstone and sky
+1. [x] Disc and EXE analysis; the EXE runs from KUSEG, which upstream had never tested
+2. [x] Recompilation boots BIOS → title → menu → 3D level, with 0 dispatch misses
+3. [x] A/B against psx-beetle: identical attract demo and timer values
+4. [x] macOS build verified (50 fps, audio, memory card, launcher)
+5. [x] OpenBIOS: plays without a retail BIOS, including memory card saves
+6. [x] Level Select mod
+7. [x] Widescreen mod up to 2.4:1 (21:9), HUD in the corners, edge culling widened on both sides
+8. [x] CD Speed default (2x)
+9. [x] Upstream reports: KUSEG result and portability findings for musl/macOS
+10. [x] Upstream PR: widescreen band form for register compares ([psxrecomp#676](https://github.com/RetroPortingToolKit/psxrecomp/pull/676))
+11. [x] Widescreen: filled side bands on still screens, HUD sparkles in the corners, pill trail at full width
+12. [x] Upstream PR: framebuffer-feedback sprites in the bands ([psxrecomp#692](https://github.com/RetroPortingToolKit/psxrecomp/pull/692))
+13. [x] Upstream PRs for the musl/macOS findings ([#693](https://github.com/RetroPortingToolKit/psxrecomp/pull/693), [#694](https://github.com/RetroPortingToolKit/psxrecomp/pull/694))
+14. [x] Ending FMV plays
+15. [x] Wobble fix: PGXP on by default
+16. [x] Launcher: only memory card 1, own box art, brand mark and app icon
+17. [x] Widescreen: sky reaches the wide corners
+18. [x] HD textures, built in the background from the player's disc (Linux and macOS verified)
+19. [x] Detail Distance: sharp far cubes and full item models (Linux and macOS verified)
+20. [x] Upstream PRs: a game can hide memory card slot 2 and use its own brand mark in the launcher ([recomp-ui#110](https://github.com/RetroPortingToolKit/recomp-ui/pull/110), [#114](https://github.com/RetroPortingToolKit/recomp-ui/pull/114))
+21. [x] Framework update: psxrecomp and recomp-ui on current upstream `master`
+22. [x] Controller test on macOS (Xbox One pad over Bluetooth)
+23. [x] Launcher colors per game: sandstone and sky
 
 Next:
-- [ ] Help [#1](https://github.com/zap0xfce2/Kula-World-Recompiled/issues/1): on Manjaro (glibc) the launcher's Generate & Rebuild fails with "Toolchain ensure succeeded but bin/ is not usable for emitters"
-- [ ] Upstream PRs: per-game launcher colors ([recomp-ui#173](https://github.com/RetroPortingToolKit/recomp-ui/pull/173), [psxrecomp#975](https://github.com/RetroPortingToolKit/psxrecomp/pull/975)); until merged, both submodules are pinned to our forks
-- [ ] HD textures: test the background build on Windows
-- [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
-- [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)
-- [ ] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171)); until it is merged, recomp-ui is pinned to the fix on our fork
-- [ ] Windows build
-- [ ] Release packaging (macOS: `.app` bundle with `.icns`, so Dock and Cmd+Tab show the app icon)
-- [ ] Listing on RecompStore / RecompLauncher (needs a GitHub release; optional `recomplauncher.json`)
+24. [ ] Help [#1](https://github.com/zap0xfce2/Kula-World-Recompiled/issues/1): on Manjaro (glibc) the launcher's Generate & Rebuild fails with "Toolchain ensure succeeded but bin/ is not usable for emitters"
+25. [ ] Upstream PRs: per-game launcher colors ([recomp-ui#173](https://github.com/RetroPortingToolKit/recomp-ui/pull/173), [psxrecomp#975](https://github.com/RetroPortingToolKit/psxrecomp/pull/975)); until merged, both submodules are pinned to our forks
+26. [ ] HD textures: test the background build on Windows
+27. [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
+28. [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)
+29. [ ] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171)); until it is merged, recomp-ui is pinned to the fix on our fork
+30. [ ] Windows build
+31. [ ] Release packaging (macOS: `.app` bundle with `.icns`, so Dock and Cmd+Tab show the app icon)
+32. [ ] Listing on RecompStore / RecompLauncher (needs a GitHub release; optional `recomplauncher.json`)
 
 ## Known issues
 

@@ -111,7 +111,7 @@ Next:
 25. [ ] Upstream PRs: per-game launcher colors ([recomp-ui#173](https://github.com/RetroPortingToolKit/recomp-ui/pull/173), [psxrecomp#975](https://github.com/RetroPortingToolKit/psxrecomp/pull/975)); until merged, both submodules are pinned to our forks
 26. [ ] HD textures: test the background build on Windows
 27. [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
-28. [ ] HD textures: build progress in the launcher (recomp-ui; `hd-auto/progress.json` already exists)
+28. [x] HD textures: build status in the launcher mod row
 29. [ ] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171)); until it is merged, recomp-ui is pinned to the fix on our fork
 30. [ ] Windows build
 31. [ ] Release packaging (macOS: `.app` bundle with `.icns`, so Dock and Cmd+Tab show the app icon)

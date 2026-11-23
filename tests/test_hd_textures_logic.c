@@ -62,6 +62,29 @@ static void test_source_files_has_twelve_entries(void) {
     assert(HD_SOURCE_FILES[HD_SOURCE_FILE_COUNT - 1] != NULL);
 }
 
+static void test_status_up_to_date_model(void) {
+    char out[256];
+    hd_status_text(out, sizeof out, "up_to_date", 1);
+    assert(strcmp(out, "HD pack active (AI model)") == 0);
+}
+
+static void test_status_up_to_date_lanczos(void) {
+    char out[256];
+    hd_status_text(out, sizeof out, "up_to_date", 0);
+    assert(strcmp(out, "HD pack active (Lanczos)") == 0);
+}
+
+static void test_status_no_platform(void) {
+    char out[256];
+    hd_status_text(out, sizeof out, "no_platform", 0);
+    assert(strcmp(out, "HD pack not built: no portable Python for this platform") == 0);
+}
+
+static void test_status_runner_started_has_no_text(void) {
+    char out[256];
+    assert(hd_status_text(out, sizeof out, "runner_started", 0) == 0);
+}
+
 int main(void) {
     test_marker_matches_written_marker();
     test_marker_matches_model_marker();
@@ -74,6 +97,10 @@ int main(void) {
     test_lock_without_platform_returns_zero();
     test_lock_rejects_small_buffer();
     test_source_files_has_twelve_entries();
+    test_status_up_to_date_model();
+    test_status_up_to_date_lanczos();
+    test_status_no_platform();
+    test_status_runner_started_has_no_text();
     puts("hd_textures_logic: all tests passed");
     return 0;
 }

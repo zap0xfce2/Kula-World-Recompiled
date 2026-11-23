@@ -103,9 +103,37 @@ class Steps:
     build: Callable[[Path, Path | None], None]
 
 
+def status_line(state: str, fraction: float, error: str | None, with_model: bool) -> str:
+    """The one line the launcher shows under the mod (status_file in the manifest)."""
+    percent = int(fraction * 100)
+    kind = "AI model" if with_model and not error else "Lanczos"
+    if state == "running":
+        return f"HD pack: {percent} % built, continues while you play"
+    if state == "stopped":
+        return f"HD pack: {percent} % built, continues when you play"
+    if state == "failed":
+        return f"HD pack build failed ({error}), retries on the next start"
+    if state == "active":
+        return f"HD pack active ({kind})"
+    if with_model and error:
+        kind = f"Lanczos, AI model failed: {error}"
+    return f"HD pack ready ({kind}), active from the next start"
+
+
+def write_atomic(path: Path, text: str) -> None:
+    tmp = path.with_suffix(".tmp")
+    try:
+        tmp.write_text(text, encoding="utf-8")
+        tmp.replace(path)
+    except OSError:  # Windows: the launcher has it open; the next write wins
+        pass
+
+
 class Progress:
-    def __init__(self, path: Path) -> None:
-        self.path = path
+    def __init__(
+        self, path: Path, status: Path | None = None, with_model: bool = False
+    ) -> None:
+        self.path, self.status, self.with_model = path, status, with_model
         self.phase, self.part, self.state = "", 0.0, "running"
 
     def set(
@@ -116,6 +144,7 @@ class Progress:
         state: str = "running",
         error: str | None = None,
     ) -> None:
+        shown, state = state, "done" if state == "active" else state
         self.phase, self.part, self.state = phase, part, state
         names = [name for name, _ in PHASES]
         before = sum(w for _, w in PHASES[: names.index(phase)])
@@ -133,12 +162,9 @@ class Progress:
             "error": error,
             "updated": int(time.time()),
         }
-        tmp = self.path.with_suffix(".tmp")
-        try:
-            tmp.write_text(json.dumps(data))
-            tmp.replace(self.path)
-        except OSError:  # Windows: the launcher has it open; the next write wins
-            pass
+        write_atomic(self.path, json.dumps(data))
+        if self.status:
+            write_atomic(self.status, status_line(shown, fraction, error, self.with_model) + "\n")
 
 
 def log(message: str) -> None:
@@ -672,15 +698,16 @@ def cleanup(data: Path) -> None:
 
 def build_if_needed(
     args: argparse.Namespace, data: Path, prog: Progress, logf: IO[str]
-) -> str | None:
-    """Checked before any setup: a launcher start with a current pack costs nothing."""
+) -> tuple[bool, str | None]:
+    """(built, model error). Checked before any setup: a current pack costs nothing."""
     if not args.disc.exists():
         raise Failed("disc", str(args.disc))
     if not needs_build(args.pack, current_marker(args.with_model)):
         log("pack is up to date")
-        return None
+        prog.set("build", 1.0, state="active")
+        return False, None
     check_space(args, data)
-    return run_phases(args.with_model, real_steps(args, data, prog, logf))
+    return True, run_phases(args.with_model, real_steps(args, data, prog, logf))
 
 
 def main() -> int:
@@ -692,11 +719,11 @@ def main() -> int:
         return 0  # already running
     logf = open(data / "hd-build.log", "a", buffering=1, encoding="utf-8")
     sys.stdout = sys.stderr = logf
-    prog = Progress(data / "progress.json")
+    prog = Progress(data / "progress.json", data / "status.txt", args.with_model)
     detach(args, prog)
     log(f"HD build: disc {args.disc}, pack {args.pack}, model {args.with_model}")
     try:
-        error = build_if_needed(args, data, prog, logf)
+        built, error = build_if_needed(args, data, prog, logf)
     except Failed as failure:
         log(f"failed: {failure}")
         prog.set(prog.phase or "python", prog.part, state="failed", error=failure.code)
@@ -705,6 +732,8 @@ def main() -> int:
         log(f"failed: {failure!r}")
         prog.set(prog.phase or "python", prog.part, state="failed", error="failed")
         return 1
+    if not built:
+        return 0
     prog.set("build", 1.0, state="done", error=error)
     log("HD pack installed; removing the build files")
     cleanup(data)

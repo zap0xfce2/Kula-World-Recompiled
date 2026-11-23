@@ -67,6 +67,29 @@ static int data_path(char* out, const char* relative) {
            beside_exe(out, joined);
 }
 
+#define COUNTER_PREFIX "kula.hd-textures."
+#define STATUS_FILE "status.txt"
+
+/* The launcher shows this line under the mod (status_file in the manifest). */
+static void write_status(const char* counter) {
+    char text[256], path[PATH_SIZE], dir[PATH_SIZE];
+    const size_t prefix = strlen(COUNTER_PREFIX);
+    if (strncmp(counter, COUNTER_PREFIX, prefix) == 0) counter += prefix;
+    if (!hd_status_text(text, sizeof text, counter, g_with_model) ||
+        !data_path(path, STATUS_FILE) || !beside_exe(dir, DATA_DIR))
+        return;
+    SDL_CreateDirectory(dir);
+    FILE* f = fopen(path, "w");
+    if (!f) return;
+    fprintf(f, "%s\n", text);
+    fclose(f);
+}
+
+static void count(const char* counter) {
+    psx_mod_counter_add(counter, 1);
+    write_status(counter);
+}
+
 static int option_model(void) {
     char value[8];
     return psx_mod_option_value(PLUGIN_ID, FEATURE_ID, "model", value, sizeof value) &&
@@ -211,20 +234,20 @@ static int SDLCALL setup_worker(void* unused) {
 static void report_worker(void) {
     const int event = SDL_SetAtomicInt(&g_event, EV_NONE);
     if (event <= EV_NONE || event >= EV_COUNT) return;
-    psx_mod_counter_add(EVENT_NAMES[event], 1);
+    count(EVENT_NAMES[event]);
     if (event != EV_RUNNER_STARTED) fprintf(stderr, "%s\n", EVENT_NAMES[event]);
 }
 
 /* Disc reads need the emulation thread; downloads and process starts do not. */
 static void start_build(void) {
     if (!extract_sources()) {
-        psx_mod_counter_add("kula.hd-textures.extract_failed", 1);
+        count(COUNTER_PREFIX "extract_failed");
         fprintf(stderr, "kula.hd-textures.extract_failed\n");
         return;
     }
     SDL_Thread* worker = SDL_CreateThread(setup_worker, "kula-hd-setup", NULL);
     if (!worker) {
-        psx_mod_counter_add(EVENT_NAMES[EV_RUNNER_FAILED], 1);
+        count(EVENT_NAMES[EV_RUNNER_FAILED]);
         return;
     }
     SDL_DetachThread(worker);
@@ -236,7 +259,7 @@ static void on_vblank(void) {
     g_checked = 1;
     g_with_model = option_model();
     if (pack_is_current()) {
-        psx_mod_counter_add("kula.hd-textures.up_to_date", 1);
+        count(COUNTER_PREFIX "up_to_date");
         return;
     }
     start_build();

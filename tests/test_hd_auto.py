@@ -24,6 +24,7 @@ from hd.hd_auto import (
     run_phases,
     current_marker,
     single_instance,
+    status_line,
     tool_version,
 )
 from hd import hd_auto
@@ -69,6 +70,61 @@ class AutoTest(unittest.TestCase):
         Progress(self.tmp / "p.json").set("model", 0.5)
         data = json.loads((self.tmp / "p.json").read_text())
         self.assertAlmostEqual(data["fraction"], round((0.3 + 1.5 + 0.2) / 100, 4))
+
+    def test_status_line_running(self) -> None:
+        self.assertEqual(
+            status_line("running", 0.416, None, True),
+            "HD pack: 41 % built, continues while you play",
+        )
+
+    def test_status_line_stopped(self) -> None:
+        self.assertEqual(
+            status_line("stopped", 0.416, None, True),
+            "HD pack: 41 % built, continues when you play",
+        )
+
+    def test_status_line_done_model(self) -> None:
+        self.assertEqual(
+            status_line("done", 1.0, None, True),
+            "HD pack ready (AI model), active from the next start",
+        )
+
+    def test_status_line_done_model_fallback(self) -> None:
+        self.assertEqual(
+            status_line("done", 1.0, "download", True),
+            "HD pack ready (Lanczos, AI model failed: download), active from the next start",
+        )
+
+    def test_status_line_done_lanczos(self) -> None:
+        self.assertEqual(
+            status_line("done", 1.0, None, False),
+            "HD pack ready (Lanczos), active from the next start",
+        )
+
+    def test_status_line_failed(self) -> None:
+        self.assertEqual(
+            status_line("failed", 0.2, "disk", False),
+            "HD pack build failed (disk), retries on the next start",
+        )
+
+    def test_status_line_active(self) -> None:
+        self.assertEqual(status_line("active", 1.0, None, True), "HD pack active (AI model)")
+
+    def test_up_to_date_pack_reports_active(self) -> None:
+        pack = self.write_marker(current_marker(False))
+        disc = self.tmp / "disc.cue"
+        disc.write_text("")
+        args = hd_auto.argparse.Namespace(disc=disc, pack=pack, with_model=False)
+        prog = Progress(self.tmp / "progress.json", self.tmp / "status.txt", False)
+        built, _ = hd_auto.build_if_needed(args, self.tmp, prog, sys.stderr)
+        self.assertEqual(
+            (built, (self.tmp / "status.txt").read_text()),
+            (False, "HD pack active (Lanczos)\n"),
+        )
+
+    def test_progress_writes_status_file(self) -> None:
+        Progress(self.tmp / "progress.json", self.tmp / "status.txt", True).set("build", 0.5)
+        self.assertTrue((self.tmp / "status.txt").read_text().startswith("HD pack: "))
 
     def test_download_rejects_checksum_mismatch(self) -> None:
         source = self.tmp / "source.bin"

@@ -64,3 +64,28 @@ const char* hd_platform_key(void) {
     return NULL; /* e.g. musl: the portable Python needs glibc */
 #endif
 }
+
+typedef struct {
+    const char* counter;
+    const char* reason;
+} HdStatusReason;
+
+static const HdStatusReason HD_STATUS_REASONS[] = {
+    {"extract_failed", "could not read the disc"},
+    {"no_platform", "no portable Python for this platform"},
+    {"download_failed", "Python download failed"},
+    {"checksum_failed", "Python download is damaged"},
+    {"unpack_failed", "Python could not be unpacked"},
+    {"runner_failed", "the build could not start"},
+};
+
+int hd_status_text(char* out, size_t out_size, const char* counter, int with_model) {
+    if (strcmp(counter, "up_to_date") == 0)
+        return snprintf(out, out_size, "HD pack active (%s)",
+                        with_model ? "AI model" : "Lanczos") > 0;
+    for (size_t i = 0; i < sizeof HD_STATUS_REASONS / sizeof HD_STATUS_REASONS[0]; ++i)
+        if (strcmp(counter, HD_STATUS_REASONS[i].counter) == 0)
+            return snprintf(out, out_size, "HD pack not built: %s",
+                            HD_STATUS_REASONS[i].reason) > 0;
+    return 0;
+}

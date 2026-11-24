@@ -1,0 +1,27 @@
+format_version = 11
+id = "psx.integration.playable-replays"
+version = "1.0.0"
+name = "Playable Replays"
+author = "psxrecomp"
+description = "Save single-player gameplay as playable .psxrpl files. Separate from Input Recording support-session diagnostics."
+resolver = "declarative"
+save_compatibility = "shared"
+
+# Kula World override of the framework builtin (same id and version), only to
+# turn it off by default: replays drift out of sync for Kula (2026-11-24, see
+# CLAUDE.md), so each session would just leave a useless file in saves/replays.
+# Keep in sync with psxrecomp/mods/builtin/packages/psx.integration.playable-replays.
+[[target]]
+game_id = "*"
+
+[[feature]]
+id = "playable-replays"
+name = "Playable Replays (Single Player)"
+description = "Disabled by default for Kula World. Saves a playable .psxrpl file in saves/replays when you quit normally. Applies on the next launch. Recording stops with a message if Player 2 becomes active or the controller configuration changes; normal controls and native saves are unaffected. Netplay and special peripherals are not supported. Input Recording, when available, separately collects support-session diagnostics."
+group = "Diagnostics"
+default_enabled = false
+
+[[plugin]]
+feature = "playable-replays"
+id = "psx.playable-replays"
+netplay = "host_only"

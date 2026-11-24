@@ -131,3 +131,6 @@ starvation_dump.jsonl
 
 # Local qDrover board
 /qdrover.json
+
+# Wine prefix for task run:win
+/.wine-kula/

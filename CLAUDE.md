@@ -445,8 +445,14 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Einreichen macht der Nutzer per Formular `recompstore.com/submit?platform=pc`. Pflicht ist ein Screenshot aus dem Spiel, „AI-assisted“ mit ja beantworten.
      - Offene Entscheidungen: erstes Release ohne Windows, mit oder ohne `recomplauncher.json`. Entschieden: Das Release enthält das aus `generated/` kompilierte Binary, `generated/` selbst nicht.
 
-## Windows (Plan, 2026-11-24)
-Kein Windows-Rechner vorhanden. Weg: Cross-Compile mit MinGW unter Linux (Disc liegt lokal), erste Prüfung per Wine unter Xvfb, für die Windows-Zweige des HD-Runners (Punkt 26) eine Windows-VM (90-Tage-Testversion, QEMU, Software-Renderer). Die Endabnahme (fps, Controller, Ton) macht der Nutzer auf einem geliehenen Gaming-PC, sobald es ein Windows-Bundle gibt.
+## Windows
+Kein Windows-Rechner vorhanden. Weg: Cross-Compile mit MinGW unter Linux, Prüfung per Wine unter Xvfb. Für die Windows-Zweige des HD-Runners (Punkt 26) eine Windows-VM (90-Tage-Testversion, QEMU, Software-Renderer). Die Endabnahme (fps, Controller, Ton) macht der Nutzer auf einem geliehenen Gaming-PC, sobald es ein Windows-Bundle gibt.
+- Anleitung: `docs/BUILD_WINDOWS.md`. Tasks `build:win` (nach `build-win/`, Toolchain `psxrecomp/cmake/toolchain-mingw-w64.cmake`, `-DPSXRECOMP_BIOS_STEMS=OpenBIOS`, Debug-Server an) und `run:win` (Wine, Präfix `.wine-kula/`, gitignored). Pakete: `sudo apk add mingw-w64-gcc wine` (GCC 15.2, Wine 11.0).
+- Stand 2026-11-24 (Punkt 30, `main` nach `228e036`): Build ohne Fehler, ohne Anpassungen an Framework oder Mods. SDL3 3.4.10, zlib und libwebp baut CMake selbst. Die Exe (46 MB) importiert nur System-DLLs (UCRT), `kula.ico` steckt per `windres` in `.rsrc` (6 Größen). Unter Wine/Xvfb: Smoke `demo_gameplay_reached`, Demo 1 endet mit 3603, 0 Misses, Widescreen und HUD-Anker aktiv. Launcher (X11-Capture): Box-Art, Logo, Kula-Farben, Schrift, nur Karte 1, „Disc verified“.
+- Ungeprüft (braucht echtes Windows): fps auf echter GPU, Ton, Controller, Launcher-PLAY ins Spiel, HD-Hintergrundbau (`curl.exe`/`tar.exe` ab Windows 10 1803, Python, Modell).
+- Gotcha: Liegt `assets/launcher/original/boxart.tga` (urheberrechtlich geschützt) vor, landet es auch im Windows-Build. Für ein Bundle zum Weitergeben vorher entfernen und neu konfigurieren.
+- Gotcha: Der Framework-Release-Packager (`package_title_release.ps1`) baut die Windows-ZIP nur auf einem Windows-Host. Für Punkt 31 also entweder Windows-VM oder eigenes Packen des `build-win/`-Ordners.
+- Beenden eines Wine-Laufs: `WINEPREFIX=… wineserver -k` (beendet auch den Launcher).
 
 ## macOS
 Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Der Mac-Workspace ist seit 2026-11-18 eine Kopie des Linux-Workspace, `origin` per HTTPS.

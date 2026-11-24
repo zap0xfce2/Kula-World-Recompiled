@@ -28,7 +28,7 @@ emulator.
 |---|---|
 | Linux (x86-64, tested on Alpine/musl) | builds and runs; tested headless under Xvfb |
 | macOS (Apple Silicon, M1 Pro) | builds and runs at 50 fps; audio, memory card, launcher, keyboard and gamepad verified |
-| Windows | not tested |
+| Windows (x64) | cross-built with MinGW-w64; boots to the demo under Wine, launcher works; not yet tested on a real Windows PC |
 
 ## Mods
 
@@ -51,6 +51,7 @@ All mods are switchable in the launcher (recomp-ui).
 - [go-task](https://taskfile.dev), CMake, Ninja, a C/C++ compiler, SDL3, Python 3.11+.
   - Alpine: `apk add cmake samurai pkgconf sdl3-dev mesa-dev linux-headers libucontext-dev`
   - macOS: see [docs/BUILD_MACOS.md](docs/BUILD_MACOS.md)
+  - Windows: cross build from Linux, see [docs/BUILD_WINDOWS.md](docs/BUILD_WINDOWS.md)
 
 ## Build
 
@@ -105,12 +106,12 @@ Done:
 28. [x] HD textures: build status in the launcher mod row
 25. [x] Upstream PRs: per-game launcher colors and the mod feature status line ([recomp-ui#173](https://github.com/RetroPortingToolKit/recomp-ui/pull/173), [psxrecomp#1001](https://github.com/RetroPortingToolKit/psxrecomp/pull/1001))
 27. [x] HD textures: hourglass sand levels and the menu/level-end graphics stored compressed in the EXE
+30. [x] Windows build (MinGW-w64 cross build, verified under Wine)
 29. [x] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171))
 
 Next:
 24. [ ] Help [#1](https://github.com/zap0xfce2/Kula-World-Recompiled/issues/1): on Manjaro (glibc) the launcher's Generate & Rebuild fails with "Toolchain ensure succeeded but bin/ is not usable for emitters"
 26. [ ] HD textures: test the background build on Windows
-30. [ ] Windows build
 31. [ ] Release packaging (macOS: `.app` bundle with `.icns`, so Dock and Cmd+Tab show the app icon)
 32. [ ] Listing on RecompStore / RecompLauncher (needs a GitHub release; optional `recomplauncher.json`)
 

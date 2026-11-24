@@ -65,6 +65,24 @@ tasks:
       - cmake -S . -B build-dev {{.CMAKE_FLAGS}} -DPSX_DEBUG_TOOLS=ON
       - cmake --build build-dev
 
+  build:win:
+    desc: Windows x64 cross build with MinGW-w64, OpenBIOS only, debug server on (build-win/)
+    cmds:
+      - >-
+        cmake -S . -B build-win -G Ninja -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_TOOLCHAIN_FILE=psxrecomp/cmake/toolchain-mingw-w64.cmake
+        -DPSXRECOMP_BIOS_STEMS=OpenBIOS -DPSX_DEBUG_TOOLS=ON
+      - cmake --build build-win
+
+  run:win:
+    desc: Start the Windows build under Wine (headless with RUNNER="xvfb-run -a"), launcher unless CLI_ARGS say otherwise
+    vars:
+      WINEPREFIX: '{{.WINEPREFIX | default ".wine-kula"}}'
+    cmds:
+      - >-
+        WINEPREFIX="$PWD/{{.WINEPREFIX}}" WINEDEBUG=-all
+        {{.RUNNER}} wine build-win/Kula_World_Recompiled.exe --disc {{.DISC}} {{.CLI_ARGS}}
+
   all:
     desc: Emitters, generate and dev build from a fresh checkout
     cmds:

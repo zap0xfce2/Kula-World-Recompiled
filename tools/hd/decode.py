@@ -14,7 +14,7 @@ from hd.names import TEXELS_PER_WORD, TextureKey, hash_words
 STP_BIT = 0x8000
 MIN_TEXELS = 16  # the runtime dumper's default threshold; smaller mipmaps gain nothing
 # Tiles too: fading, crumbling and glass-level cubes are drawn semi-transparent (decomp level_init.c).
-ST_KINDS = {"sprite", "tile"}
+ST_KINDS = {"sprite", "menu", "tile"}
 ALPHA_STP = 143
 ALPHA_OPAQUE = 255
 LOW_NIBBLE = bytes(b & 0x0F for b in range(256))

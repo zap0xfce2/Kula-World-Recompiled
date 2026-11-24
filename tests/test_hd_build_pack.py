@@ -88,6 +88,12 @@ class BuildPackTest(unittest.TestCase):
     def test_mipmaps_use_lanczos(self) -> None:
         self.assertIs(upscaler_for(tile(4, 8, 32), fake_model), lanczos4)
 
+    def test_menu_glass_text_uses_lanczos(self) -> None:
+        menu = Pairing(
+            Upload(0, 0, 4, 16, 4, bytes(128), "menu"), Clut(0, 0, bytes(32))
+        )
+        self.assertIs(upscaler_for(menu, fake_model), lanczos4)
+
     def test_full_tiles_use_the_model(self) -> None:
         self.assertIs(upscaler_for(tile(8, 32, 64), fake_model), fake_model)
 

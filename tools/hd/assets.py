@@ -13,7 +13,7 @@ class Upload:
     height: int
     depth: int  # 4 or 8 bits per texel
     words: bytes  # little-endian 16-bit words, row-major
-    kind: str  # "sky" | "sprite" | "tile" | "bonus_sky"
+    kind: str  # "sky" | "sprite" | "menu" | "tile" | "bonus_sky"
 
 
 @dataclass(frozen=True)

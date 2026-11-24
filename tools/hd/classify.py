@@ -7,6 +7,7 @@ from hd.contour import round_ui, upscale_alpha_nearest
 from hd.upscale import Upscaler, clear_cutout, fill_transparent
 
 TRANSPARENT_CLASSES = (0, 143)
+UI_KINDS = ("sprite", "menu")
 
 
 def classify(pair: Pairing, image: Image.Image) -> str:
@@ -14,7 +15,7 @@ def classify(pair: Pairing, image: Image.Image) -> str:
     if pair.upload.kind == "sky":
         return "sky"
     histogram = image.getchannel("A").histogram()
-    if pair.upload.kind == "sprite" and any(histogram[a] for a in TRANSPARENT_CLASSES):
+    if pair.upload.kind in UI_KINDS and any(histogram[a] for a in TRANSPARENT_CLASSES):
         return "ui"
     return "other"
 

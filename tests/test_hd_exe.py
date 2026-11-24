@@ -89,6 +89,10 @@ class MenuSpritesTest(unittest.TestCase):
         pairs = read_menu_sprites(exe_with_menu_archive([tim(4, 16)]))
         self.assertEqual(pairs[0].clut.colors, bytes(range(32)))
 
+    def test_menu_sprite_kind_is_menu(self) -> None:
+        pairs = read_menu_sprites(exe_with_menu_archive([tim(4, 16)]))
+        self.assertEqual(pairs[0].upload.kind, "menu")
+
     def test_both_archives_are_read(self) -> None:
         pairs = read_menu_sprites(exe_with_menu_archive([tim(4, 16), tim(8, 16)]))
         self.assertEqual(len(pairs), 4)

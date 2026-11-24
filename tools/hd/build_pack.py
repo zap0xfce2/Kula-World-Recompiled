@@ -37,7 +37,7 @@ from hd.tgi import read_bonus_sky, read_sky, read_tiles  # noqa: E402
 from hd.upscale import SCALE, Upscaler, lanczos4  # noqa: E402
 from psxdisc import PVD_LBA, RAW_SECTOR, USER_DATA_OFFSET, Disc, parse_dir  # noqa: E402
 
-TOOL_VERSION = 8
+TOOL_VERSION = 9
 LANCZOS_NAME = "lanczos"
 MODEL_NAME = "m60"
 MODEL_CACHE = "model"
@@ -127,6 +127,9 @@ def read_input(source: Path) -> dict[str, bytes]:
 def upscaler_for(pair: Pairing, model: Upscaler) -> Upscaler:
     """Mipmaps are drawn only far away, once per fog palette: three quarters of the model work for no visible gain."""
     if pair.upload.kind == "tile" and pair.upload.depth == MIPMAP_DEPTH:
+        return lanczos4
+    # Low-contrast embossed glass text: the model draws hard contours and patterns into it (Mac A/B 2026-11-24).
+    if pair.upload.kind == "menu":
         return lanczos4
     return model
 

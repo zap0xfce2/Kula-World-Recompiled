@@ -61,7 +61,7 @@ def tim_pairing(tim: bytes) -> Pairing:
     x, y, width_words, height = struct.unpack_from("<4h", tim, TIM_SIZE - 4)
     words = tim[TIM_PIXELS : TIM_PIXELS + width_words * height * WORD_BYTES]
     clut = Clut(0, 0, tim[TIM_CLUT : TIM_CLUT + P4_CLUT_BYTES])
-    return Pairing(Upload(x, y, width_words, height, 4, words, "sprite"), clut)
+    return Pairing(Upload(x, y, width_words, height, 4, words, "menu"), clut)
 
 
 def hourglass_palette(exe: bytes, amount: int) -> list[int]:

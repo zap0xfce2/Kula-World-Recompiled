@@ -443,6 +443,9 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
      - Einreichen macht der Nutzer per Formular `recompstore.com/submit?platform=pc`. Pflicht ist ein Screenshot aus dem Spiel, „AI-assisted“ mit ja beantworten.
      - Offene Entscheidungen: erstes Release ohne Windows, mit oder ohne `recomplauncher.json`. Entschieden: Das Release enthält das aus `generated/` kompilierte Binary, `generated/` selbst nicht.
 
+## Windows (Plan, 2026-11-24)
+Kein Windows-Rechner vorhanden. Weg: Cross-Compile mit MinGW unter Linux (Disc liegt lokal), erste Prüfung per Wine unter Xvfb, für die Windows-Zweige des HD-Runners (Punkt 26) eine Windows-VM (90-Tage-Testversion, QEMU, Software-Renderer). Die Endabnahme (fps, Controller, Ton) macht der Nutzer auf einem geliehenen Gaming-PC, sobald es ein Windows-Bundle gibt.
+
 ## macOS
 Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. Der Mac-Workspace ist seit 2026-11-18 eine Kopie des Linux-Workspace, `origin` per HTTPS.
 - Rolle des Macs: reine Teststation für alles, was unter Linux ohne Display/GPU nicht geht (echte fps, Audio, Launcher-UI, Sichtprüfungen).

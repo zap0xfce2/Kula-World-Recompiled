@@ -1,8 +1,8 @@
 [submodule "psxrecomp"]
 	path = psxrecomp
-	url = https://github.com/zap0xfce2/psxrecomp.git
-	branch = feat/launcher-theme
+	url = https://github.com/RetroPortingToolKit/psxrecomp.git
+	branch = master
 [submodule "recomp-ui"]
 	path = recomp-ui
-	url = https://github.com/zap0xfce2/recomp-ui.git
-	branch = feat/game-theme-overrides
+	url = https://github.com/RetroPortingToolKit/recomp-ui.git
+	branch = master

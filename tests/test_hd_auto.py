@@ -108,7 +108,9 @@ class AutoTest(unittest.TestCase):
         )
 
     def test_status_line_active(self) -> None:
-        self.assertEqual(status_line("active", 1.0, None, True), "HD pack active (AI model)")
+        self.assertEqual(
+            status_line("active", 1.0, None, True), "HD pack active (AI model)"
+        )
 
     def test_up_to_date_pack_reports_active(self) -> None:
         pack = self.write_marker(current_marker(False))
@@ -123,7 +125,9 @@ class AutoTest(unittest.TestCase):
         )
 
     def test_progress_writes_status_file(self) -> None:
-        Progress(self.tmp / "progress.json", self.tmp / "status.txt", True).set("build", 0.5)
+        Progress(self.tmp / "progress.json", self.tmp / "status.txt", True).set(
+            "build", 0.5
+        )
         self.assertTrue((self.tmp / "status.txt").read_text().startswith("HD pack: "))
 
     def test_download_rejects_checksum_mismatch(self) -> None:

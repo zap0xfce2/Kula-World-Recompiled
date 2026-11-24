@@ -29,6 +29,7 @@ from hd.assets import Pairing  # noqa: E402
 from hd.classify import classify, upscale_file  # noqa: E402
 from hd.contour import check_classes  # noqa: E402
 from hd.decode import decode, keys_for  # noqa: E402
+from hd.exe import hourglass_pairings, read_menu_sprites  # noqa: E402
 from hd.ggi import read_sprites  # noqa: E402
 from hd.names import Rect, TextureKey, format_name  # noqa: E402
 from hd.sky import band_rects, build_sky  # noqa: E402
@@ -36,7 +37,7 @@ from hd.tgi import read_bonus_sky, read_sky, read_tiles  # noqa: E402
 from hd.upscale import SCALE, Upscaler, lanczos4  # noqa: E402
 from psxdisc import PVD_LBA, RAW_SECTOR, USER_DATA_OFFSET, Disc, parse_dir  # noqa: E402
 
-TOOL_VERSION = 7
+TOOL_VERSION = 8
 LANCZOS_NAME = "lanczos"
 MODEL_NAME = "m60"
 MODEL_CACHE = "model"
@@ -176,6 +177,8 @@ def collect_jobs(
 ) -> dict[str, Callable[[], Image.Image]]:
     """Every file of the pack by name; worlds share names, so duplicates collapse."""
     pairs = read_sprites(files[GGI_NAME])
+    exe = files[EXE_NAME]
+    pairs += hourglass_pairings(exe, pairs) + read_menu_sprites(exe)
     jobs: list[Job] = []
     for path in sorted(p for p in files if p.endswith(".TGI")):
         pairs += read_tiles(files[path]) + read_bonus_sky(files[path])

@@ -103,7 +103,9 @@ class Steps:
     build: Callable[[Path, Path | None], None]
 
 
-def status_line(state: str, fraction: float, error: str | None, with_model: bool) -> str:
+def status_line(
+    state: str, fraction: float, error: str | None, with_model: bool
+) -> str:
     """The one line the launcher shows under the mod (status_file in the manifest)."""
     percent = int(fraction * 100)
     kind = "AI model" if with_model and not error else "Lanczos"
@@ -164,7 +166,9 @@ class Progress:
         }
         write_atomic(self.path, json.dumps(data))
         if self.status:
-            write_atomic(self.status, status_line(shown, fraction, error, self.with_model) + "\n")
+            write_atomic(
+                self.status, status_line(shown, fraction, error, self.with_model) + "\n"
+            )
 
 
 def log(message: str) -> None:

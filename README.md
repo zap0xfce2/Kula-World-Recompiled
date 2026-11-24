@@ -63,11 +63,8 @@ task build      # release build
 task run        # start with the launcher
 ```
 
-Both submodules point at forks on top of upstream `master`: `recomp-ui` carries
-the launcher assets fix
-[recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171) and
-per-game launcher colors, `psxrecomp` passes those colors on. They switch back
-once the changes are merged upstream.
+Both submodules track upstream `master`. In a clone from before 2026-11-24 run
+`git submodule sync --recursive` once, the submodules used to point at forks.
 
 The launcher ships with its own box art. `task boxart` fetches the original
 PAL cover from [libretro-thumbnails](https://github.com/libretro-thumbnails/libretro-thumbnails)
@@ -106,13 +103,13 @@ Done:
 22. [x] Controller test on macOS (Xbox One pad over Bluetooth)
 23. [x] Launcher colors per game: sandstone and sky
 28. [x] HD textures: build status in the launcher mod row
+25. [x] Upstream PRs: per-game launcher colors and the mod feature status line ([recomp-ui#173](https://github.com/RetroPortingToolKit/recomp-ui/pull/173), [psxrecomp#1001](https://github.com/RetroPortingToolKit/psxrecomp/pull/1001))
+29. [x] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171))
 
 Next:
 24. [ ] Help [#1](https://github.com/zap0xfce2/Kula-World-Recompiled/issues/1): on Manjaro (glibc) the launcher's Generate & Rebuild fails with "Toolchain ensure succeeded but bin/ is not usable for emitters"
-25. [ ] Upstream PRs: per-game launcher colors ([recomp-ui#173](https://github.com/RetroPortingToolKit/recomp-ui/pull/173), [psxrecomp#975](https://github.com/RetroPortingToolKit/psxrecomp/pull/975)) and the mod feature status line ([psxrecomp#1001](https://github.com/RetroPortingToolKit/psxrecomp/pull/1001)); until merged, both submodules are pinned to our forks
 26. [ ] HD textures: test the background build on Windows
 27. [ ] HD textures: 84 palettes the game creates at runtime and 9 semi-transparent textures not found on the disc stay original
-29. [ ] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171)); until it is merged, recomp-ui is pinned to the fix on our fork
 30. [ ] Windows build
 31. [ ] Release packaging (macOS: `.app` bundle with `.icns`, so Dock and Cmd+Tab show the app icon)
 32. [ ] Listing on RecompStore / RecompLauncher (needs a GitHub release; optional `recomplauncher.json`)

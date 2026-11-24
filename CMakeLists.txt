@@ -43,8 +43,8 @@ if(NOT EXISTS "${KULA_BOXART}")
 endif()
 message(STATUS "Launcher box art: ${KULA_BOXART}")
 
-# PGXP hook flavor: the psx.enhancement.pgxp override in mods/preloaded turns it
-# on by default; without the hook build its coverage drops (ENHANCEMENTS.md G1.11).
+# PGXP hook flavor: game.toml [video] turns PGXP on by default; without the
+# hook build its coverage drops (ENHANCEMENTS.md G1.11).
 psxrecomp_add_game_runtime(psx-runtime
     PGXP
     PRELOADED_MODS_DIR "${PSX_PRELOADED_MODS}"

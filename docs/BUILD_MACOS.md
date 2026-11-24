@@ -13,8 +13,8 @@ Python 3.11+ is required. The default `python3` (CLT) is 3.9, so the steps below
 ## Get the repo
 The repo is private for now; you need read access. Submodules come from their public GitHub repos.
 ```sh
-git clone https://github.com/zap0xfce2/kula-world-recompiled.git
-cd kula-world-recompiled
+git clone https://github.com/zap0xfce2/kula-world-rerolled.git
+cd kula-world-rerolled
 git submodule update --init --recursive
 ```
 Copy your own disc next to it (never committed): `disc/SCES01000.BIN` + `disc/SCES01000.CUE`.
@@ -40,11 +40,11 @@ Times on an M1 Pro: emitters 15 s, generate 25 s, runtime build 2:35 min.
 
 ## Run
 ```sh
-./build-release/Kula_World_Recompiled
+./build-release/Kula_World_Rerolled
 ```
 If the recomp-ui launcher misbehaves, skip it:
 ```sh
-./build-release/Kula_World_Recompiled --no-launcher --bios bios/SCPH1001.BIN --disc disc/SCES01000.CUE
+./build-release/Kula_World_Rerolled --no-launcher --bios bios/SCPH1001.BIN --disc disc/SCES01000.CUE
 ```
 For tests with the debug server, configure an extra tree with `-DPSX_DEBUG_TOOLS=ON`, start with `--debug-port 4370`, then run `python3.12 tools/smoke_boot.py`.
 

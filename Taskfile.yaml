@@ -81,7 +81,7 @@ tasks:
     cmds:
       - >-
         WINEPREFIX="$PWD/{{.WINEPREFIX}}" WINEDEBUG=-all
-        {{.RUNNER}} wine build-win/Kula_World_Recompiled.exe --disc {{.DISC}} {{.CLI_ARGS}}
+        {{.RUNNER}} wine build-win/Kula_World_Rerolled.exe --disc {{.DISC}} {{.CLI_ARGS}}
 
   all:
     desc: Emitters, generate and dev build from a fresh checkout
@@ -93,13 +93,13 @@ tasks:
   run:
     desc: Start the release build with launcher
     cmds:
-      - '{{.RUNNER}} ./build-release/Kula_World_Recompiled'
+      - '{{.RUNNER}} ./build-release/Kula_World_Rerolled'
 
   run:dev:
     desc: Start the dev build without launcher, debug server on DEBUG_PORT
     cmds:
       - >-
-        {{.RUNNER}} ./build-dev/Kula_World_Recompiled --no-launcher
+        {{.RUNNER}} ./build-dev/Kula_World_Rerolled --no-launcher
         {{if .BIOS}}--bios {{.BIOS}} {{end}}--disc {{.DISC}} --debug-port {{.DEBUG_PORT}}
 
   beetle:

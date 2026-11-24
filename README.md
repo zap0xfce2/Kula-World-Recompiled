@@ -1,4 +1,4 @@
-# Kula World Recompiled
+# Kula World Rerolled
 
 A static recompilation of **Kula World** (PAL, SCES-01000) to native Linux, macOS and Windows (comming soon!), built on [psxrecomp](https://github.com/RetroPortingToolKit/psxrecomp)
 and [recomp-ui](https://github.com/RetroPortingToolKit/recomp-ui).
@@ -56,8 +56,8 @@ All mods are switchable in the launcher (recomp-ui).
 ## Build
 
 ```sh
-git clone --recursive https://github.com/zap0xfce2/kula-world-recompiled.git
-cd kula-world-recompiled
+git clone --recursive https://github.com/zap0xfce2/kula-world-rerolled.git
+cd kula-world-rerolled
 # put your disc (and optionally the BIOS) in place, then:
 task all        # emitters, generate, dev build with debug server
 task build      # release build
@@ -110,7 +110,7 @@ Done:
 29. [x] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171))
 
 Next:
-24. [ ] Help [#1](https://github.com/zap0xfce2/Kula-World-Recompiled/issues/1): on Manjaro (glibc) the launcher's Generate & Rebuild fails with "Toolchain ensure succeeded but bin/ is not usable for emitters"
+24. [ ] Help [#1](https://github.com/zap0xfce2/Kula-World-Rerolled/issues/1): on Manjaro (glibc) the launcher's Generate & Rebuild fails with "Toolchain ensure succeeded but bin/ is not usable for emitters"
 26. [ ] HD textures: test the background build on Windows
 31. [ ] Release packaging (macOS: `.app` bundle with `.icns`, so Dock and Cmd+Tab show the app icon)
 32. [ ] Listing on RecompStore / RecompLauncher (needs a GitHub release; optional `recomplauncher.json`)

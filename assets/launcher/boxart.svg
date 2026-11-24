@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Launcher box art for Kula World Recompiled. Original artwork (no game assets):
+<!-- Launcher box art for Kula World Rerolled. Original artwork (no game assets):
      a beach ball resting on a sandstone cube against the sky. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="712" viewBox="0 0 512 712">
   <defs>
@@ -63,5 +63,5 @@
 
   <text x="256" y="676" text-anchor="middle" font-family="Open Sans" font-weight="800"
         font-size="40" fill="#ffffff" stroke="#123a73" stroke-width="5" paint-order="stroke"
-        letter-spacing="6">RECOMPILED</text>
+        letter-spacing="6">REROLLED</text>
 </svg>

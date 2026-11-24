@@ -9,7 +9,7 @@ if(NOT EXISTS "${PSXRECOMP_ROOT}/runtime/runtime.cmake")
         "If psxrecomp/ is not a submodule, set -DPSXRECOMP_ROOT=<path-to-psxrecomp>.")
 endif()
 
-project(Kula_World_Recompiled LANGUAGES C CXX)
+project(Kula_World_Rerolled LANGUAGES C CXX)
 
 # --- Opt-in product surfaces (OFF by default in the framework) -------------
 # Scaffold prompts / flags fill these. Without recomp-ui, PSX_RECOMP_UI is OFF.
@@ -51,7 +51,7 @@ psxrecomp_add_game_runtime(psx-runtime
     # ENABLE_NETPLAY_IF_PRESENT
     # NETPLAY_LOBBY_URL "ws://netplay.retcomm.net:8765"
     ENABLE_SETUP_WIZARD
-    WINDOW_TITLE "Kula World Recompiled"
+    WINDOW_TITLE "Kula World Rerolled"
     DEFAULT_GAME_CONFIG_PATH "game.toml"
     MAX_PLAYERS 2
     # Kula only uses memory card port 1 (decomp: MemCardAccept(0)).

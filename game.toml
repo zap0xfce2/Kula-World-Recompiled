@@ -42,7 +42,7 @@ mod_function_entry_funcs = ["0x000491a8", "0x0004c09c", "0x00017ae8", "0x0001d9b
                             "0x00020b30", "0x000563c4", "0x000431b8"]
 
 [runtime]
-window_title = "Kula World Recompiled"
+window_title = "Kula World Rerolled"
 memcard_dir = "saves"
 overlay_cache = true
 

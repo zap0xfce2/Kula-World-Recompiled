@@ -1,4 +1,4 @@
-# CLAUDE.md – Kula World Recompiled
+# CLAUDE.md – Kula World Rerolled
 
 Statischer Recomp von **Kula World (PAL, SCES-01000)** zu einer nativen Linux/Windows-Anwendung
 auf Basis von [psxrecomp](https://github.com/RetroPortingToolKit/psxrecomp).
@@ -23,7 +23,7 @@ keine extrahierten Assets und keine Disassembly mit Original-Bytes.
 `disc/`, `bios/` und `generated/` gehören in `.gitignore`.
 
 ## Stand (Grundlage 2026-10-15, laufend ergänzt bis 2026-10-24)
-Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-recompiled`, seit 2026-10-16 öffentlich). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
+Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `github.com/zap0xfce2/kula-world-rerolled`, seit 2026-10-16 öffentlich). **KUSEG-Smoke-Test bestanden**, Details und A/B-Tabelle in `NOTES.md`.
 - Submodule: Basis ist Upstream-`master` von RetroPortingToolKit. `main` pinnt seit dem Framework-Update (in `main` seit 2026-11-18, Merge `6d98a81`) `psxrecomp` `da9be047` und `recomp-ui` `b54c7eb`.
 - Submodule (seit 2026-11-24, Branch `chore/upstream-submodules`): beide wieder auf Upstream-`master` von RetroPortingToolKit, psxrecomp `76c56124`, recomp-ui `70f4e01`. Alle eigenen PRs sind gemergt (recomp-ui#171, #173; psxrecomp#1001; die Launcher-Farben übernahm der Maintainer als `1880ffb6f`, #975 geschlossen). Bestehende Klone brauchen einmal `git submodule sync --recursive`. Linux geprüft: 130 Python- und 5 C-Tests, Smoke `demo_gameplay_reached`, 0 Misses, PGXP aktiv. Mac-Abnahme (2026-11-24, OpenBIOS): Launcher-Farben, nur Karte 1, PGXP-Seite mit beiden Korrekturen an, Mods-Seite, HD-Statuszeile (im Detailbereich rechts, nicht in der Liste), 50 fps, Widescreen 16:9, Levelauswahl W3/L5, PGXP über Settings aus und an, Smoke 3603, 0 Misses. Die alte Mod-Wahl 1080p übernimmt die Migration nicht, Settings zeigen 4x (passt zur Entscheidung vom 2026-11-18). Neu im Katalog und standardmäßig an: `psx.integration.playable-replays` (schreibt `saves/replays/*.psxrpl`). Test 2026-11-24 (Mac-Aufnahme W1/L1 ab Power-on, `--no-launcher`, HD aus): Wiedergabe weicht selbst auf dem Mac ab (Frame 960, core+aux+ext, 15 RAM-Seiten), unter Linux ab Frame 600 (core+av, 43 Seiten), Endzyklus gleich. Ursache nicht untersucht (Kandidaten: Mod-Zustand außerhalb der Aufnahme, Hostzeit). Entscheidung des Nutzers: für Repros nicht nutzbar, weiter `press`-Skripte. Auf Wunsch des Nutzers standardmäßig aus: Override `mods/preloaded/packages/psx.integration.playable-replays` (`default_enabled = false`, bei Framework-Updates abgleichen). Eine schon gespeicherte Wahl in `state.toml` bleibt wirksam.
   - Framework-Update (Branch `chore/framework-update`, 2026-11-18): `psxrecomp` `da9be047`, `recomp-ui` auf dem Fork-Branch `fix/launcher-assets-dir-exe-dir` (`b54c7eb` = Upstream `ab72f8d` plus recomp-ui#171, siehe unten). Nach dem Merge von #171 `.gitmodules` auf Upstream-`master` zurückstellen. Beide nur zusammen: Upstream-recomp-ui hat seit `20ae77b` die `dynamic_resolution`-Felder aus den Launcher-Structs entfernt, `31df2e1e` greift ungeschützt darauf zu (Build-Fehler), neues psxrecomp nur hinter `RECOMP_LAUNCHER_HAS_*`-Guards.
@@ -34,7 +34,7 @@ Voranalyse abgeschlossen, Repo nach New Project Layout aufgesetzt (Remote `githu
   - Historie: Vom 2026-10-16 bis 2026-10-20 kam `psxrecomp` aus dem Fork (`sltu`-Bandform, dann Framebuffer-Feedback).
 - Scaffold-Optionen: recomp-ui + Setup-Wizard an; Netplay, CI-Workflow, Boxart aus
 - BIOS: nur das mitgelieferte OpenBIOS (Entscheidung 2026-11-18). Das Sony-BIOS (`SCPH1001.BIN`, MD5 `924e392ed05558ffdb115408c263dccf`) samt generiertem `SCPH1001_*`-Backend ist unter Linux gelöscht. CMake linkt SCPH1001 nur, wenn dessen generierte Quellen da sind, ein Flag ist nicht nötig. `task run:dev` startet ohne `--bios`, `BIOS=<dump>` bleibt optional.
-- 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Recompiled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D**. Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
+- 2026-10-15: Generate und Release-Build laufen (`build-release/Kula_World_Rerolled`). Der Boot unter Xvfb erreicht BIOS → Titel → Hauptmenü → **Demo-Modus in 3D**. Das ist der erste KUSEG-Lauf auf aktuellem Upstream-Codegen (`d67f0f93`).
   - Gemessen (`build-dev`, `tools/smoke_boot.py`): gleiche Demo-Abfolge und gleiche Endwerte wie psx-beetle, 0 Dispatch-Misses. Upstream gemeldet (#671) und in `SEGMENT_AWARE_CODE.md` §7 eingetragen (PR #695, gemergt).
 - **Abweichung von Upstream:** `generated/` bleibt dauerhaft gitignored (Upstream committet es). Entscheidung vom 2026-11-18: Der übersetzte Spielcode (951 MB C) kommt nie ins Repo, die README-Zusage „no recompiled game C“ bleibt. Releases enthalten nur das daraus kompilierte Binary.
 - `disc/kula-quest-jp/` enthält Kula Quest (Japan), nur als Referenz, nicht Teil des Builds.
@@ -434,7 +434,7 @@ Python-Tools, die Disc-Daten lesen, immer mit `python3 -I` starten.
    - ~~Kleinkram aus dem Review des Levelauswahl-Mods~~ (erledigt 2026-10-24): `g_calling_original` wird nach `LS_MAX_MISSED_VBLANKS` VBlanks zurückgesetzt, falls ein Render-Pass-Watchdog-longjmp den Reset übersprungen hat (Zähler `kula.level-select.guard_cleared`). Dazu Docstrings und einfache Reads in `check_level_select.py`, ein Assert pro C-Test, ein Test für `LS_ACT_MOVE` und ein Kommentar zur Annahme hinter `LS_MAX_MISSED_VBLANKS`.
      - `kula_widescreen.c` hat dasselbe Guard-Muster (`g_calling_original`) ohne diese Absicherung. Relevant erst, wenn Frame-Generierung (Render-Pass) für Kula aktiv wird.
 9. Veröffentlichung (Repo auf public stellen). Vorher:
-   - ~~Repo öffentlich schalten~~ (erledigt 2026-10-16, https://github.com/zap0xfce2/Kula-World-Recompiled)
+   - ~~Repo öffentlich schalten~~ (erledigt 2026-10-16, https://github.com/zap0xfce2/Kula-World-Rerolled)
    - ~~Entscheidung zu `generated/`~~ (erledigt 2026-11-18): bleibt gitignored, Releases liefern nur das kompilierte Binary
    - ~~README auf Projektstand bringen~~ (erledigt 2026-10-16, mit Screenshots unter `docs/images/`, Roadmap und KI-Hinweis)
    - ~~erneuter Check der ganzen Historie auf Spieldaten, Secrets und persönliche Pfade~~ (erledigt 2026-11-18, 161 Commits, alle Branches): sauber. Binärdateien nur eigene Launcher-Grafiken, Upstream-Scaffold-Bilder und 4 Spiel-Screenshots in `docs/images/`. 30 Commits tragen Claude-Attribution, bleiben so (Entscheidung des Nutzers, kein Umschreiben der öffentlichen Historie).
@@ -475,7 +475,7 @@ Nativer Build auf dem Mac (Apple Silicon), Anleitung in `docs/BUILD_MACOS.md`. D
   - Das Default-`python3` ist 3.9, also überall `python3.12`.
   - Nach einer Workspace-Kopie von Linux: `build-*`, `.venv-hd`, Root-`hd-auto/` und Freeze-Dumps verwerfen, `compile_commands.json` als Symlink neu anlegen, `UV_PYTHON` in `.claude/settings.local.json` auf `/opt/homebrew/bin/python3.12` (Serena braucht 3.11+), Mac-Allowlist dort wiederherstellen.
   - (Bis 2026-11-24, vor der Rückkehr der Einstellungs-Mods zu Spieler-Einstellungen) Ein veralteter `build-*/mods/bundled/` (z. B. aus einem kopierten Backup) fehlt im Katalog `psx.enhancement.internal-resolution`. Die Runtime fällt dann still auf 1x zurück (Log: „not in this build's mod catalog“, „internal resolution Native: 1x requested“), Launcher und `[[package]]`-Eintrag in `state.toml` helfen nicht. Abhilfe: `bundled/` und das Binary löschen, neu bauen (danach 17 Pakete). Nutzerdaten in `mods/` sind nur `texture-packs/` und `state.toml`.
-  - `pgrep -x Kula_World_Reco` findet die Runtime auf dem Mac nicht (die 15-Zeichen-Kürzung gilt nur unter Linux). Dort `pgrep -f Kula_World_Recompiled` nehmen.
+  - `pgrep -x Kula_World_Rero` findet die Runtime auf dem Mac nicht (die 15-Zeichen-Kürzung gilt nur unter Linux). Dort `pgrep -f Kula_World_Rerolled` nehmen.
   - Bei `core.fileMode=false` im Submodul fehlen nach dem Checkout die Exec-Bits (`build_emitters.sh`: permission denied). Abhilfe: `chmod +x` für alle `100755`-Einträge aus `git ls-files -s`.
 - Der Launcher schreibt bei jedem Start `[controller] multitap_analog` in `game.toml`. Der Wert ist deshalb fest eingetragen, damit kein Diff entsteht.
 - Der Launcher schaltet BIOS-Call-HLE ein (`bios_backend=HLE`). Mit `--no-launcher` gilt der Default LLE. Für A/B gegen Beetle `PSX_BIOS_HLE=0` setzen.
@@ -503,11 +503,11 @@ cmake --build build-dev
 - Seit #694 schreibt `generate --bios` den Emitter-Stempel selbst. Ein schon vorhandenes BIOS-Backend überspringt das CLI aber („already present — skipping bios regen“). Nach einem Framework-Update meldet CMake dann „BIOS … STALE“. Abhilfe: `task generate -- --force-bios`.
   - Gotcha: Upstream führt `psxrecomp/generated/OpenBIOS.emitter.sha` mit CRLF, `--force-bios` schreibt sie mit LF neu (gleicher Hash). Das Submodul ist danach „modified“ und blockiert den nächsten Checkout. Abhilfe: `git -C psxrecomp checkout -- generated/OpenBIOS.emitter.sha`.
 - musl hat keine `getcontext`/`makecontext`/`swapcontext`, die `psx_fiber.c` braucht. `sudo apk add libucontext-dev` genügt, seit #693 erkennt CMake das und linkt `libucontext` selbst.
-- Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Recompiled --no-launcher --disc disc/SCES01000.CUE --debug-port 4370` (OpenBIOS).
+- Release-Builds haben keinen Debug-Server. Für Tests deshalb `build-dev` mit `-DCMAKE_BUILD_TYPE=Release -DPSX_DEBUG_TOOLS=ON`. Start: `xvfb-run -a ./build-dev/Kula_World_Rerolled --no-launcher --disc disc/SCES01000.CUE --debug-port 4370` (OpenBIOS).
 - Generate dauert ca. 2 min (seit dem Framework-Update 129 Shards, 8774 Funktionen, ~167 MB; vorher 569 Shards, ~950 MB). Der Runtime-Build dauert auf 8 Kernen ca. 7,5 min (vorher 23 min).
 - Gotcha Framework-Update: Generate löscht alte Shards nicht. Liegen welche ohne `psx_native_span.h` herum, bricht CMake mit „Regenerate game sources with native span support“ ab. Abhilfe: `rm -rf generated` und neu generieren.
 - `task test` braucht für die HD-Tests Pillow und xxhash: `task test PYTHON=.venv-hd/bin/python`.
-- Gotcha: `pkill -f Kula_World…` trifft auch die eigene Shell (der Befehl steht in deren Kommandozeile). Runtime per PID oder `pkill -x Kula_World_Reco` beenden.
+- Gotcha: `pkill -f Kula_World…` trifft auch die eigene Shell (der Befehl steht in deren Kommandozeile). Runtime per PID oder `pkill -x Kula_World_Rero` beenden.
 - Serena mit C (`clangd`): `sudo apk add clang-extra-tools`. Dazu `.claude/settings.local.json` mit `env.UV_PYTHON=/usr/bin/python3` (lokal, über `.git/info/exclude` ignoriert), danach `/mcp` reconnect. Unter uvs statischem musl-Python liefert `platform.libc_ver()` `('libc', '')`, Serena meldet dann „Unknown platform“. `compile_commands.json` im Root ist ein Symlink auf `build-dev/` (`-DCMAKE_EXPORT_COMPILE_COMMANDS=ON`).
 - Oracle: `psxrecomp/beetle-psx` (im Submodule gitignored) auf `5759277b` plus `docs/beetle_*.patch`, siehe `psxrecomp/docs/beetle-linux.md`. `task beetle` braucht `BIOS=<dump>`; seit das Sony-BIOS weg ist, ist ein Beetle-A/B nur mit eigenem Dump möglich (ob Beetle OpenBIOS bootet, ist ungeprüft).
 
@@ -526,7 +526,7 @@ cmake --build build-dev
 - Lange Testsitzungen: `task freeze-timer` (`tools/freeze_timer.py`) hält den Level-Timer per `write_ram` voll (nur Dev-Build). `SDL_AUDIO_DRIVER=dummy` schaltet den Ton ab, das Spiel läuft normal weiter.
 - `write_ram` schreibt ein Byte pro Anfrage.
 - Vor jedem Lauf prüfen, dass kein alter Runtime-Prozess den Debug-Port hält (`pgrep -af Kula_World`). Verliert ein Prozess sein Xvfb, nimmt er weiter Verbindungen an, antwortet aber nicht mehr (Timeout bei `frame`), und reagiert nicht auf SIGTERM, dann `kill -9`.
-- Gotcha: `timeout N xvfb-run … Kula_World_Recompiled` beendet nur `xvfb-run`, die Runtime läuft weiter und hält den Port. Ein späterer Test verbindet sich dann still mit dem alten Prozess (erkennbar an einer hohen `frame`-Zahl direkt nach dem Start).
+- Gotcha: `timeout N xvfb-run … Kula_World_Rerolled` beendet nur `xvfb-run`, die Runtime läuft weiter und hält den Port. Ein späterer Test verbindet sich dann still mit dem alten Prozess (erkennbar an einer hohen `frame`-Zahl direkt nach dem Start).
 - Debug-Protokoll: eine Anfrage pro TCP-Verbindung. Frame-Nummer: Runtime über `frame`, Beetle im `ping`.
 - **`press`/`set_input` erwarten das Pad-Wort active-low** (`0xFFFF` = nichts gedrückt). Kreuz drücken heißt also `0xFFFF ^ 0x4000`. Bits: `PAD_*` im Decomp `include/common.h`.
 - Spielstart per Eingabe: Kreuz → Untermenü (`curMenu` 3) → Kreuz → 1-Spieler-Arcade (Welt 0, Level 0). Spielerposition `playerCombinedPos` = `0x800A45D0` (8 Byte).

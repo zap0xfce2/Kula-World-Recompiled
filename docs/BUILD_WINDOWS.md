@@ -28,7 +28,7 @@ This configures `build-win/` with:
 
 CMake downloads SDL3 3.4.10, zlib and libwebp and builds them for Windows. Later builds use ccache.
 
-The result is `build-win/Kula_World_Recompiled.exe` (about 46 MB). It links SDL and the GCC
+The result is `build-win/Kula_World_Rerolled.exe` (about 46 MB). It links SDL and the GCC
 runtime statically and imports only system DLLs (UCRT `api-ms-win-crt-*`, `OPENGL32`, …),
 so it runs without extra DLLs. Next to it the build stages `bios/openbios.bin`, `game.toml`,
 the mods (`mods/bundled/`), the launcher assets and `tools/hd/` (HD texture runner).
@@ -36,7 +36,7 @@ the mods (`mods/bundled/`), the launcher assets and `tools/hd/` (HD texture runn
 The window and file icon `assets/launcher/kula.ico` is embedded through `windres`
 (`APP_ICON`, configure prints `APP_ICON=… (RC=x86_64-w64-mingw32-windres)`). Check it with:
 ```sh
-x86_64-w64-mingw32-windres --input build-win/Kula_World_Recompiled.exe --output-format=rc | grep -i icon
+x86_64-w64-mingw32-windres --input build-win/Kula_World_Rerolled.exe --output-format=rc | grep -i icon
 ```
 
 Box art: if `assets/launcher/original/boxart.tga` exists (`task boxart`, copyrighted, gitignored),
@@ -53,7 +53,7 @@ The Wine prefix lives in `.wine-kula/` (gitignored). Under Xvfb/llvmpipe start h
 Stop a Wine run with `WINEPREFIX=$PWD/.wine-kula wineserver -k`.
 
 ## On Windows
-Copy the whole `build-win/` folder, put the disc next to it and start `Kula_World_Recompiled.exe`.
+Copy the whole `build-win/` folder, put the disc next to it and start `Kula_World_Rerolled.exe`.
 The HD texture plugin downloads Python with the `curl.exe` and `tar.exe` that Windows 10 (1803)
 and later ship.
 

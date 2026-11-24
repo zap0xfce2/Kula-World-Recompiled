@@ -7,16 +7,16 @@
 
 static const PsxrecompCodegenHostConfig kCodegenConfig = {
     .display_name = "Kula World",
-    .project_root_env = "KULA_WORLD_RECOMPILED_PROJECT_ROOT",
-    .build_dir_env = "KULA_WORLD_RECOMPILED_BUILD_DIR",
-    .force_setup_env = "KULA_WORLD_RECOMPILED_FORCE_SETUP",
+    .project_root_env = "KULA_WORLD_REROLLED_PROJECT_ROOT",
+    .build_dir_env = "KULA_WORLD_REROLLED_BUILD_DIR",
+    .force_setup_env = "KULA_WORLD_REROLLED_FORCE_SETUP",
     .psxrecomp_cli_relpath = "psxrecomp/psxrecomp_cli.py",
     .seed_cfg_relpath = "game.toml",
     .game_toml_relpath = "game.toml",
     .gen_marker_relpath = "generated/SCES_010.00_dispatch.c",
     .build_dir_name = "build-release",
     .cmake_target = "psx-runtime",
-    .exe_basename = "Kula_World_Recompiled",
+    .exe_basename = "Kula_World_Rerolled",
     .prepare_note =
         "Uses your legal disc with the local psxrecomp SDK to generate "
         "BIOS + game C, then cmake --build. The product lives under "

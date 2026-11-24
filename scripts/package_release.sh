@@ -54,8 +54,8 @@ exec bash "${PACKAGER}" \
   --build-dir "${BUILD_DIR}" \
   --artifact "${ARTIFACT_TAG}" \
   --zip-prefix kwr \
-  --exe-name Kula_World_Recompiled \
-  --display-name "Kula World Recompiled" \
+  --exe-name Kula_World_Rerolled \
+  --display-name "Kula World Rerolled" \
   --recompiler-build "${RECOMPILER_BUILD}" \
   --version-env RELEASE_VERSION \
   --disc-hint "your legally owned Kula World disc" \

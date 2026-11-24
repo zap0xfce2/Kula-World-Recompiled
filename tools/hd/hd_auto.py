@@ -197,7 +197,7 @@ def ssl_context() -> ssl.SSLContext:
 
 def fetch(url: str, part: Path, report: Callable[[float], None]) -> None:
     request = urllib.request.Request(
-        url, headers={"User-Agent": "kula-world-recompiled-hd"}
+        url, headers={"User-Agent": "kula-world-rerolled-hd"}
     )
     try:
         with urllib.request.urlopen(

@@ -26,6 +26,7 @@ Done:
 21. [x] Framework update: psxrecomp and recomp-ui on current upstream `master`
 22. [x] Controller test on macOS (Xbox One pad over Bluetooth)
 23. [x] Launcher colors per game: sandstone and sky
+24. [x] Help [#1](https://github.com/zap0xfce2/Kula-World-Rerolled/issues/1): Manjaro players take the v1.0.0 Linux release, nothing to generate or rebuild
 25. [x] Upstream PRs: per-game launcher colors and the mod feature status line ([recomp-ui#173](https://github.com/RetroPortingToolKit/recomp-ui/pull/173), [psxrecomp#1001](https://github.com/RetroPortingToolKit/psxrecomp/pull/1001))
 27. [x] HD textures: hourglass sand levels and the menu/level-end graphics stored compressed in the EXE
 28. [x] HD textures: build status in the launcher mod row
@@ -35,5 +36,4 @@ Done:
 32. [x] RecompStore listing prepared: release v1.0.0 with `recomplauncher.json` (serial check, Redump-verified dump), Linux as tarball
 
 Next:
-24. [ ] Help [#1](https://github.com/zap0xfce2/Kula-World-Rerolled/issues/1): on Manjaro (glibc) the launcher's Generate & Rebuild fails with "Toolchain ensure succeeded but bin/ is not usable for emitters"
 26. [ ] HD textures: test the background build on Windows

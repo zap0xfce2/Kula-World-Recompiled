@@ -1,12 +1,13 @@
 Kula World Rerolled @VERSION@ (macOS, Apple Silicon)
 
-1. Keep "Kula World Rerolled.app" in this folder: saves/ and your settings live here.
-2. The app is not notarized, so macOS blocks it. Before the first start, open
-   Terminal in this folder and run once:
+1. Move "Kula World Rerolled.app" wherever you like, e.g. Applications.
+2. The app is not notarized, so macOS blocks the first start. Either click
+   "Open Anyway" in System Settings > Privacy & Security, or run once in Terminal:
      xattr -dr com.apple.quarantine "Kula World Rerolled.app"
-   ("Open Anyway" in System Settings is not enough: macOS then runs the app
-   from a read-only copy and settings cannot be saved.)
 3. Start the app and point it at your own Kula World disc (PAL, SCES-01000, BIN/CUE).
    The disc is never copied. No BIOS dump is needed: the bundled OpenBIOS (MIT) is used.
+
+Saves, settings and the optional HD texture pack live in
+~/Library/Application Support/Kula World Rerolled, so updating the app keeps them.
 
 Third-party notices are in licenses/.

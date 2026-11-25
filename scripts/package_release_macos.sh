@@ -50,7 +50,10 @@ APPDIR="${STAGE}/${APP_NAME}.app"
 # Without a bundle icon Dock and Cmd+Tab show the generic exec symbol.
 cp "${ROOT}/assets/launcher/kula.icns" "${APPDIR}/Contents/Resources/kula.icns"
 /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string kula" "${APPDIR}/Contents/Info.plist"
-# The icon changes the sealed resources: sign again like the packager does.
+# Our entry point keeps player data in ~/Library/Application Support instead of the bundle.
+install -m 755 "${ROOT}/packaging/macos/launcher.sh" "${APPDIR}/Contents/MacOS/${APP_NAME}"
+command rm -rf "${STAGE}/saves"
+# Icon and entry point change the sealed resources: sign again like the packager does.
 codesign --force --sign - "${APPDIR}/Contents/MacOS/${BIN}"
 codesign --force --sign - "${APPDIR}"
 codesign --verify --deep "${APPDIR}"

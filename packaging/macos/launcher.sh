@@ -2,7 +2,8 @@
 # Bundle entry point (CFBundleExecutable). Player data must live outside the .app: the
 # bundle is signed, replaced on update, and read-only when macOS translocates it.
 RES="$(cd "$(dirname "$0")/../Resources" && pwd)"
-DATA="$HOME/Library/Application Support/Kula World Rerolled"
+# RecompLauncher passes its per-game data folder; started on its own, the usual macOS place.
+DATA="${RECOMPLAUNCHER_DATA:-$HOME/Library/Application Support/Kula World Rerolled}"
 mkdir -p "$DATA" || exit 1
 
 # Mirror the bundle's files as symlinks (the bundle path changes under translocation, so

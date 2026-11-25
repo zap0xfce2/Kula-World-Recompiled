@@ -41,6 +41,19 @@ enum {
     PARTICLE_PRIMS_PER_ENV = 2,
 };
 enum { HUD_EDGE_LEFT = -1, HUD_EDGE_RIGHT = 1 };
+/* Pause label ("LEVEL" + number) of PauseOrMainMenu: DrawStaticUiSprite and
+ * DrawTextFancyFont append to TSprite textDrawSprites[2][300] at x 20.., y 20.
+ * The pause submenus all draw further down, so the top row is only the label. */
+enum {
+    FN_PAUSE_OR_MAIN_MENU = 0x00047fa0u,
+    VAR_GAME_STATE = 0x800a2ec0u,
+    VAR_TEXT_CHAR_IDX = 0x800a3cbcu,
+    VAR_TEXT_DRAW_SPRITES = 0x800a5a1cu,
+    TEXT_SPRITES_PER_ENV = 300,
+    TSPRITE_X0 = 16,
+    TSPRITE_Y0 = 18,
+    PAUSE_LABEL_MAX_Y = 40,
+};
 /* Pill trail: TSprite lethargyEffectSprite[2][2], drawn while lethargyMode != 0. */
 enum {
     FN_DRAW_LETHARGY = 0x00020b30u,
@@ -168,6 +181,28 @@ static int on_process_particles(struct CPUState* cpu, uint32_t address) {
     if (g_calling_original) return 0;
     call_original(cpu, address);
     anchor_hud_particles();
+    return 1;
+}
+
+/* The paused level label sits top left like the keys, so it follows the left edge. */
+static void anchor_pause_label(uint32_t first, uint32_t end) {
+    const uint32_t env = psx_mod_read_word(VAR_WHICH_DRAW_ENV);
+    const int width = (int)psx_mod_read_word(VAR_DISPLAY_WIDTH);
+    for (uint32_t i = first; i < end && i < TEXT_SPRITES_PER_ENV; ++i) {
+        const uint32_t sprite = VAR_TEXT_DRAW_SPRITES + (env * TEXT_SPRITES_PER_ENV + i) * TSPRITE_SIZE;
+        const int x = (int16_t)psx_mod_read_half(sprite + TSPRITE_X0);
+        const int y = (int16_t)psx_mod_read_half(sprite + TSPRITE_Y0);
+        if (y < PAUSE_LABEL_MAX_Y && x < width / 2)
+            psx_mod_anchor_hud_primitive(sprite + SPRT_TAG_OFFSET, HUD_EDGE_LEFT);
+    }
+}
+
+static int on_pause_or_main_menu(struct CPUState* cpu, uint32_t address) {
+    if (g_calling_original) return 0;
+    const uint32_t first = psx_mod_read_word(VAR_TEXT_CHAR_IDX);
+    call_original(cpu, address);
+    if (psx_mod_read_word(VAR_GAME_STATE) != 0)  /* 0 = title menu, stays centred */
+        anchor_pause_label(first, psx_mod_read_word(VAR_TEXT_CHAR_IDX));
     return 1;
 }
 
@@ -333,6 +368,7 @@ PSX_MOD_CONSTRUCTOR(register_kula_widescreen) {
     (void)psx_mod_register_vblank_plugin(PLUGIN_ID, on_vblank);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_PROCESS_PARTICLES, on_process_particles);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_LETHARGY, on_draw_lethargy);
+    (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_PAUSE_OR_MAIN_MENU, on_pause_or_main_menu);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_BUTTON_BG, on_draw_button_bg);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_RENDER_BACKGROUND, on_render_background);
     (void)psx_mod_register_function_filter_plugin(PLUGIN_ID, FN_DRAW_SCORE_GRAPH, on_draw_score_graph);

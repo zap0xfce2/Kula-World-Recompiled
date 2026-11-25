@@ -72,6 +72,9 @@ PAL cover from [libretro-thumbnails](https://github.com/libretro-thumbnails/libr
 into `assets/launcher/original/` for your local build only (it is not part of
 this repository). Reconfigure and relink afterwards.
 
+Release zips (no game data inside) come from `task release:linux` (Docker), `task release:win`
+and, on a Mac, `task release:mac`; they land in `dist/`.
+
 `task --list` shows everything else (tests, lint, smoke test, the psx-beetle
 oracle, a level-timer freeze for long test sessions). On macOS pass
 `PYTHON=python3.12`. The first generate takes a few minutes; the recompiled C
@@ -108,11 +111,11 @@ Done:
 27. [x] HD textures: hourglass sand levels and the menu/level-end graphics stored compressed in the EXE
 30. [x] Windows build (MinGW-w64 cross build, verified under Wine)
 29. [x] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171))
+31. [x] Release zips: Linux x64 (glibc), Windows x64, macOS arm64 (`.app` with icon, player data in Application Support)
 
 Next:
 24. [ ] Help [#1](https://github.com/zap0xfce2/Kula-World-Rerolled/issues/1): on Manjaro (glibc) the launcher's Generate & Rebuild fails with "Toolchain ensure succeeded but bin/ is not usable for emitters"
 26. [ ] HD textures: test the background build on Windows
-31. [ ] Release packaging (macOS: `.app` bundle with `.icns`, so Dock and Cmd+Tab show the app icon)
 32. [ ] Listing on RecompStore / RecompLauncher (needs a GitHub release; optional `recomplauncher.json`)
 
 ## Known issues

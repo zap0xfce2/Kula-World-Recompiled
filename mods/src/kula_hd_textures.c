@@ -54,10 +54,19 @@ static int g_checked;
 static int g_with_model;
 static SDL_AtomicInt g_event;
 
-/* <exe dir>/<relative>; 0 when it does not fit. */
+/* <runtime root>/<relative>; 0 when it does not fit. Like the runtime's exe_dir_from_argv,
+ * the root is the folder of $APPIMAGE when set (AppImage, the macOS .app launcher's data
+ * folder), else the exe dir. */
 static int beside_exe(char* out, const char* relative) {
-    const char* base = SDL_GetBasePath();
-    const int n = snprintf(out, PATH_SIZE, "%s%s", base ? base : "", relative);
+    const char* appimage = getenv("APPIMAGE");
+    const char* slash = appimage ? strrchr(appimage, '/') : NULL;
+    int n;
+    if (slash) {
+        n = snprintf(out, PATH_SIZE, "%.*s%s", (int)(slash - appimage + 1), appimage, relative);
+    } else {
+        const char* base = SDL_GetBasePath();
+        n = snprintf(out, PATH_SIZE, "%s%s", base ? base : "", relative);
+    }
     return n > 0 && n < PATH_SIZE;
 }
 

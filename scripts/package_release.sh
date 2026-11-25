@@ -8,8 +8,9 @@
 #
 # Usage:
 #   scripts/package_release.sh <build-dir> <artifact-tag> [recompiler-build-dir]
+#   artifact-tag: Linux-x64 or Windows-x64 (system and CPU, as RecompStore expects)
 #
-# Writes: dist/kwr-<VERSION>-<artifact-tag>.zip
+# Writes: dist/Kula_World_Rerolled-<VERSION>-<artifact-tag>.zip
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -39,7 +40,7 @@ if [[ -n "${PSX_OVERLAY_CACHE_ROOT:-}" ]]; then
   EXTRA+=(--overlay-cache-root "${PSX_OVERLAY_CACHE_ROOT}")
 else
   EXTRA+=(--ship-without-overlay-cache-because \
-    "no disc at package time: the committed static AOT shard is compiled in and overlay_toolchain/ autocompiles the rest on the player's machine")
+    "Kula World streams no overlays (no Load/Exec in the EXE), the whole game is compiled in")
 fi
 # Extra docs shipped at the zip root (DISC.md tells players which dump works).
 for _doc in DISC.md; do
@@ -48,15 +49,39 @@ for _doc in DISC.md; do
   fi
 done
 
+# The original cover is copyrighted: only our own box art may ship.
+if ! cmp -s "${ROOT}/${BUILD_DIR}/assets/img/boxart.tga" "${ROOT}/assets/launcher/boxart.tga"; then
+  echo "error: ${BUILD_DIR} does not carry our own box art (original cover?); reconfigure with -DPSX_RELEASE_CHANNEL" >&2
+  exit 1
+fi
+# Kula World streams no overlays (no Load/Exec in the EXE), so the overlay compiler stays out.
+EXTRA+=(--no-overlay-toolchain)
+# HD texture runner (tools/hd), started by the kula.hd-textures plugin beside the exe.
+EXTRA+=(--runtime-dir tools)
+
 cd "${ROOT}"
-exec bash "${PACKAGER}" \
+bash "${PACKAGER}" --stage-only \
   --root "${ROOT}" \
   --build-dir "${BUILD_DIR}" \
   --artifact "${ARTIFACT_TAG}" \
-  --zip-prefix kwr \
+  --zip-prefix Kula_World_Rerolled \
   --exe-name Kula_World_Rerolled \
   --display-name "Kula World Rerolled" \
   --recompiler-build "${RECOMPILER_BUILD}" \
   --version-env RELEASE_VERSION \
   --disc-hint "your legally owned Kula World disc" \
   "${EXTRA[@]}"
+
+# The framework README describes overlay_toolchain/, which this release leaves out.
+VERSION="$(tr -d '[:space:]' <"${ROOT}/VERSION")"
+STAGE="${ROOT}/dist/stage-game-${ARTIFACT_TAG}"
+ZIP="${ROOT}/dist/Kula_World_Rerolled-${VERSION}-${ARTIFACT_TAG}.zip"
+sed -i '/^overlay_toolchain\//,$d' "${STAGE}/README.txt"
+cat >>"${STAGE}/README.txt" <<EOF
+HD Textures (off by default, see the launcher's Mods page) builds an HD pack
+from your disc in the background; tools/ holds its builder.
+EOF
+command rm -f "${ZIP}" "${ZIP}.sha256"
+python3 "${ROOT}/psxrecomp/tools/create_release_zip.py" --source "${STAGE}" --output "${ZIP}" >/dev/null
+(cd "${ROOT}/dist" && sha256sum "$(basename "${ZIP}")" >"$(basename "${ZIP}").sha256")
+echo "Wrote ${ZIP}"

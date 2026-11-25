@@ -28,6 +28,14 @@ cp "${BUILD}/game.toml" "${BUILD}/game_options.toml" "${SRC}/"
 cp -R "${BUILD}/tools" "${SRC}/tools"
 sed "s/@VERSION@/${VERSION}/" "${ROOT}/packaging/macos/START_HERE.txt" >"${SRC}/START_HERE.txt"
 
+# The packager calls python3 from PATH (mod channel filter needs 3.11+); the Mac's
+# default python3 is 3.9, so put the requested interpreter first.
+if [[ -n "${PYTHON:-}" ]]; then
+  mkdir -p "${OUT}/bin"
+  ln -sf "$(command -v "${PYTHON}")" "${OUT}/bin/python3"
+  export PATH="${OUT}/bin:${PATH}"
+fi
+
 bash "${ROOT}/psxrecomp/tools/package_release_macos.sh" \
   --repo "${SRC}" --build "${BUILD}" --bin "${BIN}" \
   --app-name "${APP_NAME}" --package "${BIN}" \
@@ -49,7 +57,7 @@ codesign --verify --deep "${APPDIR}"
 
 ZIP="${ROOT}/dist/${BIN}-${VERSION}-macOS-arm64.zip"
 rm -f "${ZIP}" "${ZIP}.sha256"
-# ditto keeps the symlinks and the signature intact.
-(cd "$(dirname "${STAGE}")" && ditto -c -k --sequesterRsrc --keepParent "$(basename "${STAGE}")" "${ZIP}")
+# ditto keeps the symlinks and the signature intact; --norsrc leaves out the __MACOSX/ tree.
+(cd "$(dirname "${STAGE}")" && ditto -c -k --norsrc --keepParent "$(basename "${STAGE}")" "${ZIP}")
 (cd "${ROOT}/dist" && shasum -a 256 "$(basename "${ZIP}")" >"$(basename "${ZIP}").sha256")
 echo "Wrote ${ZIP}"

@@ -121,7 +121,7 @@ tasks:
     cmds:
       - cmake -S . -B build-release-mac {{.RELEASE_FLAGS}} -DPSX_PYTHON="$(command -v {{.PYTHON}})"
       - cmake --build build-release-mac
-      - scripts/package_release_macos.sh build-release-mac
+      - PYTHON={{.PYTHON}} scripts/package_release_macos.sh build-release-mac
 
   all:
     desc: Emitters, generate and dev build from a fresh checkout

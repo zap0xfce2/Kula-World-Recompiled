@@ -75,13 +75,24 @@ bash "${PACKAGER}" --stage-only \
 # The framework README describes overlay_toolchain/, which this release leaves out.
 VERSION="$(tr -d '[:space:]' <"${ROOT}/VERSION")"
 STAGE="${ROOT}/dist/stage-game-${ARTIFACT_TAG}"
-ZIP="${ROOT}/dist/Kula_World_Rerolled-${VERSION}-${ARTIFACT_TAG}.zip"
 sed -i '/^overlay_toolchain\//,$d' "${STAGE}/README.txt"
 cat >>"${STAGE}/README.txt" <<EOF
 HD Textures (off by default, see the launcher's Mods page) builds an HD pack
 from your disc in the background; tools/ holds its builder.
 EOF
-command rm -f "${ZIP}" "${ZIP}.sha256"
-python3 "${ROOT}/psxrecomp/tools/create_release_zip.py" --source "${STAGE}" --output "${ZIP}" >/dev/null
-(cd "${ROOT}/dist" && sha256sum "$(basename "${ZIP}")" >"$(basename "${ZIP}").sha256")
-echo "Wrote ${ZIP}"
+# RecompLauncher / RecompStore read this beside the program.
+cp "${ROOT}/packaging/recomplauncher.json" "${STAGE}/"
+
+# RecompStore takes Linux builds as tarballs, everything else as zip.
+NAME="Kula_World_Rerolled-${VERSION}-${ARTIFACT_TAG}"
+if [[ "${ARTIFACT_TAG}" == Linux-* ]]; then
+  ARCHIVE="${ROOT}/dist/${NAME}.tar.gz"
+  command rm -f "${ARCHIVE}" "${ARCHIVE}.sha256"
+  python3 -I "${ROOT}/tools/make_release_tar.py" "${STAGE}" "${ARCHIVE}"
+else
+  ARCHIVE="${ROOT}/dist/${NAME}.zip"
+  command rm -f "${ARCHIVE}" "${ARCHIVE}.sha256"
+  python3 "${ROOT}/psxrecomp/tools/create_release_zip.py" --source "${STAGE}" --output "${ARCHIVE}" >/dev/null
+fi
+(cd "${ROOT}/dist" && sha256sum "$(basename "${ARCHIVE}")" >"$(basename "${ARCHIVE}").sha256")
+echo "Wrote ${ARCHIVE}"

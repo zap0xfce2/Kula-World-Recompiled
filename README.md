@@ -65,7 +65,7 @@ needs an internal resolution of at least 2x; the launcher defaults to 4x.
 You need your own copy of the game: Kula World PAL, SCES-01000, as a BIN/CUE image
 (single data track, MD5 `0f675dc230354f8c3b835bf34841bd20`).
 
-Unpack the zip for your system and start `Kula_World_Rerolled` (macOS: `Kula World Rerolled.app`),
+Unpack the archive for your system (Linux: `.tar.gz`, macOS and Windows: `.zip`) and start `Kula_World_Rerolled` (macOS: `Kula World Rerolled.app`),
 then point the launcher at your disc image. No BIOS dump is needed.
 
 **macOS:** the app is not notarized, so macOS blocks the first start. Open
@@ -78,7 +78,7 @@ xattr -dr com.apple.quarantine "Kula World Rerolled.app"
 Saves, settings and the HD texture pack live in `~/Library/Application Support/Kula World Rerolled`,
 so replacing the app with a newer version keeps them.
 
-## Build
+## Build it yourself
 
 ### Requirements
 
@@ -108,7 +108,7 @@ PAL cover from [libretro-thumbnails](https://github.com/libretro-thumbnails/libr
 into `assets/launcher/original/` for your local build only (it is not part of
 this repository). Reconfigure and relink afterwards.
 
-Release zips (no game data inside) come from `task release:linux` (Docker), `task release:win`
+Release archives (no game data inside) come from `task release:linux` (Docker), `task release:win`
 and, on a Mac, `task release:mac`; they land in `dist/`.
 
 `task --list` shows everything else (tests, lint, smoke test, the psx-beetle

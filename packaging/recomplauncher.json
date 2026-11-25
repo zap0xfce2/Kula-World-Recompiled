@@ -1,0 +1,25 @@
+{
+  "$schema": "https://recomplauncher.com/schema/recomplauncher.json",
+  "format": 1,
+  "repo": "zap0xfce2/Kula-World-Rerolled",
+  "name": "Kula World Rerolled",
+  "inputs": [
+    {
+      "id": "game",
+      "label": "Your Kula World disc image (.cue) of the European release, serial SCES-01000.",
+      "role": "game",
+      "formats": [{ "type": "file", "extensions": ["cue"] }],
+      "check": { "ids": ["SCES-01000"] },
+      "dumps": [{ "name": "Europe", "size": 255123792, "crc32": "a9ac54a4" }]
+    }
+  ],
+  "start": {
+    "program": ["Kula_World_Rerolled.exe", "Kula World Rerolled.app", "Kula_World_Rerolled"],
+    "args": ["--disc", "{input:game}"]
+  },
+  "system": {
+    "windows": { "version": "10" },
+    "linux": { "glibc": "2.35" },
+    "macos": { "version": "11" }
+  }
+}

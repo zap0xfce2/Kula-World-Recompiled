@@ -53,6 +53,8 @@ cp "${ROOT}/assets/launcher/kula.icns" "${APPDIR}/Contents/Resources/kula.icns"
 # Our entry point keeps player data in ~/Library/Application Support instead of the bundle.
 install -m 755 "${ROOT}/packaging/macos/launcher.sh" "${APPDIR}/Contents/MacOS/${APP_NAME}"
 command rm -rf "${STAGE}/saves"
+# RecompLauncher / RecompStore read this beside the .app (the zip's single folder is unwrapped).
+cp "${ROOT}/packaging/recomplauncher.json" "${STAGE}/"
 # Icon and entry point change the sealed resources: sign again like the packager does.
 codesign --force --sign - "${APPDIR}/Contents/MacOS/${BIN}"
 codesign --force --sign - "${APPDIR}"

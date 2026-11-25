@@ -17,9 +17,10 @@
     "program": ["Kula_World_Rerolled.exe", "Kula World Rerolled.app", "Kula_World_Rerolled"],
     "args": ["--disc", "{input:game}"]
   },
+  "saves": ["{install}/saves", "{data}/saves"],
   "system": {
-    "windows": { "version": "10" },
-    "linux": { "glibc": "2.35" },
-    "macos": { "version": "11" }
+    "windows": { "version": "10", "graphics": { "opengl": "3.3" } },
+    "linux": { "glibc": "2.35", "graphics": { "opengl": "3.3" } },
+    "macos": { "version": "11", "graphics": { "opengl": "3.3" } }
   }
 }

@@ -36,9 +36,9 @@ if(NOT IS_DIRECTORY "${PSX_PRELOADED_MODS}")
 endif()
 
 # The original cover is copyrighted and only fetched locally (task boxart);
-# without it the launcher shows our own box art.
+# without it, and always in a release build, the launcher shows our own box art.
 set(KULA_BOXART "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/original/boxart.tga")
-if(NOT EXISTS "${KULA_BOXART}")
+if(NOT EXISTS "${KULA_BOXART}" OR PSX_RELEASE_CHANNEL)
     set(KULA_BOXART "${CMAKE_CURRENT_SOURCE_DIR}/assets/launcher/boxart.tga")
 endif()
 message(STATUS "Launcher box art: ${KULA_BOXART}")

@@ -15,6 +15,10 @@ vars:
   CMAKE_FLAGS: >-
     -G Ninja -DCMAKE_BUILD_TYPE=Release
     -DPSX_PYTHON="$(command -v {{.PYTHON}})"
+  # Player build: public channel, no debug server, OpenBIOS only, version from VERSION
+  RELEASE_FLAGS: >-
+    -G Ninja -DCMAKE_BUILD_TYPE=Release -DPSX_RELEASE_CHANNEL=public
+    -DPSX_GAME_VERSION=$(cat VERSION) -DPSXRECOMP_BIOS_STEMS=OpenBIOS
 
 tasks:
   emitters:
@@ -52,6 +56,13 @@ tasks:
       - magick -background none -density 96 icon.svg -resize 256x256 -gravity center -extent 256x256 -depth 8 -define icon:auto-resize=256,128,64,48,32,16 kula.ico
       # psxrecomp stages psxrecomp.png from APP_ICON's folder as the SDL window icon (launcher and game)
       - magick -background none -density 192 icon.svg -resize 512x512 -gravity center -extent 512x512 -depth 8 psxrecomp.png
+      # macOS .app icon (Dock, Cmd+Tab); ImageMagick cannot write icns, make_icns.py packs the PNGs
+      - >-
+        d=$(mktemp -d) && for s in 16 32 128 256 512 1024; do
+        magick -background none -density $(( s < 192 ? 72 : s * 96 / 256 )) icon.svg -resize ${s}x${s}
+        -gravity center -extent ${s}x${s} -depth 8 PNG32:$d/$s.png; done
+        && {{.PYTHON}} -I ../../tools/make_icns.py kula.icns $d/16.png $d/32.png $d/128.png $d/256.png $d/512.png $d/1024.png;
+        rc=$?; rm -rf $d; exit $rc
 
   build:
     desc: Release build without debug server (build-release/)
@@ -82,6 +93,35 @@ tasks:
       - >-
         WINEPREFIX="$PWD/{{.WINEPREFIX}}" WINEDEBUG=-all
         {{.RUNNER}} wine build-win/Kula_World_Rerolled.exe --disc {{.DISC}} {{.CLI_ARGS}}
+
+  release:linux:
+    desc: Linux x64 release zip, built on glibc in Docker (local daemon) -> dist/
+    env:
+      # A remote docker context would build elsewhere and see no checkout
+      DOCKER_CONTEXT: default
+    cmds:
+      - docker build -q -t kula-release-linux packaging/linux
+      - >-
+        docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD":/src -w /src kula-release-linux
+        sh -c 'cmake -S . -B build-release-linux {{.RELEASE_FLAGS}} -DPSX_PYTHON=/usr/bin/python3
+        && cmake --build build-release-linux'
+      - scripts/package_release.sh build-release-linux Linux-x64
+
+  release:win:
+    desc: Windows x64 release zip, MinGW-w64 cross build -> dist/
+    cmds:
+      - >-
+        cmake -S . -B build-release-win {{.RELEASE_FLAGS}}
+        -DCMAKE_TOOLCHAIN_FILE=psxrecomp/cmake/toolchain-mingw-w64.cmake
+      - cmake --build build-release-win
+      - scripts/package_release.sh build-release-win Windows-x64
+
+  release:mac:
+    desc: macOS arm64 release zip with .app and icon (run on the Mac) -> dist/
+    cmds:
+      - cmake -S . -B build-release-mac {{.RELEASE_FLAGS}} -DPSX_PYTHON="$(command -v {{.PYTHON}})"
+      - cmake --build build-release-mac
+      - scripts/package_release_macos.sh build-release-mac
 
   all:
     desc: Emitters, generate and dev build from a fresh checkout

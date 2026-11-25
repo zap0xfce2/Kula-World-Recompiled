@@ -32,8 +32,8 @@ Done:
 29. [x] Upstream PR: launcher finds its assets when the host passes the exe dir ([recomp-ui#171](https://github.com/RetroPortingToolKit/recomp-ui/pull/171))
 30. [x] Windows build (MinGW-w64 cross build, verified under Wine)
 31. [x] Release zips: Linux x64 (glibc), Windows x64, macOS arm64 (`.app` with icon, player data in Application Support)
+32. [x] RecompStore listing prepared: release v1.0.0 with `recomplauncher.json` (serial check, Redump-verified dump), Linux as tarball
 
 Next:
 24. [ ] Help [#1](https://github.com/zap0xfce2/Kula-World-Rerolled/issues/1): on Manjaro (glibc) the launcher's Generate & Rebuild fails with "Toolchain ensure succeeded but bin/ is not usable for emitters"
 26. [ ] HD textures: test the background build on Windows
-32. [ ] Listing on RecompStore / RecompLauncher (needs a GitHub release; optional `recomplauncher.json`)

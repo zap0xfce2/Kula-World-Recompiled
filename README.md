@@ -43,6 +43,21 @@ All mods are switchable in the launcher (recomp-ui).
 | Detail Distance | on | Far cubes keep their full texture and far coins and fruit keep their full model instead of a plain disc. The short blur while turning stays. |
 | HD Textures | off | Builds an HD texture pack from your own disc in the background while you play; it is used from the next start. Python is downloaded once (Linux glibc, macOS Apple Silicon, Windows). The optional AI model (CC BY-NC-SA 4.0, about 1.5 GB) needs its own switch; without it the pack is upscaled with Lanczos. No game data ships with the release. |
 
+## Playing a release
+
+Unpack the zip for your system and start `Kula_World_Rerolled` (macOS: `Kula World Rerolled.app`),
+then point the launcher at your own disc image. No BIOS dump is needed.
+
+**macOS:** the app is not notarized, so macOS blocks the first start. Open
+**System Settings > Privacy & Security** and click **Open Anyway**, or run once in Terminal:
+
+```sh
+xattr -dr com.apple.quarantine "Kula World Rerolled.app"
+```
+
+Saves, settings and the HD texture pack live in `~/Library/Application Support/Kula World Rerolled`,
+so replacing the app with a newer version keeps them.
+
 ## Requirements
 
 - Your own copy of the game: Kula World PAL, SCES-01000, as `disc/SCES01000.BIN` + `disc/SCES01000.CUE`

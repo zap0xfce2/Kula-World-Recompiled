@@ -1,7 +1,5 @@
 # Kula World Rerolled
 
-<a href="https://recomplauncher.com"><picture><source media="(prefers-color-scheme: dark)" srcset="https://recomplauncher.com/assets/press/launcher/badge-light.svg"><img alt="Get it on RecompLauncher" src="https://recomplauncher.com/assets/press/launcher/badge-dark.svg" height="48"></picture></a>
-
 Kula World as a native game for Linux, macOS and Windows, with the things the
 PlayStation could not do:
 
